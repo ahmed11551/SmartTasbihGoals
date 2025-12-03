@@ -90,7 +90,7 @@ async function calculateCategoryStreak(
 }
 
 // Функция обновления streak для категории на основе текущей активности
-export async function updateCategoryStreaks(userId: string) {
+async function updateCategoryStreaks(userId: string) {
   try {
     // Получить данные для расчета streaks
     
@@ -113,9 +113,9 @@ export async function updateCategoryStreaks(userId: string) {
       lastActivityDate: prayerDates.length > 0 ? new Date(prayerDates[0] + 'T00:00:00') : null,
     });
 
-    // 2. Quran streak - на основе целей с категорией 'quran'
+    // 2. Quran streak - на основе целей с категорией 'surah' или 'ayah' (коран)
     const goals = await storage.getGoals(userId);
-    const quranGoals = goals.filter(g => g.category === 'quran');
+    const quranGoals = goals.filter(g => g.category === 'surah' || g.category === 'ayah');
     const quranDates: string[] = [];
     
     // Получить даты активности по корану (когда была активность по целям корана)
@@ -148,8 +148,8 @@ export async function updateCategoryStreaks(userId: string) {
     const allLogs = await storage.getDhikrLogs(userId, 100000);
     const dhikrDates = allLogs
       .filter(log => {
-        // Исключить коран
-        if (log.category === 'quran') return false;
+        // Исключить коран (surah и ayah)
+        if (log.category === 'surah' || log.category === 'ayah') return false;
         // Включить только tap/bulk/repeat события
         return log.eventType === 'tap' || log.eventType === 'bulk' || log.eventType === 'repeat';
       })
