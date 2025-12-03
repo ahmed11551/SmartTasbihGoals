@@ -145,6 +145,11 @@ export const sessionsApi = {
     return res.json();
   },
   
+  getUnfinished: async () => {
+    const res = await apiRequest("GET", "/api/sessions/unfinished", undefined, getAuthOptions());
+    return res.json();
+  },
+  
   create: async (data: unknown) => {
     const res = await apiRequest("POST", "/api/sessions", data, getAuthOptions());
     return res.json();

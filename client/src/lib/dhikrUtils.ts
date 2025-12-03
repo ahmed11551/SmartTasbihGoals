@@ -80,6 +80,12 @@ export function searchDhikrItems(query: string, category?: Category): DhikrItem[
   );
 }
 
+// Найти dhikr item по категории и ID
+export function findDhikrItemById(category: Category, itemId: string): DhikrItem | null {
+  const items = getDhikrItemsByCategory(category);
+  return items.find(item => item.id === itemId) || null;
+}
+
 // Получить популярные зикры (первые несколько)
 export function getPopularDhikrItems(limit = 5): DhikrItem[] {
   // Можно добавить логику на основе статистики использования

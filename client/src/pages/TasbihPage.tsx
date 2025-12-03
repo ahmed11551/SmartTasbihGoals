@@ -29,8 +29,9 @@ import {
   useUpsertDailyAzkar,
   useQazaDebt,
   useUpdateQazaProgress,
+  useUnfinishedSessions,
 } from '@/hooks/use-api';
-import { getTodayDhikrItem, getDhikrItemsByCategory } from '@/lib/dhikrUtils';
+import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDhikrItems } from '@/lib/dhikrUtils';
 import { useToast } from '@/hooks/use-toast';
 
 interface RecentAction {
@@ -54,6 +55,7 @@ export default function TasbihPage() {
   const updateGoalMutation = useUpdateGoal();
   const upsertDailyAzkarMutation = useUpsertDailyAzkar();
   const updateQazaProgressMutation = useUpdateQazaProgress();
+  const { data: unfinishedSessions = [] } = useUnfinishedSessions();
 
   // Текущая активная сессия
   const currentSessionIdRef = useRef<string | null>(null);
@@ -513,6 +515,62 @@ export default function TasbihPage() {
             goalType={linkedGoal?.goalType || 'recite'}
           />
         </div>
+
+        {unfinishedSessions.length > 0 && (
+          <div className="px-4 py-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Play className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">Незавершенные сессии</span>
+            </div>
+            
+            <div className="space-y-2">
+              {unfinishedSessions.map((session: any) => {
+                const dhikrItem = session.category && session.itemId
+                  ? findDhikrItemById(session.category, session.itemId)
+                  : null;
+                const sessionTitle = dhikrItem 
+                  ? dhikrItem.titleRu 
+                  : session.goal?.title || 'Неизвестный зикр';
+                const startedDate = new Date(session.startedAt);
+                const rounds = Math.floor((session.currentCount || 0) / 100);
+
+                return (
+                  <Card
+                    key={session.id}
+                    className="p-3 hover-elevate cursor-pointer active:scale-[0.98] transition-transform touch-manipulation border-primary/20 bg-primary/5"
+                    onClick={() => handleResumeSession(session)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleResumeSession(session);
+                      }
+                    }}
+                    data-testid={`unfinished-session-${session.id}`}
+                  >
+                    <div className="flex items-center justify-between pointer-events-none">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{sessionTitle}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{session.currentCount || 0} счёт</span>
+                          {rounds > 0 && (
+                            <span className="text-gold">• {rounds} кр.</span>
+                          )}
+                          <span>• {formatTimeAgo(startedDate)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-primary shrink-0">
+                        <Play className="w-3 h-3" />
+                        <span>Продолжить</span>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {recentActions.length > 0 && (
           <div className="px-4 py-4 space-y-3">

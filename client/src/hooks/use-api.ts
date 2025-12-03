@@ -191,6 +191,17 @@ export function useUpdateSession() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["unfinished-sessions"] });
+    },
+  });
+}
+
+export function useUnfinishedSessions() {
+  return useQuery({
+    queryKey: ["unfinished-sessions"],
+    queryFn: async () => {
+      const res = await sessionsApi.getUnfinished();
+      return res.sessions;
     },
   });
 }

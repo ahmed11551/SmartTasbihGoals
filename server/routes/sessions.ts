@@ -16,6 +16,67 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// GET /api/sessions/unfinished - получить незавершенные сессии
+router.get("/unfinished", async (req, res, next) => {
+  try {
+    const userId = getUserId(req)!;
+    const { prisma } = await import("../db-prisma");
+    
+    // Получить незавершенные сессии (endedAt === null)
+    const unfinishedSessions = await prisma.session.findMany({
+      where: {
+        userId,
+        endedAt: null,
+      },
+      include: {
+        goal: true,
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+      take: 5, // Максимум 5 незавершенных сессий
+    });
+
+    // Для каждой сессии получить последний лог и посчитать текущий счетчик
+    const sessionsWithCount = await Promise.all(
+      unfinishedSessions.map(async (session) => {
+        // Получить все логи сессии для подсчета текущего счетчика
+        const logs = await prisma.dhikrLog.findMany({
+          where: {
+            sessionId: session.id,
+          },
+          orderBy: {
+            atTs: 'asc',
+          },
+        });
+
+        // Подсчитать текущий счетчик из всех логов
+        const currentCount = logs.reduce((sum, log) => {
+          if (log.eventType === 'tap' || log.eventType === 'bulk' || log.eventType === 'repeat') {
+            return log.valueAfter || sum + log.delta;
+          }
+          return sum;
+        }, 0);
+
+        // Получить информацию о последнем логе (категория, itemId)
+        const lastLog = logs[logs.length - 1];
+        
+        return {
+          ...session,
+          currentCount,
+          category: lastLog?.category,
+          itemId: lastLog?.itemId,
+          prayerSegment: session.prayerSegment,
+        };
+      })
+    );
+
+    res.json({ sessions: sessionsWithCount });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const userId = getUserId(req)!;
