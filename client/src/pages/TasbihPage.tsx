@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TasbihCounter from '@/components/TasbihCounter';
 import DailyAzkarBar from '@/components/DailyAzkarBar';
 import DhikrSelector from '@/components/DhikrSelector';
