@@ -96,7 +96,14 @@ export default function TasbihPage() {
     g.status === 'active' &&
     (g.itemId === selectedItem.id || !g.itemId)
   );
-  const currentStreak = stats?.stats?.currentStreak || 0;
+  
+  // Получить streak для текущего типа активности (dhikr по умолчанию)
+  const getCurrentStreak = () => {
+    const dhikrStreak = categoryStreaks.find(s => s.category === 'dhikr');
+    return dhikrStreak?.currentStreak || 0;
+  };
+  
+  const currentStreak = getCurrentStreak();
   
   const dailyAzkar = dailyAzkarData || {
     userId: '',
