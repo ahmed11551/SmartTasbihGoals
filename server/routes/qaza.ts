@@ -272,24 +272,17 @@ router.post("/calendar/mark", requireAuth, async (req, res, next) => {
     });
 
     const progress = {
-      fajr: allEntries.filter(e => e.fajr).length,
-      dhuhr: allEntries.filter(e => e.dhuhr).length,
-      asr: allEntries.filter(e => e.asr).length,
-      maghrib: allEntries.filter(e => e.maghrib).length,
-      isha: allEntries.filter(e => e.isha).length,
-      witr: allEntries.filter(e => e.witr).length,
+      fajrProgress: allEntries.filter(e => e.fajr).length,
+      dhuhrProgress: allEntries.filter(e => e.dhuhr).length,
+      asrProgress: allEntries.filter(e => e.asr).length,
+      maghribProgress: allEntries.filter(e => e.maghrib).length,
+      ishaProgress: allEntries.filter(e => e.isha).length,
+      witrProgress: allEntries.filter(e => e.witr).length,
     };
 
     await prisma.qazaDebt.update({
       where: { userId },
-      data: {
-        fajrProgress: progress.fajr,
-        dhuhrProgress: progress.dhuhr,
-        asrProgress: progress.asr,
-        maghribProgress: progress.maghrib,
-        ishaProgress: progress.isha,
-        witrProgress: progress.witr,
-      },
+      data: progress,
     });
 
     res.json({ entry: calendarEntry, progress });
