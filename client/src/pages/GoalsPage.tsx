@@ -50,6 +50,7 @@ import {
   Circle,
   Square,
   X,
+  Calculator,
 } from 'lucide-react';
 import HabitCatalogSheet from '@/components/HabitCatalogSheet';
 import HabitCreationSheet from '@/components/HabitCreationSheet';
@@ -974,6 +975,24 @@ export default function GoalsPage() {
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-4">
         <AIInsight habits={habits} />
+
+        {/* Быстрый доступ к калькулятору Каза */}
+        <Card className="p-3 bg-primary/5 border-primary/20">
+          <Link href="/qaza-calculator">
+            <div className="flex items-center justify-between cursor-pointer hover:bg-primary/10 rounded-lg p-2 -m-2 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Calculator className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm">Калькулятор Каза</h3>
+                  <p className="text-xs text-muted-foreground">Расчет и восполнение пропущенных намазов</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </Link>
+        </Card>
 
         <Collapsible open={goalsOpen} onOpenChange={setGoalsOpen}>
           <CollapsibleTrigger className="w-full">

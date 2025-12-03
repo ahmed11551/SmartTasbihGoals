@@ -13,6 +13,11 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Calculator, Calendar, Target, Plus, Check, TrendingUp, Map } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
 import { prayerLabels } from '@/lib/constants';
@@ -453,38 +458,67 @@ export default function QazaCalculatorPage() {
                     const entry = calendarEntries.find(e => e.dateLocal === dateLocal);
                     const isToday = dateLocal === format(new Date(), 'yyyy-MM-dd');
                     
+                    const completedCount = entry ? 
+                      [entry.fajr, entry.dhuhr, entry.asr, entry.maghrib, entry.isha].filter(Boolean).length : 0;
+                    const hasCompleted = completedCount > 0;
+                    
                     return (
-                      <button
-                        key={dateLocal}
-                        onClick={() => {
-                          // При клике на день открываем меню выбора намазов
-                          // Для простоты пока отмечаем первый обязательный
-                          handleMarkCalendarDay(dateLocal, 'fajr');
-                        }}
-                        className={cn(
-                          "relative aspect-square rounded-md border text-xs transition-colors",
-                          isToday && "ring-2 ring-primary",
-                          entry && (entry.fajr || entry.dhuhr || entry.asr || entry.maghrib || entry.isha) 
-                            ? "bg-green-500/20 border-green-500" 
-                            : "bg-background border-border hover:bg-muted"
-                        )}
-                      >
-                        <span className={cn(
-                          "absolute inset-0 flex items-center justify-center",
-                          isToday && "font-semibold"
-                        )}>
-                          {date.getDate()}
-                        </span>
-                        {(entry && (entry.fajr || entry.dhuhr || entry.asr || entry.maghrib || entry.isha)) && (
-                          <div className="absolute bottom-0.5 left-0.5 right-0.5 flex gap-0.5">
-                            {entry.fajr && <div className="h-1 flex-1 bg-green-500 rounded" />}
-                            {entry.dhuhr && <div className="h-1 flex-1 bg-green-500 rounded" />}
-                            {entry.asr && <div className="h-1 flex-1 bg-green-500 rounded" />}
-                            {entry.maghrib && <div className="h-1 flex-1 bg-green-500 rounded" />}
-                            {entry.isha && <div className="h-1 flex-1 bg-green-500 rounded" />}
+                      <Popover key={dateLocal}>
+                        <PopoverTrigger asChild>
+                          <button
+                            className={cn(
+                              "relative aspect-square rounded-md border text-xs transition-colors",
+                              isToday && "ring-2 ring-primary",
+                              hasCompleted
+                                ? "bg-green-500/20 border-green-500" 
+                                : "bg-background border-border hover:bg-muted"
+                            )}
+                          >
+                            <span className={cn(
+                              "absolute inset-0 flex items-center justify-center",
+                              isToday && "font-semibold"
+                            )}>
+                              {date.getDate()}
+                            </span>
+                            {hasCompleted && (
+                              <div className="absolute bottom-0.5 left-0.5 right-0.5 flex gap-0.5">
+                                {entry.fajr && <div className="h-1 flex-1 bg-green-500 rounded" title="Фаджр" />}
+                                {entry.dhuhr && <div className="h-1 flex-1 bg-green-500 rounded" title="Зухр" />}
+                                {entry.asr && <div className="h-1 flex-1 bg-green-500 rounded" title="Аср" />}
+                                {entry.maghrib && <div className="h-1 flex-1 bg-green-500 rounded" title="Магриб" />}
+                                {entry.isha && <div className="h-1 flex-1 bg-green-500 rounded" title="Иша" />}
+                              </div>
+                            )}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3" align="start">
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium">
+                              {format(date, "d MMMM yyyy", { locale: ru })}
+                            </div>
+                            <div className="space-y-1.5">
+                              {prayers.filter(p => p !== 'witr').map((prayer) => {
+                                const isCompleted = entry?.[prayer] || false;
+                                return (
+                                  <button
+                                    key={prayer}
+                                    onClick={() => handleMarkCalendarDay(dateLocal, prayer)}
+                                    className={cn(
+                                      "w-full flex items-center justify-between p-2 rounded-md transition-colors text-sm",
+                                      isCompleted 
+                                        ? "bg-green-500/10 border border-green-500/20" 
+                                        : "bg-muted hover:bg-muted/80"
+                                    )}
+                                  >
+                                    <span>{prayerLabels[prayer] || prayer}</span>
+                                    {isCompleted && <Check className="w-4 h-4 text-green-600" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        )}
-                      </button>
+                        </PopoverContent>
+                      </Popover>
                     );
                   })}
                 </div>
