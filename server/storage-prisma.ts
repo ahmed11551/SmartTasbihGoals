@@ -392,6 +392,44 @@ export class PrismaStorage implements IStorage {
       where: { id, userId },
     });
   }
+
+  // Category Streaks
+  async getCategoryStreaks(userId: string): Promise<CategoryStreak[]> {
+    return prisma.categoryStreak.findMany({
+      where: { userId },
+      orderBy: { category: 'asc' },
+    });
+  }
+
+  async getCategoryStreak(userId: string, category: string): Promise<CategoryStreak | null> {
+    return prisma.categoryStreak.findUnique({
+      where: {
+        userId_category: {
+          userId,
+          category,
+        },
+      },
+    });
+  }
+
+  async updateCategoryStreak(userId: string, category: string, data: Partial<CategoryStreak>): Promise<CategoryStreak> {
+    return prisma.categoryStreak.upsert({
+      where: {
+        userId_category: {
+          userId,
+          category,
+        },
+      },
+      update: data as any,
+      create: {
+        userId,
+        category,
+        currentStreak: data.currentStreak || 0,
+        longestStreak: data.longestStreak || 0,
+        lastActivityDate: data.lastActivityDate || null,
+      },
+    });
+  }
 }
 
 export const storage = new PrismaStorage();
