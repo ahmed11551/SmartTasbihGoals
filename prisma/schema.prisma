@@ -102,6 +102,8 @@ model User {
   dailyAzkar    DailyAzkar[]
   badges        Badge[]
   calendarEvents CalendarEvent[]
+  qazaDebt      QazaDebt?
+  qazaCalendar  QazaCalendarEntry[]
 }
 
 model Habit {
@@ -273,6 +275,63 @@ model CalendarEvent {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+}
+
+model QazaDebt {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  gender           String   // 'male' | 'female'
+  birthYear        Int?
+  prayerStartYear  Int?
+  calculatedAt     DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Расчетный долг по каждому намазу
+  fajrDebt         Int      @default(0)
+  dhuhrDebt        Int      @default(0)
+  asrDebt          Int      @default(0)
+  maghribDebt      Int      @default(0)
+  ishaDebt         Int      @default(0)
+  witrDebt         Int      @default(0)
+  
+  // Прогресс восполнения
+  fajrProgress     Int      @default(0)
+  dhuhrProgress    Int      @default(0)
+  asrProgress      Int      @default(0)
+  maghribProgress  Int      @default(0)
+  ishaProgress     Int      @default(0)
+  witrProgress     Int      @default(0)
+  
+  // Периоды освобождения (для женщин)
+  haydNifasPeriods Json     @default("[]") // [{startDate, endDate, type}]
+  
+  // Дни в пути (сафар)
+  safarDays        Json     @default("[]") // [{startDate, endDate}]
+  
+  // ID связанной цели (если создана)
+  goalId           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model QazaCalendarEntry {
+  id           String   @id @default(uuid())
+  userId       String
+  dateLocal    String   // YYYY-MM-DD
+  fajr         Boolean  @default(false)
+  dhuhr        Boolean  @default(false)
+  asr          Boolean  @default(false)
+  maghrib      Boolean  @default(false)
+  isha         Boolean  @default(false)
+  witr         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dateLocal])
   @@index([userId])
 }
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi } from "@/lib/api";
+import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi, qazaApi } from "@/lib/api";
 import type { Habit, Task, Goal } from "@/lib/types";
 
 // Habits
@@ -237,6 +237,91 @@ export function useUpsertDailyAzkar() {
     onSuccess: (_, variables: any) => {
       queryClient.invalidateQueries({ queryKey: ["daily-azkar", variables.dateLocal] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+  });
+}
+
+// Qaza
+export function useQazaDebt() {
+  return useQuery({
+    queryKey: ["qaza-debt"],
+    queryFn: async () => {
+      const res = await qazaApi.getDebt();
+      return res.debt;
+    },
+  });
+}
+
+export function useCalculateQaza() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      gender: 'male' | 'female';
+      birthYear?: number;
+      prayerStartYear?: number;
+      haydNifasPeriods?: Array<{ startDate: string; endDate: string; type: 'hayd' | 'nifas' }>;
+      safarDays?: Array<{ startDate: string; endDate: string }>;
+      manualPeriod?: { years: number; months: number };
+    }) => {
+      const res = await qazaApi.calculate(params);
+      return res.debt;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["qaza-debt"] });
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+    },
+  });
+}
+
+export function useUpdateQazaProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ prayer, count }: { prayer: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | 'witr'; count: number }) => {
+      const res = await qazaApi.updateProgress(prayer, count);
+      return res.debt;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["qaza-debt"] });
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+    },
+  });
+}
+
+export function useMarkQazaCalendarDay() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dateLocal, prayers }: { dateLocal: string; prayers: { fajr?: boolean; dhuhr?: boolean; asr?: boolean; maghrib?: boolean; isha?: boolean; witr?: boolean } }) => {
+      const res = await qazaApi.markCalendarDay(dateLocal, prayers);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["qaza-debt"] });
+      queryClient.invalidateQueries({ queryKey: ["qaza-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+    },
+  });
+}
+
+export function useQazaCalendar(startDate?: string, endDate?: string) {
+  return useQuery({
+    queryKey: ["qaza-calendar", startDate, endDate],
+    queryFn: async () => {
+      const res = await qazaApi.getCalendar(startDate, endDate);
+      return res.entries;
+    },
+  });
+}
+
+export function useCreateQazaGoal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await qazaApi.createGoal();
+      return res.goal;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["qaza-debt"] });
     },
   });
 }

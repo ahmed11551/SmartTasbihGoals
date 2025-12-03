@@ -193,3 +193,62 @@ export const statsApi = {
   },
 };
 
+// AI API
+export const aiApi = {
+  assistant: async (message: string, context: any): Promise<{ response: string }> => {
+    const res = await apiRequest("POST", "/api/ai/assistant", { message, context }, getAuthOptions());
+    return res.json();
+  },
+};
+
+// Qaza API
+export const qazaApi = {
+  getDebt: async (): Promise<{ debt: any | null }> => {
+    const res = await apiRequest("GET", "/api/qaza", undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  calculate: async (params: {
+    gender: 'male' | 'female';
+    birthYear?: number;
+    prayerStartYear?: number;
+    haydNifasPeriods?: Array<{ startDate: string; endDate: string; type: 'hayd' | 'nifas' }>;
+    safarDays?: Array<{ startDate: string; endDate: string }>;
+    manualPeriod?: { years: number; months: number };
+  }): Promise<{ debt: any }> => {
+    const res = await apiRequest("POST", "/api/qaza/calculate", params, getAuthOptions());
+    return res.json();
+  },
+  
+  updateProgress: async (prayer: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | 'witr', count: number): Promise<{ debt: any }> => {
+    const res = await apiRequest("PATCH", "/api/qaza/progress", { prayer, count }, getAuthOptions());
+    return res.json();
+  },
+  
+  markCalendarDay: async (dateLocal: string, prayers: {
+    fajr?: boolean;
+    dhuhr?: boolean;
+    asr?: boolean;
+    maghrib?: boolean;
+    isha?: boolean;
+    witr?: boolean;
+  }): Promise<{ entry: any; progress: any }> => {
+    const res = await apiRequest("POST", "/api/qaza/calendar/mark", { dateLocal, prayers }, getAuthOptions());
+    return res.json();
+  },
+  
+  getCalendar: async (startDate?: string, endDate?: string): Promise<{ entries: any[] }> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const query = params.toString();
+    const res = await apiRequest("GET", `/api/qaza/calendar${query ? `?${query}` : ''}`, undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  createGoal: async (): Promise<{ goal: any }> => {
+    const res = await apiRequest("POST", "/api/qaza/create-goal", undefined, getAuthOptions());
+    return res.json();
+  },
+};
+
