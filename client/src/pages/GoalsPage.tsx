@@ -919,11 +919,6 @@ export default function GoalsPage() {
     setTaskDeleteDialogOpen(false);
   };
 
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setTaskSheetOpen(true);
-  };
-
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
