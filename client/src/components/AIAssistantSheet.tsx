@@ -82,7 +82,7 @@ export default function AIAssistantSheet({
           tasks: tasks.slice(0, 5),
           goals: goals.slice(0, 5),
         },
-      });
+      }, getAuthOptions());
       
       const data = await res.json();
       

@@ -2,7 +2,7 @@ import { apiRequest } from "./queryClient";
 import { getAuthToken, getUserId } from "./auth";
 
 // Get auth options for API requests
-function getAuthOptions() {
+export function getAuthOptions() {
   const token = getAuthToken();
   const userId = getUserId();
   

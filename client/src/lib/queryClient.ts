@@ -36,7 +36,11 @@ export async function apiRequest(
     }
   }
   
-  const res = await fetch(url, {
+  // Использовать абсолютный URL для API запросов
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const apiUrl = url.startsWith('/') ? `${baseUrl}${url}` : url;
+  
+  const res = await fetch(apiUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,

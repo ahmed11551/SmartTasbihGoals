@@ -80,8 +80,11 @@ export default function TasbihPage() {
   const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
 
   const activeGoals = goals.filter((g: any) => g.status === 'active').slice(0, 2);
-  const linkedGoal = activeGoals.find((g: any) => 
-    g.linkedCounterType === selectedItem.category && g.status === 'active'
+  // Найти связанную цель для текущего выбранного зикра
+  const linkedGoal = goals.find((g: any) => 
+    g.linkedCounterType === selectedItem.category && 
+    g.status === 'active' &&
+    (g.itemId === selectedItem.id || !g.itemId)
   );
   const currentStreak = stats?.stats?.currentStreak || 0;
   
