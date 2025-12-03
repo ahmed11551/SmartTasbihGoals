@@ -61,6 +61,7 @@ import CalendarSheet from '@/components/CalendarSheet';
 import type { Habit, Task, Goal, WeekDay } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { habitCategories } from '@/lib/habitsCatalog';
+import { goalCategoryLabels } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { getIconByName } from '@/lib/iconUtils';
 import { useData } from '@/context/DataContext';
@@ -557,6 +558,39 @@ export default function GoalsPage() {
 
   const weekDays = useMemo(() => getWeekDays(), []);
 
+  // Автоматическое обновление данных при смене дня
+  useEffect(() => {
+    const updateOnDayChange = () => {
+      // Инвалидировать кэш целей, чтобы пересчитать ежедневные планы
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    };
+
+    // Проверять смену дня каждую минуту
+    const interval = setInterval(() => {
+      const now = new Date();
+      const currentDay = now.toDateString();
+      
+      // Сохранить текущий день в localStorage
+      const lastDay = localStorage.getItem('lastDayChecked');
+      
+      if (lastDay !== currentDay) {
+        localStorage.setItem('lastDayChecked', currentDay);
+        updateOnDayChange();
+      }
+    }, 60000); // Проверять каждую минуту
+
+    // Проверить сразу при загрузке
+    const lastDay = localStorage.getItem('lastDayChecked');
+    const currentDay = new Date().toDateString();
+    if (lastDay !== currentDay) {
+      localStorage.setItem('lastDayChecked', currentDay);
+      updateOnDayChange();
+    }
+
+    return () => clearInterval(interval);
+  }, [queryClient]);
+
   useEffect(() => {
     if (highlightHabitId) {
       setHabitsOpen(true);
@@ -582,9 +616,40 @@ export default function GoalsPage() {
   }, [habits, habitCategoryFilter]);
 
   const filteredGoals = useMemo(() => {
-    if (goalFilter === 'all') return goals;
-    return goals.filter(g => g.status === goalFilter);
-  }, [goals, goalFilter]);
+    let result = goals;
+    
+    // Фильтр по статусу
+    if (goalFilter !== 'all') {
+      result = result.filter(g => g.status === goalFilter);
+    }
+    
+    // Фильтр по поисковому запросу
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(g => 
+        g.title.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [goals, goalFilter, searchQuery]);
+
+  // Группировка целей по категориям
+  const goalsByCategory = useMemo(() => {
+    const grouped: Record<string, typeof filteredGoals> = {};
+    
+    filteredGoals.forEach(goal => {
+      const category = goal.category;
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(goal);
+    });
+    
+    return grouped;
+  }, [filteredGoals]);
+  
+  const categoryOrder: Array<keyof typeof goalCategoryLabels> = ['azkar', 'salawat', 'dua', 'kalimat', 'names99', 'surah', 'ayah', 'general'];
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
@@ -909,6 +974,100 @@ export default function GoalsPage() {
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-4">
         <AIInsight habits={habits} />
+
+        <Collapsible open={goalsOpen} onOpenChange={setGoalsOpen}>
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-between py-2">
+              <h2 className="text-lg font-semibold">Цели</h2>
+              {goalsOpen ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              )}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {(['all', 'active', 'completed', 'archived'] as const).map((filter) => (
+                <Button
+                  key={filter}
+                  variant={goalFilter === filter ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setGoalFilter(filter)}
+                  className="text-xs whitespace-nowrap"
+                  data-testid={`button-filter-goal-${filter}`}
+                >
+                  {filter === 'all' ? 'Все' : filter === 'active' ? 'Активные' : filter === 'completed' ? 'Выполненные' : 'Архив'}
+                </Button>
+              ))}
+            </div>
+
+            {goalsLoading ? (
+              <div className="text-center py-6 text-muted-foreground">Загрузка целей...</div>
+            ) : filteredGoals.length === 0 ? (
+              <div className="text-center py-6">
+                <Flag className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-sm text-muted-foreground">Нет целей</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {categoryOrder.map((category) => {
+                  const categoryGoals = goalsByCategory[category] || [];
+                  if (categoryGoals.length === 0) return null;
+
+                  return (
+                    <div key={category} className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          {goalCategoryLabels[category] || category}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs h-5">
+                          {categoryGoals.length}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {categoryGoals.map((goal: Goal) => (
+                          <GoalCard 
+                            key={goal.id} 
+                            goal={goal} 
+                            onEdit={handleEditGoal}
+                            onDelete={handleDeleteGoal}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Цели с категориями, не попавшими в categoryOrder */}
+                {Object.entries(goalsByCategory).map(([category, categoryGoals]) => {
+                  if (categoryOrder.includes(category as any) || categoryGoals.length === 0) return null;
+                  return (
+                    <div key={category} className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          {goalCategoryLabels[category] || category}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs h-5">
+                          {categoryGoals.length}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {categoryGoals.map((goal: Goal) => (
+                          <GoalCard 
+                            key={goal.id} 
+                            goal={goal} 
+                            onEdit={handleEditGoal}
+                            onDelete={handleDeleteGoal}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
 
         <Collapsible open={tasksOpen} onOpenChange={setTasksOpen}>
           <CollapsibleTrigger className="w-full">
