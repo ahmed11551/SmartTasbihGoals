@@ -77,6 +77,7 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
+  useCheckBadges,
 } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 
