@@ -60,7 +60,16 @@ async function buildAll() {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
-    external: externals,
+    external: [
+      ...externals,
+      "@shared/schema",
+      "shared/schema",
+      "drizzle-orm",
+      "drizzle-orm/pg-core",
+      "drizzle-orm/neon-serverless",
+      "drizzle-zod",
+      "@neondatabase/serverless",
+    ],
     logLevel: "info",
   });
 }
