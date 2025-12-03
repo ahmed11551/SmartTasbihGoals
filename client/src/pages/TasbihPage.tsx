@@ -42,6 +42,7 @@ interface RecentAction {
 export default function TasbihPage() {
   const { toast } = useToast();
   const { data: goals = [] } = useGoals();
+  const { data: qazaDebt } = useQazaDebt();
   const { data: stats } = useStats();
   const today = new Date().toISOString().split('T')[0];
   const { data: dailyAzkarData } = useDailyAzkar(today);
