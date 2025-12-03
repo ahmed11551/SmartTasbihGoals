@@ -8,6 +8,7 @@ import sessionsRoutes from "./routes/sessions";
 import dhikrRoutes from "./routes/dhikr";
 import statsRoutes from "./routes/stats";
 import aiRoutes from "./routes/ai";
+import telegramRoutes from "./routes/telegram";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -22,6 +23,7 @@ export async function registerRoutes(
   app.use("/api/dhikr", dhikrRoutes);
   app.use("/api/stats", statsRoutes);
   app.use("/api/ai", aiRoutes);
+  app.use("/api/telegram", telegramRoutes);
 
   return httpServer;
 }

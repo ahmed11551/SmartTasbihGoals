@@ -182,6 +182,3 @@ import { TasbihCounter } from 'smartTasbih/components';
 └── docker-compose.yml  # Docker конфигурация
 ```
 
-## Лицензия
-
-MIT

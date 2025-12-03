@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DataProvider } from "@/context/DataContext";
 import BottomNav from "@/components/BottomNav";
+import TelegramAuth from "@/components/TelegramAuth";
 import TasbihPage from "@/pages/TasbihPage";
 import GoalsPage from "@/pages/GoalsPage";
 import ZikryPage from "@/pages/ZikryPage";
@@ -32,6 +33,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DataProvider>
+          <TelegramAuth />
           <div className="min-h-screen bg-background">
             <Router />
             <BottomNav />

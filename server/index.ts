@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -42,6 +43,16 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+// CORS для Telegram WebApp
+app.use(cors({
+  origin: [
+    'https://web.telegram.org',
+    'https://telegram.org',
+    process.env.FRONTEND_URL || 'http://localhost:5000',
+  ],
+  credentials: true,
+}));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
