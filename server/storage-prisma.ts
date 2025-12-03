@@ -328,7 +328,7 @@ export class PrismaStorage implements IStorage {
     });
   }
 
-  async createBadge(userId: string, badge: Prisma.BadgeCreateInput): Promise<Badge> {
+  async createBadge(userId: string, badge: Omit<Prisma.BadgeCreateInput, 'user'>): Promise<Badge> {
     return prisma.badge.create({
       data: {
         ...badge,
