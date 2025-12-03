@@ -60,6 +60,7 @@ export default function TasbihPage() {
   const updateQazaProgressMutation = useUpdateQazaProgress();
   const { data: unfinishedSessions = [] } = useUnfinishedSessions();
   const checkBadgesMutation = useCheckBadges();
+  const { data: categoryStreaks = [] } = useCategoryStreaks();
 
   // Текущая активная сессия
   const currentSessionIdRef = useRef<string | null>(null);

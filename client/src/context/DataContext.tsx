@@ -31,23 +31,8 @@ interface DataContextValue {
 const DataContext = createContext<DataContextValue | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  // Обработка ошибок в хуках, чтобы не ломать весь провайдер
-  let habits: Habit[] = [];
-  let tasks: Task[] = [];
-  let habitsLoading = false;
-  let tasksLoading = false;
-
-  try {
-    const habitsQuery = useHabits();
-    const tasksQuery = useTasks();
-    habits = habitsQuery.data || [];
-    tasks = tasksQuery.data || [];
-    habitsLoading = habitsQuery.isLoading || false;
-    tasksLoading = tasksQuery.isLoading || false;
-  } catch (error) {
-    console.error('Error loading habits/tasks:', error);
-  }
-
+  const { data: habits = [], isLoading: habitsLoading } = useHabits();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const createHabitMutation = useCreateHabit();
   const updateHabitMutation = useUpdateHabit();
   const deleteHabitMutation = useDeleteHabit();
