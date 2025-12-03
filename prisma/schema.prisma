@@ -1,0 +1,278 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  general
+  surah
+  ayah
+  dua
+  azkar
+  names99
+  salawat
+  kalimat
+}
+
+enum GoalType {
+  recite
+  learn
+}
+
+enum GoalStatus {
+  active
+  completed
+  archived
+  paused
+}
+
+enum PrayerSegment {
+  fajr
+  dhuhr
+  asr
+  maghrib
+  isha
+  none
+}
+
+enum EventType {
+  tap
+  bulk
+  repeat
+  learn_mark
+  goal_completed
+  auto_reset
+}
+
+enum BadgeLevel {
+  copper
+  silver
+  gold
+}
+
+enum HabitCategory {
+  namaz
+  quran
+  dhikr
+  sadaqa
+  knowledge
+  fasting
+  etiquette
+}
+
+enum HabitDifficulty {
+  easy
+  medium
+  advanced
+}
+
+enum RepeatType {
+  never
+  daily
+  weekly
+  monthly
+  custom
+}
+
+enum Priority {
+  low
+  medium
+  high
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  habits        Habit[]
+  tasks         Task[]
+  goals         Goal[]
+  sessions      Session[]
+  dhikrLogs     DhikrLog[]
+  dailyAzkar    DailyAzkar[]
+  badges        Badge[]
+  calendarEvents CalendarEvent[]
+}
+
+model Habit {
+  id            String        @id @default(uuid())
+  userId        String
+  templateId    String?
+  category      HabitCategory
+  title         String
+  description   String?
+  iconName      String
+  difficulty    HabitDifficulty
+  repeatType    RepeatType
+  repeatDays    String[]      @default([])
+  repeatDates   Int[]         @default([])
+  startDate     DateTime?
+  endDate       DateTime?
+  time          String?
+  endTime       String?
+  isAllDay      Boolean       @default(true)
+  reminders     Json          @default("[]")
+  calendarId    String?
+  notes         String?
+  url           String?
+  linkedToTasbih Boolean      @default(false)
+  targetCount   Int?
+  currentStreak Int           @default(0)
+  longestStreak Int           @default(0)
+  completedDates String[]     @default([])
+  createdAt     DateTime      @default(now())
+  isActive      Boolean       @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  dueTime     String?
+  priority    Priority  @default(medium)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  subtasks    Json      @default("[]")
+  reminders   Json      @default("[]")
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Goal {
+  id              String     @id @default(uuid())
+  userId          String
+  category        Category
+  itemId          String?
+  goalType        GoalType
+  title           String
+  targetCount     Int
+  currentProgress Int        @default(0)
+  status          GoalStatus @default(active)
+  startDate       DateTime
+  endDate         DateTime?
+  linkedCounterType String?
+  createdAt       DateTime   @default(now())
+  completedAt     DateTime?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions  Session[]
+  dhikrLogs DhikrLog[]
+
+  @@index([userId])
+}
+
+model Session {
+  id            String        @id @default(uuid())
+  userId        String
+  goalId        String?
+  prayerSegment PrayerSegment @default(none)
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal?      @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  dhikrLogs DhikrLog[]
+
+  @@index([userId])
+}
+
+model DhikrLog {
+  id            String        @id @default(uuid())
+  userId        String
+  sessionId     String
+  goalId        String?
+  category      Category
+  itemId        String?
+  eventType     EventType
+  delta         Int
+  valueAfter    Int
+  prayerSegment PrayerSegment @default(none)
+  atTs          DateTime      @default(now())
+  tz            String        @default("UTC")
+  offlineId     String?       @default(uuid())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  goal    Goal?   @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model DailyAzkar {
+  userId    String   @id
+  dateLocal String
+  fajr      Int      @default(0)
+  dhuhr     Int      @default(0)
+  asr       Int      @default(0)
+  maghrib   Int      @default(0)
+  isha      Int      @default(0)
+  total     Int      @default(0)
+  isComplete Boolean @default(false)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dateLocal])
+  @@index([userId])
+}
+
+model Badge {
+  id         String     @id @default(uuid())
+  userId     String
+  type       String
+  title      String
+  description String
+  level      BadgeLevel
+  icon       String
+  achievedAt DateTime?
+  isUnlocked Boolean    @default(false)
+  progress   Int?
+  target     Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CalendarEvent {
+  id          String     @id @default(uuid())
+  userId      String
+  title       String
+  location    String?
+  startDate   DateTime
+  startTime   String?
+  endDate     DateTime
+  endTime     String?
+  isAllDay    Boolean    @default(true)
+  repeatType  RepeatType @default(never)
+  calendarId  String?
+  reminders   Json       @default("[]")
+  notes       String?
+  url         String?
+  createdAt   DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
