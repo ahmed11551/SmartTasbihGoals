@@ -6,14 +6,15 @@ import federation from "@originjs/vite-plugin-federation";
 
 const isProduction = process.env.NODE_ENV === "production";
 const isReplit = process.env.REPL_ID !== undefined;
+const isVercel = process.env.VERCEL === "1";
 
 export default defineConfig({
   plugins: [
     react(),
-    // Только в dev режиме и на Replit
+    // Runtime error overlay только в dev на Replit
     ...(!isProduction && isReplit ? [runtimeErrorOverlay()] : []),
-    // Module Federation только если не на Vercel
-    ...(process.env.VERCEL !== "1" ? [
+    // Module Federation только если не на Vercel (чтобы избежать проблем при сборке)
+    ...(!isVercel ? [
       federation({
         name: 'smartTasbih',
         filename: 'remoteEntry.js',
@@ -36,18 +37,7 @@ export default defineConfig({
         },
       })
     ] : []),
-    // Replit плагины только в dev на Replit
-    ...(!isProduction && isReplit
-      ? [
-          import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-          import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
