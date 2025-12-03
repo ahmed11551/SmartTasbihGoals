@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DataProvider } from "@/context/DataContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import BottomNav from "@/components/BottomNav";
 import TelegramAuth from "@/components/TelegramAuth";
 import TasbihPage from "@/pages/TasbihPage";
@@ -30,18 +31,22 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <DataProvider>
-          <TelegramAuth />
-          <div className="min-h-screen bg-background">
-            <Router />
-            <BottomNav />
-          </div>
-          <Toaster />
-        </DataProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ErrorBoundary>
+            <DataProvider>
+              <TelegramAuth />
+              <div className="min-h-screen bg-background">
+                <Router />
+                <BottomNav />
+              </div>
+              <Toaster />
+            </DataProvider>
+          </ErrorBoundary>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
