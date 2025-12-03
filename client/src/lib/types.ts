@@ -106,6 +106,15 @@ export interface Streak {
   lastActivityDate: string;
 }
 
+export interface CategoryStreak {
+  id: string;
+  userId: string;
+  category: 'prayer' | 'quran' | 'dhikr';
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate?: string;
+}
+
 export interface UserStats {
   totalDhikrCount: number;
   goalsCompleted: number;

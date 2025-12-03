@@ -275,3 +275,21 @@ export const badgesApi = {
   },
 };
 
+// Category Streaks API
+export const categoryStreaksApi = {
+  getAll: async (): Promise<{ streaks: any[] }> => {
+    const res = await apiRequest("GET", "/api/category-streaks", undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  getByCategory: async (category: string): Promise<{ streak: any }> => {
+    const res = await apiRequest("GET", `/api/category-streaks/${category}`, undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  update: async (): Promise<{ success: boolean; streaks: any }> => {
+    const res = await apiRequest("POST", "/api/category-streaks/update", undefined, getAuthOptions());
+    return res.json();
+  },
+};
+

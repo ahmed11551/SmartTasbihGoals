@@ -10,6 +10,7 @@ import type {
   DhikrLog,
   DailyAzkar,
   Badge,
+  CategoryStreak,
   CalendarEvent,
   Prisma,
 } from "@prisma/client";
@@ -70,6 +71,11 @@ export interface IStorage {
   createCalendarEvent(userId: string, event: Prisma.CalendarEventCreateInput): Promise<CalendarEvent>;
   updateCalendarEvent(id: string, userId: string, updates: Prisma.CalendarEventUpdateInput): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string, userId: string): Promise<void>;
+  
+  // Category Streaks
+  getCategoryStreaks(userId: string): Promise<CategoryStreak[]>;
+  getCategoryStreak(userId: string, category: string): Promise<CategoryStreak | null>;
+  updateCategoryStreak(userId: string, category: string, data: Partial<CategoryStreak>): Promise<CategoryStreak>;
 }
 
 export class PrismaStorage implements IStorage {

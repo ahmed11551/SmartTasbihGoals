@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi, qazaApi, badgesApi } from "@/lib/api";
-import type { Habit, Task, Goal, Badge } from "@/lib/types";
+import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi, qazaApi, badgesApi, categoryStreaksApi } from "@/lib/api";
+import type { Habit, Task, Goal, Badge, CategoryStreak } from "@/lib/types";
 
 // Habits
 export function useHabits() {
@@ -357,6 +357,41 @@ export function useCheckBadges() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["badges"] });
+    },
+  });
+}
+
+// Category Streaks
+export function useCategoryStreaks() {
+  return useQuery({
+    queryKey: ["category-streaks"],
+    queryFn: async () => {
+      const res = await categoryStreaksApi.getAll();
+      return res.streaks as CategoryStreak[];
+    },
+  });
+}
+
+export function useCategoryStreak(category: 'prayer' | 'quran' | 'dhikr') {
+  return useQuery({
+    queryKey: ["category-streak", category],
+    queryFn: async () => {
+      const res = await categoryStreaksApi.getByCategory(category);
+      return res.streak as CategoryStreak;
+    },
+  });
+}
+
+export function useUpdateCategoryStreaks() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await categoryStreaksApi.update();
+      return res.streaks;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["category-streaks"] });
+      queryClient.invalidateQueries({ queryKey: ["category-streak"] });
     },
   });
 }

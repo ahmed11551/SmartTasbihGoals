@@ -100,6 +100,7 @@ export default function ReportsPage() {
   const { data: stats } = useStats();
   const { data: badges = [] } = useBadges();
   const checkBadgesMutation = useCheckBadges();
+  const { data: categoryStreaks = [] } = useCategoryStreaks();
   const today = new Date().toISOString().split('T')[0];
   const { data: dailyAzkarData } = useDailyAzkar(today);
   

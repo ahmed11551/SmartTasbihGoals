@@ -111,6 +111,7 @@ model User {
   calendarEvents CalendarEvent[]
   qazaDebt      QazaDebt?
   qazaCalendar  QazaCalendarEntry[]
+  categoryStreaks CategoryStreak[]
 }
 
 model Habit {

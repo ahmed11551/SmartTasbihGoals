@@ -31,6 +31,8 @@ import {
   useUpdateQazaProgress,
   useUnfinishedSessions,
   useCheckBadges,
+  useCategoryStreaks,
+  useUpdateCategoryStreaks,
 } from '@/hooks/use-api';
 import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDhikrItems } from '@/lib/dhikrUtils';
 import { useToast } from '@/hooks/use-toast';
