@@ -22,6 +22,7 @@ export function useCreateHabit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -35,6 +36,7 @@ export function useUpdateHabit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -47,6 +49,7 @@ export function useDeleteHabit() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -71,6 +74,7 @@ export function useCreateTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -84,6 +88,7 @@ export function useUpdateTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -96,6 +101,7 @@ export function useDeleteTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -133,6 +139,7 @@ export function useUpdateGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }
@@ -145,6 +152,7 @@ export function useDeleteGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
   });
 }

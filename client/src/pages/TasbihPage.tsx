@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TasbihCounter from '@/components/TasbihCounter';
 import DailyAzkarBar from '@/components/DailyAzkarBar';
 import DhikrSelector from '@/components/DhikrSelector';
@@ -18,9 +18,18 @@ import {
 import { Settings2, Target, ChevronRight, History, Play, Volume2 } from 'lucide-react';
 import type { DhikrItem, PrayerSegment, TranscriptionType } from '@/lib/types';
 import { Link } from 'wouter';
-import { useGoals } from '@/hooks/use-api';
-import { useDailyAzkar, useStats } from '@/hooks/use-api';
+import { 
+  useGoals, 
+  useStats, 
+  useDailyAzkar, 
+  useCreateSession, 
+  useUpdateSession,
+  useCreateDhikrLog,
+  useUpdateGoal,
+  useUpsertDailyAzkar,
+} from '@/hooks/use-api';
 import { getTodayDhikrItem, getDhikrItemsByCategory } from '@/lib/dhikrUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface RecentAction {
   id: string;
@@ -31,10 +40,21 @@ interface RecentAction {
 }
 
 export default function TasbihPage() {
+  const { toast } = useToast();
   const { data: goals = [] } = useGoals();
   const { data: stats } = useStats();
   const today = new Date().toISOString().split('T')[0];
   const { data: dailyAzkarData } = useDailyAzkar(today);
+  const createSessionMutation = useCreateSession();
+  const updateSessionMutation = useUpdateSession();
+  const createDhikrLogMutation = useCreateDhikrLog();
+  const updateGoalMutation = useUpdateGoal();
+  const upsertDailyAzkarMutation = useUpsertDailyAzkar();
+
+  // Текущая активная сессия
+  const currentSessionIdRef = useRef<string | null>(null);
+  const logBatchRef = useRef<Array<{ delta: number; valueAfter: number; timestamp: Date }>>([]);
+  const batchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Получаем зикр дня или первый доступный
   const defaultDhikr = getTodayDhikrItem() || getDhikrItemsByCategory('azkar')[0] || {
@@ -60,6 +80,9 @@ export default function TasbihPage() {
   const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
 
   const activeGoals = goals.filter((g: any) => g.status === 'active').slice(0, 2);
+  const linkedGoal = activeGoals.find((g: any) => 
+    g.linkedCounterType === selectedItem.category && g.status === 'active'
+  );
   const currentStreak = stats?.stats?.currentStreak || 0;
   
   const dailyAzkar = dailyAzkarData || {
@@ -74,7 +97,131 @@ export default function TasbihPage() {
     isComplete: false,
   };
 
-  const handlePrayerSelect = (prayer: PrayerSegment) => {
+  // Создать сессию при первом использовании счетчика
+  const ensureSession = async () => {
+    if (currentSessionIdRef.current) return currentSessionIdRef.current;
+
+    try {
+      const session = await createSessionMutation.mutateAsync({
+        goalId: linkedGoal?.id || undefined,
+        prayerSegment: selectedPrayer,
+      });
+      currentSessionIdRef.current = session.id;
+      return session.id;
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      return null;
+    }
+  };
+
+  // Сохранить лог зикра (батчинг для оптимизации)
+  const saveDhikrLog = async (delta: number, valueAfter: number) => {
+    const sessionId = await ensureSession();
+    if (!sessionId) return;
+
+    logBatchRef.current.push({ delta, valueAfter, timestamp: new Date() });
+
+    // Очистить предыдущий таймаут
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+    }
+
+    // Сохранить батч через 2 секунды (или сразу если батч большой)
+    batchTimeoutRef.current = setTimeout(async () => {
+      if (logBatchRef.current.length === 0) return;
+
+      try {
+        // Сохранить последний лог из батча
+        const lastLog = logBatchRef.current[logBatchRef.current.length - 1];
+        await createDhikrLogMutation.mutateAsync({
+          sessionId,
+          goalId: linkedGoal?.id || undefined,
+          category: selectedItem.category,
+          itemId: selectedItem.id,
+          eventType: 'tap',
+          delta: lastLog.delta,
+          valueAfter: lastLog.valueAfter,
+          prayerSegment: selectedPrayer,
+        });
+
+        // Обновить цель, если она связана
+        if (linkedGoal) {
+          // Вычислить новый прогресс: текущий прогресс цели + последнее изменение
+          const newProgress = Math.min(linkedGoal.currentProgress + lastLog.delta, linkedGoal.targetCount);
+          const isCompleted = newProgress >= linkedGoal.targetCount;
+          
+          if (newProgress !== linkedGoal.currentProgress) {
+            await updateGoalMutation.mutateAsync({
+              id: linkedGoal.id,
+              data: {
+                currentProgress: newProgress,
+                status: isCompleted ? 'completed' : 'active',
+                completedAt: isCompleted ? new Date().toISOString() : undefined,
+              },
+            });
+
+            if (isCompleted) {
+              toast({
+                title: "Цель достигнута!",
+                description: `Машааллах! Цель "${linkedGoal.title}" выполнена!`,
+              });
+            }
+          }
+        }
+
+        // Обновить ежедневные азкары
+        if (selectedPrayer !== 'none') {
+          const prayerKey = selectedPrayer as keyof typeof dailyAzkar;
+          const currentPrayerCount = (dailyAzkar[prayerKey] as number || 0) + lastLog.delta;
+          const newDailyAzkar = {
+            ...dailyAzkar,
+            [prayerKey]: currentPrayerCount,
+            total: (dailyAzkar.total || 0) + lastLog.delta,
+          };
+
+          await upsertDailyAzkarMutation.mutateAsync({
+            dateLocal: today,
+            ...newDailyAzkar,
+          });
+        }
+
+        logBatchRef.current = [];
+      } catch (error) {
+        console.error('Failed to save dhikr log:', error);
+      }
+    }, 2000);
+  };
+
+  // Завершить сессию при размонтировании
+  useEffect(() => {
+    return () => {
+      if (currentSessionIdRef.current) {
+        updateSessionMutation.mutate({
+          id: currentSessionIdRef.current,
+          data: { endedAt: new Date().toISOString() },
+        });
+        currentSessionIdRef.current = null;
+      }
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handlePrayerSelect = async (prayer: PrayerSegment) => {
+    // Завершить текущую сессию перед сменой
+    if (currentSessionIdRef.current) {
+      try {
+        await updateSessionMutation.mutateAsync({
+          id: currentSessionIdRef.current,
+          data: { endedAt: new Date().toISOString() },
+        });
+      } catch (error) {
+        console.error('Failed to end session:', error);
+      }
+      currentSessionIdRef.current = null;
+    }
+
     setSelectedPrayer(prayer);
     setCurrentCount(0);
     setCurrentRounds(0);
@@ -87,9 +234,14 @@ export default function TasbihPage() {
     });
   };
 
-  const handleCountChange = (count: number, delta: number, rounds: number) => {
+  const handleCountChange = async (count: number, delta: number, rounds: number) => {
     setCurrentCount(count);
     setCurrentRounds(rounds);
+    
+    // Сохранить в API
+    if (delta > 0) {
+      await saveDhikrLog(delta, count);
+    }
     
     if (count > 0 && delta > 0) {
       setRecentActions(prev => {
@@ -118,8 +270,35 @@ export default function TasbihPage() {
     }
   };
 
-  const handleComplete = () => {
-    console.log('Goal completed!');
+  const handleComplete = async () => {
+    // Сохранить финальный батч перед завершением
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
+
+    if (logBatchRef.current.length > 0) {
+      const lastLog = logBatchRef.current[logBatchRef.current.length - 1];
+      await saveDhikrLog(lastLog.delta, lastLog.valueAfter);
+    }
+
+    // Завершить сессию
+    if (currentSessionIdRef.current) {
+      try {
+        await updateSessionMutation.mutateAsync({
+          id: currentSessionIdRef.current,
+          data: { endedAt: new Date().toISOString() },
+        });
+        currentSessionIdRef.current = null;
+      } catch (error) {
+        console.error('Failed to end session:', error);
+      }
+    }
+
+    toast({
+      title: "Отлично!",
+      description: "Зикры сохранены",
+    });
   };
 
   const handleContinueRecent = (action: RecentAction) => {
@@ -129,7 +308,20 @@ export default function TasbihPage() {
     setCounterKey(Date.now().toString());
   };
 
-  const handleDhikrSelect = (item: DhikrItem) => {
+  const handleDhikrSelect = async (item: DhikrItem) => {
+    // Завершить текущую сессию при смене зикра
+    if (currentSessionIdRef.current && currentCount > 0) {
+      try {
+        await updateSessionMutation.mutateAsync({
+          id: currentSessionIdRef.current,
+          data: { endedAt: new Date().toISOString() },
+        });
+      } catch (error) {
+        console.error('Failed to end session:', error);
+      }
+      currentSessionIdRef.current = null;
+    }
+
     setSelectedItem(item);
     setCurrentCount(0);
     setCurrentRounds(0);
@@ -247,6 +439,7 @@ export default function TasbihPage() {
             initialCount={currentCount}
             initialRounds={currentRounds}
             counterKey={counterKey}
+            targetCount={linkedGoal ? linkedGoal.targetCount - linkedGoal.currentProgress : undefined}
             onCountChange={handleCountChange}
             onComplete={handleComplete}
             showTranscription={showTranscription}
