@@ -781,6 +781,12 @@ export default function GoalsPage() {
           description: "Новая цель добавлена",
         });
       }
+      
+      // Проверить бейджи после создания/обновления цели
+      React.startTransition(() => {
+        checkBadgesMutation.mutate();
+      });
+      
       setGoalSheetOpen(false);
     } catch (error: any) {
       // Проверка на ошибку лимита целей

@@ -30,6 +30,7 @@ import {
   useQazaDebt,
   useUpdateQazaProgress,
   useUnfinishedSessions,
+  useCheckBadges,
 } from '@/hooks/use-api';
 import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDhikrItems } from '@/lib/dhikrUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +57,7 @@ export default function TasbihPage() {
   const upsertDailyAzkarMutation = useUpsertDailyAzkar();
   const updateQazaProgressMutation = useUpdateQazaProgress();
   const { data: unfinishedSessions = [] } = useUnfinishedSessions();
+  const checkBadgesMutation = useCheckBadges();
 
   // Текущая активная сессия
   const currentSessionIdRef = useRef<string | null>(null);

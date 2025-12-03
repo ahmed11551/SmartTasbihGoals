@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'wouter';
 import StatsCard from '@/components/StatsCard';
 import BadgeCard from '@/components/BadgeCard';
