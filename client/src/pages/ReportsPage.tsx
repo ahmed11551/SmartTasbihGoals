@@ -45,7 +45,7 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import { prayerLabels } from '@/lib/constants';
-import { useGoals, useStats, useDailyAzkar, useBadges, useCheckBadges } from '@/hooks/use-api';
+import { useGoals, useStats, useDailyAzkar, useBadges, useCheckBadges, useCategoryStreaks } from '@/hooks/use-api';
 import { Check, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Subtask, Habit, WeekDay } from '@/lib/types';
