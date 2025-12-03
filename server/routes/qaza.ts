@@ -203,14 +203,24 @@ router.patch("/progress", requireAuth, async (req, res, next) => {
       return res.status(404).json({ error: "Qaza debt not found. Please calculate first." });
     }
 
-    const progressField = `${parsed.prayer}Progress` as keyof typeof qazaDebt;
+    const progressFieldMap: Record<string, string> = {
+      fajr: 'fajrProgress',
+      dhuhr: 'dhuhrProgress',
+      asr: 'asrProgress',
+      maghrib: 'maghribProgress',
+      isha: 'ishaProgress',
+      witr: 'witrProgress',
+    };
+    const progressField = progressFieldMap[parsed.prayer] as keyof typeof qazaDebt;
     const newProgress = parsed.count;
+
+    const updateData: any = {
+      [progressField]: newProgress,
+    };
 
     const updated = await prisma.qazaDebt.update({
       where: { userId },
-      data: {
-        [progressField]: newProgress,
-      },
+      data: updateData,
     });
 
     res.json({ debt: updated });
