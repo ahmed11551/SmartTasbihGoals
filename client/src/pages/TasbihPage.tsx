@@ -372,6 +372,57 @@ export default function TasbihPage() {
     setCounterKey(Date.now().toString());
   };
 
+  // Возобновить незавершенную сессию
+  const handleResumeSession = async (session: any) => {
+    try {
+      // Завершить текущую сессию, если есть
+      if (currentSessionIdRef.current) {
+        try {
+          await updateSessionMutation.mutateAsync({
+            id: currentSessionIdRef.current,
+            data: { endedAt: new Date().toISOString() },
+          });
+        } catch (error) {
+          console.error('Failed to end current session:', error);
+        }
+      }
+
+      // Найти dhikr item по категории и itemId
+      const dhikrItem = session.category && session.itemId
+        ? findDhikrItemById(session.category, session.itemId)
+        : null;
+
+      if (dhikrItem) {
+        setSelectedItem(dhikrItem);
+      }
+
+      // Установить молитву, если указана
+      if (session.prayerSegment && session.prayerSegment !== 'none') {
+        setSelectedPrayer(session.prayerSegment);
+      }
+
+      // Восстановить счетчик и сессию
+      const count = session.currentCount || 0;
+      const rounds = Math.floor(count / 100);
+      setCurrentCount(count);
+      setCurrentRounds(rounds);
+      currentSessionIdRef.current = session.id;
+      setCounterKey(Date.now().toString());
+
+      toast({
+        title: "Сессия возобновлена",
+        description: `Продолжаем с ${count} счетом`,
+      });
+    } catch (error) {
+      console.error('Failed to resume session:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось возобновить сессию",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDhikrSelect = async (item: DhikrItem) => {
     // Завершить текущую сессию при смене зикра
     if (currentSessionIdRef.current && currentCount > 0) {
