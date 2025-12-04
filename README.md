@@ -144,7 +144,7 @@ npx prisma migrate deploy
 
 ## Документация
 
-- [PROJECT_READINESS_REPORT.md](./PROJECT_READINESS_REPORT.md) - Отчет о готовности проекта к сдаче
+- [PROJECT_READINESS_REPORT.md](./PROJECT_READINESS_REPORT.md) - Отчет о готовности проекта к сдаче заказчику
 
 ## Управление Docker
 
