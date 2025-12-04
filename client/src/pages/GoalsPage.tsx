@@ -181,8 +181,8 @@ function HabitCard({ habit, weekDays, onToggleDay, onEdit, onDelete, isHighlight
   const todayKey = formatDateKey(today);
   const isTodayCompleted = habit.completedDates.includes(todayKey);
   
-  const weekDays: WeekDay[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const todayWeekDay: WeekDay = weekDays[today.getDay()];
+  const weekDayNames: WeekDay[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const todayWeekDay: WeekDay = weekDayNames[today.getDay()];
   const shouldCompleteToday = habit.repeatType === 'daily' || 
     (habit.repeatType === 'weekly' && habit.repeatDays?.includes(todayWeekDay));
   
@@ -192,7 +192,7 @@ function HabitCard({ habit, weekDays, onToggleDay, onEdit, onDelete, isHighlight
     if (habit.completedDates.includes(dateKey)) return false;
     if (habit.repeatType === 'daily') return true;
     if (habit.repeatType === 'weekly' && habit.repeatDays) {
-      const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day.date.getDay()];
+      const dayOfWeek = weekDayNames[day.date.getDay()];
       return habit.repeatDays.includes(dayOfWeek);
     }
     return true;
@@ -327,8 +327,8 @@ interface AIInsightProps {
 function shouldCompleteOnDay(habit: Habit, date: Date): boolean {
   if (habit.repeatType === 'daily') return true;
   if (habit.repeatType === 'weekly' && habit.repeatDays) {
-    const weekDays: WeekDay[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-    const dayOfWeek: WeekDay = weekDays[date.getDay()];
+    const weekDayNames: WeekDay[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayOfWeek: WeekDay = weekDayNames[date.getDay()];
     return habit.repeatDays.includes(dayOfWeek);
   }
   return true;
