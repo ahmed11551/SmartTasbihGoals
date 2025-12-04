@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { RotateCcw, Undo2, RefreshCw, Volume2, VolumeX, Target, RotateCw, CheckCircle2 } from 'lucide-react';
 import type { DhikrItem } from '@/lib/types';
@@ -238,12 +239,12 @@ export default function TasbihCounter({
   return (
     <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto px-4">
       {item && (
-        <Card className="w-full p-4 text-center space-y-2 relative">
+        <Card className="w-full p-4 relative flex flex-col max-h-[50vh]">
           {showAudioPlayer && audioSupported && (
             <button
               onClick={handlePlayAudio}
               className={cn(
-                "absolute top-2 right-2 w-7 h-7 rounded-full",
+                "absolute top-2 right-2 w-7 h-7 rounded-full z-10",
                 "flex items-center justify-center",
                 "bg-primary/10 hover:bg-primary/20 transition-colors",
                 isPlaying && "bg-primary/20"
@@ -259,38 +260,42 @@ export default function TasbihCounter({
             </button>
           )}
           
-          <p 
-            className="font-arabic text-2xl leading-loose text-foreground"
-            dir="rtl"
-            lang="ar"
-          >
-            {item.titleAr}
-          </p>
-          
-          {showTranscription && (
-            <p className="text-base text-muted-foreground italic">
-              {transcriptionType === 'cyrillic' 
-                ? item.transcriptionCyrillic 
-                : item.transcriptionLatin}
-            </p>
-          )}
-          
-          {showTranslation && item.translation && (
-            <p className="text-sm text-muted-foreground">
-              {item.translation}
-            </p>
-          )}
+          <ScrollArea className="flex-1 pr-2">
+            <div className="text-center space-y-2">
+              <p 
+                className="font-arabic text-2xl leading-loose text-foreground break-words"
+                dir="rtl"
+                lang="ar"
+              >
+                {item.titleAr}
+              </p>
+              
+              {showTranscription && (
+                <p className="text-base text-muted-foreground italic break-words">
+                  {transcriptionType === 'cyrillic' 
+                    ? item.transcriptionCyrillic 
+                    : item.transcriptionLatin}
+                </p>
+              )}
+              
+              {showTranslation && item.translation && (
+                <p className="text-sm text-muted-foreground break-words">
+                  {item.translation}
+                </p>
+              )}
 
-          {linkedGoalTitle && (
-            <div className="mt-3 pt-3 border-t border-border/50">
-              <div className="flex items-center gap-2 text-xs text-primary/90 bg-primary/5 rounded-lg px-2.5 py-1.5">
-                <Target className="w-3.5 h-3.5" />
-                <span className="font-medium">
-                  Это засчитается в вашу цель "{linkedGoalTitle}"
-                </span>
-              </div>
+              {linkedGoalTitle && (
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <div className="flex items-center gap-2 text-xs text-primary/90 bg-primary/5 rounded-lg px-2.5 py-1.5">
+                    <Target className="w-3.5 h-3.5 shrink-0" />
+                    <span className="font-medium">
+                      Это засчитается в вашу цель "{linkedGoalTitle}"
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </ScrollArea>
         </Card>
       )}
 
