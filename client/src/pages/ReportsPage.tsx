@@ -1162,7 +1162,7 @@ export default function ReportsPage() {
                     <BadgeCard 
                       key={badge.id} 
                       badge={badge}
-                      onClick={(b) => console.log('Badge:', b.title)}
+                      onClick={() => {}}
                     />
                   ))}
                 </div>
@@ -1177,7 +1177,7 @@ export default function ReportsPage() {
                     <BadgeCard 
                       key={badge.id} 
                       badge={badge}
-                      onClick={(b) => console.log('Badge:', b.title)}
+                      onClick={() => {}}
                     />
                   ))}
                 </div>

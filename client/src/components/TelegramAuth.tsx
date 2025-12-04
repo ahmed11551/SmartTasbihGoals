@@ -52,7 +52,7 @@ export default function TelegramAuth() {
           return data.user;
         }
       } catch (error) {
-        console.error('Telegram auth error:', error);
+        // Ошибка обрабатывается через React Query
       }
       return null;
     },

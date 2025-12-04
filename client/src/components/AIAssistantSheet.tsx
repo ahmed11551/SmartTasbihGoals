@@ -167,18 +167,18 @@ export default function AIAssistantSheet({
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-4 py-4">
           {messages.map((msg) => (
-            <div
+                  <div
               key={msg.id}
-              className={cn(
+                    className={cn(
                 "flex gap-3",
                 msg.role === 'user' ? "justify-end" : "justify-start"
-              )}
-            >
+                    )}
+                  >
               {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
-              )}
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
               <Card
                 className={cn(
                   "max-w-[80%] p-3",
@@ -188,14 +188,14 @@ export default function AIAssistantSheet({
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-              </Card>
+                    </Card>
               {msg.role === 'user' && (
                 <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
                   <User className="w-4 h-4 text-primary-foreground" />
-                </div>
-              )}
-            </div>
-          ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
           {isLoading && (
             <div className="flex gap-3 justify-start">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -204,51 +204,51 @@ export default function AIAssistantSheet({
               <Card className="bg-muted p-3">
                 <p className="text-sm">Думаю...</p>
               </Card>
-            </div>
-          )}
+              </div>
+            )}
         </div>
-      </ScrollArea>
+          </ScrollArea>
 
       <div className="border-t p-4 space-y-2">
         <div className="flex gap-2">
-          <Textarea
-            ref={textareaRef}
+                <Textarea
+                  ref={textareaRef}
             placeholder="Опишите задачу или привычку..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
             className="min-h-[60px] resize-none"
             disabled={isLoading}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleListening}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleListening}
             disabled={isLoading}
             className={cn(isListening && "bg-red-500 text-white hover:bg-red-600")}
-          >
-            {isListening ? (
-              <MicOff className="w-4 h-4" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-        <Button
-          onClick={handleSend}
+                >
+                  {isListening ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <Button
+                onClick={handleSend}
           disabled={!input.trim() || isLoading}
           className="w-full gap-2"
-        >
-          <Send className="w-4 h-4" />
+              >
+                <Send className="w-4 h-4" />
           Отправить
-        </Button>
-      </div>
-    </div>
+              </Button>
+            </div>
+          </div>
   );
 
   if (trigger) {

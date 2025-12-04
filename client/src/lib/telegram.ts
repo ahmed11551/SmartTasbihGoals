@@ -29,7 +29,6 @@ export function initTelegramWebApp() {
     }
   } catch (error) {
     // Игнорируем ошибку, если метод не поддерживается
-    console.debug('enableClosingConfirmation not supported in this version');
   }
   
   // Настроить тему

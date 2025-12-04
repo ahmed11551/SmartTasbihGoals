@@ -128,7 +128,11 @@ export default function TasbihPage() {
       currentSessionIdRef.current = session.id;
       return session.id;
     } catch (error) {
-      console.error('Failed to create session:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать сессию",
+        variant: "destructive",
+      });
       return null;
     }
   };
@@ -167,7 +171,7 @@ export default function TasbihPage() {
         });
       }
     } catch (error) {
-      console.error('Failed to save learn action:', error);
+      // Ошибка обрабатывается через React Query
     }
   }, [ensureSession, createDhikrLogMutation, linkedGoal, selectedItem, selectedPrayer, updateGoalMutation, toast]);
 
@@ -261,7 +265,7 @@ export default function TasbihPage() {
 
         logBatchRef.current = [];
       } catch (error) {
-        console.error('Failed to save dhikr log:', error);
+        // Ошибка обрабатывается через React Query
       }
     }, 2000);
   };
@@ -291,7 +295,7 @@ export default function TasbihPage() {
           data: { endedAt: new Date().toISOString() },
         });
       } catch (error) {
-        console.error('Failed to end session:', error);
+        // Ошибка обрабатывается через React Query
       }
       currentSessionIdRef.current = null;
     }
@@ -393,7 +397,7 @@ export default function TasbihPage() {
             data: { endedAt: new Date().toISOString() },
           });
         } catch (error) {
-          console.error('Failed to end current session:', error);
+          // Ошибка обрабатывается через React Query
         }
       }
 
@@ -424,7 +428,6 @@ export default function TasbihPage() {
         description: `Продолжаем с ${count} счетом`,
       });
     } catch (error) {
-      console.error('Failed to resume session:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось возобновить сессию",
@@ -442,7 +445,7 @@ export default function TasbihPage() {
           data: { endedAt: new Date().toISOString() },
         });
       } catch (error) {
-        console.error('Failed to end session:', error);
+        // Ошибка обрабатывается через React Query
       }
       currentSessionIdRef.current = null;
     }
