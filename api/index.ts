@@ -65,6 +65,16 @@ function getApp(): express.Express {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    // Проверка DATABASE_URL перед обработкой запроса
+    if (!process.env.DATABASE_URL) {
+      console.error('❌ DATABASE_URL не установлен в переменных окружения Vercel!');
+      return res.status(503).json({
+        error: 'Database configuration missing',
+        message: 'DATABASE_URL не настроен. Пожалуйста, добавьте DATABASE_URL в настройках Vercel (Settings → Environment Variables).',
+        hint: 'См. DATABASE_SETUP.md для инструкций по настройке базы данных.'
+      });
+    }
+
     const expressApp = getApp();
     
     // Ждем регистрацию роутов если еще не завершена
@@ -80,6 +90,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Timeout после 5 секунд
         setTimeout(() => {
           clearInterval(checkInterval);
+          if (!routesRegistered) {
+            console.error('⚠️ Routes registration timeout');
+          }
           resolve();
         }, 5000);
       });
@@ -101,7 +114,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('Handler error:', error);
+    console.error('Error stack:', error?.stack);
     if (!res.headersSent) {
+      // Проверка на ошибки подключения к БД
+      const errorMessage = error?.message?.toLowerCase() || '';
+      if (errorMessage.includes('database') || errorMessage.includes('prisma') || errorMessage.includes('connection')) {
+        return res.status(503).json({
+          error: 'Database connection failed',
+          message: 'Не удалось подключиться к базе данных. Проверьте DATABASE_URL в настройках Vercel.',
+          hint: 'Убедитесь, что база данных создана и доступна. См. DATABASE_SETUP.md'
+        });
+      }
+      
       res.status(500).json({ 
         error: 'Internal server error',
         message: process.env.NODE_ENV === 'development' ? error.message : 'Произошла ошибка при обработке запроса'

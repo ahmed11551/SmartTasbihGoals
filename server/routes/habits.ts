@@ -6,8 +6,6 @@ import { z } from "zod";
 const router = Router();
 router.use(requireAuth);
 
-import { getUserId } from "../middleware/auth";
-
 router.get("/", async (req, res, next) => {
   try {
     const userId = getUserId(req)!;

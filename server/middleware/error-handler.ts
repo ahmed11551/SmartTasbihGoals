@@ -69,6 +69,26 @@ export function errorHandler(
     });
   }
 
+  // Проверка на ошибки подключения к БД по сообщению
+  if (err instanceof Error) {
+    const errorMessage = err.message.toLowerCase();
+    if (
+      errorMessage.includes('can\'t reach database server') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('database') ||
+      errorMessage.includes('prisma') ||
+      errorMessage.includes('p1001') ||
+      errorMessage.includes('p1002') ||
+      errorMessage.includes('p1003')
+    ) {
+      console.error("Database connection error:", err);
+      return res.status(503).json({
+        error: "Database connection failed",
+        message: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL в настройках Vercel.",
+      });
+    }
+  }
+
   // Custom API errors
   const status = err.status || err.statusCode || 500;
   const message = err.message || "Internal server error";
@@ -76,12 +96,17 @@ export function errorHandler(
   // Log unexpected errors
   if (status >= 500) {
     console.error("Server error:", err);
+    // В production логируем больше информации для отладки
+    if (process.env.NODE_ENV === 'production') {
+      console.error("Error stack:", err instanceof Error ? err.stack : 'No stack');
+      console.error("Error name:", err instanceof Error ? err.name : 'Unknown');
+    }
   }
 
   res.status(status).json({
     error: message,
     ...(process.env.NODE_ENV === "development" && {
-      stack: err.stack,
+      stack: err instanceof Error ? err.stack : undefined,
     }),
   });
 }
