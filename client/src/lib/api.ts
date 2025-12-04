@@ -163,6 +163,16 @@ export const sessionsApi = {
 
 // Dhikr API
 export const dhikrApi = {
+  getCatalog: async () => {
+    const res = await apiRequest("GET", "/api/dhikr/catalog", undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  getCatalogByCategory: async (category: string) => {
+    const res = await apiRequest("GET", `/api/dhikr/catalog/${category}`, undefined, getAuthOptions());
+    return res.json();
+  },
+  
   getLogs: async (limit?: number) => {
     const url = limit ? `/api/dhikr/logs?limit=${limit}` : "/api/dhikr/logs";
     const res = await apiRequest("GET", url, undefined, getAuthOptions());

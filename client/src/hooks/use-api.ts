@@ -221,6 +221,41 @@ export function useCreateDhikrLog() {
   });
 }
 
+export function useDhikrCatalog() {
+  return useQuery({
+    queryKey: ["dhikr-catalog"],
+    queryFn: async () => {
+      try {
+        const res = await dhikrApi.getCatalog();
+        return res.catalog;
+      } catch (error: any) {
+        // Если API недоступен, возвращаем null (будет использован fallback на статические данные)
+        console.warn("Failed to load catalog from API, using fallback:", error);
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 60, // Кэшировать на 1 час
+    retry: 1,
+  });
+}
+
+export function useDhikrCatalogByCategory(category: string) {
+  return useQuery({
+    queryKey: ["dhikr-catalog", category],
+    queryFn: async () => {
+      try {
+        const res = await dhikrApi.getCatalogByCategory(category);
+        return res.items || [];
+      } catch (error: any) {
+        console.warn(`Failed to load catalog for category ${category}, using fallback:`, error);
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+    retry: 1,
+  });
+}
+
 export function useDailyAzkar(dateLocal: string) {
   return useQuery({
     queryKey: ["daily-azkar", dateLocal],

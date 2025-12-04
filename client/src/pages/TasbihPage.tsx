@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TasbihCounter from '@/components/TasbihCounter';
 import DailyAzkarBar from '@/components/DailyAzkarBar';
 import DhikrSelector from '@/components/DhikrSelector';
@@ -35,6 +35,7 @@ import {
   useUpdateCategoryStreaks,
 } from '@/hooks/use-api';
 import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDhikrItems } from '@/lib/dhikrUtils';
+import { useDhikrCatalogByCategory } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 
 interface RecentAction {
@@ -61,14 +62,38 @@ export default function TasbihPage() {
   const { data: unfinishedSessions = [] } = useUnfinishedSessions();
   const checkBadgesMutation = useCheckBadges();
   const { data: categoryStreaks = [] } = useCategoryStreaks();
+  
+  // Загружаем каталог азкаров с API
+  const { data: azkarCatalogFromAPI } = useDhikrCatalogByCategory('azkar');
+  
+  // Получаем зикры с API или fallback на статические данные
+  const azkarItems = useMemo(() => {
+    if (azkarCatalogFromAPI && Array.isArray(azkarCatalogFromAPI) && azkarCatalogFromAPI.length > 0) {
+      // Преобразуем данные API в формат DhikrItem
+      return azkarCatalogFromAPI.map((item: any) => ({
+        id: item.id || item.slug || '',
+        category: 'azkar' as const,
+        slug: item.slug || item.id || '',
+        titleAr: item.titleAr || item.title_ar || '',
+        titleRu: item.titleRu || item.title_ru || item.title || '',
+        titleEn: item.titleEn || item.title_en || item.title || '',
+        transcriptionCyrillic: item.transcriptionCyrillic || item.transcription_cyrillic || '',
+        transcriptionLatin: item.transcriptionLatin || item.transcription_latin || '',
+        translation: item.translation || '',
+      }));
+    }
+    // Fallback на статические данные
+    return getDhikrItemsByCategory('azkar');
+  }, [azkarCatalogFromAPI]);
 
   // Текущая активная сессия
   const currentSessionIdRef = useRef<string | null>(null);
   const logBatchRef = useRef<Array<{ delta: number; valueAfter: number; timestamp: Date }>>([]);
   const batchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Получаем зикр дня или первый доступный
-  const defaultDhikr = getTodayDhikrItem() || getDhikrItemsByCategory('azkar')[0] || {
+  // Получаем зикр дня или первый доступный (используем данные с API или fallback)
+  const defaultDhikr = useMemo(() => {
+    return getTodayDhikrItem() || azkarItems[0] || {
     id: 'default',
     category: 'azkar' as const,
     slug: 'subhanallah',
@@ -78,6 +103,7 @@ export default function TasbihPage() {
     transcriptionCyrillic: 'СубханАллах',
     translation: 'Пречист Аллах',
   };
+  }, [azkarItems]);
   
   const [selectedItem, setSelectedItem] = useState<DhikrItem>(defaultDhikr);
   const [selectedPrayer, setSelectedPrayer] = useState<PrayerSegment>('none');
@@ -304,6 +330,7 @@ export default function TasbihPage() {
     setCurrentCount(0);
     setCurrentRounds(0);
     setCounterKey(Date.now().toString());
+    // Используем данные из azkarItems или fallback на статические данные для салаватов
     const salawatItems = getDhikrItemsByCategory('salawat');
     const salawatItem = salawatItems[0] || defaultDhikr;
     setSelectedItem({
