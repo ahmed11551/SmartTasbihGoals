@@ -1,12 +1,12 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { z } from "zod";
+import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 
 // Token-based auth for Bot.e-replika.ru integration
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";
-const BOT_REPLIKA_API_URL = process.env.BOT_REPLIKA_API_URL || "https://Bot.e-replika.ru/docs";
 
 // Middleware to check token or session
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -44,23 +44,58 @@ router.post("/register", async (req, res, next) => {
   try {
     const parsed = registerSchema.parse(req.body);
     
-    // Check if user exists
-    const existing = await storage.getUserByUsername(parsed.username);
-    if (existing) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
-    
-    const user = await storage.createUser(parsed);
-    
-    // Set session
-    req.session!.userId = user.id;
-    
-    res.json({ 
-      user: {
-        id: user.id,
-        username: user.username,
+    try {
+      // Проксировать регистрацию в Bot.e-replika.ru API
+      const data = await botReplikaPost<{ user?: { id: string; username: string } }>(
+        "/auth/register",
+        parsed,
+        undefined
+      );
+      
+      const user = data.user || data;
+      if (!user || !user.id) {
+        return res.status(400).json({ error: "Registration failed" });
       }
-    });
+      
+      // Синхронизировать с локальной БД (если нужно)
+      try {
+        const existing = await storage.getUserByUsername(parsed.username);
+        if (!existing) {
+          await storage.createUser({ ...parsed, id: user.id });
+        }
+      } catch (localError) {
+        // Игнорируем ошибки локальной синхронизации
+        console.warn("Local user sync failed:", localError);
+      }
+      
+      // Set session
+      req.session!.userId = user.id;
+      
+      res.json({ 
+        user: {
+          id: user.id,
+          username: user.username || parsed.username,
+        }
+      });
+    } catch (apiError: any) {
+      // Fallback на локальную регистрацию
+      console.warn("Bot.e-replika.ru API unavailable, using local registration:", apiError.message);
+      
+      const existing = await storage.getUserByUsername(parsed.username);
+      if (existing) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      const user = await storage.createUser(parsed);
+      req.session!.userId = user.id;
+      
+      res.json({ 
+        user: {
+          id: user.id,
+          username: user.username,
+        }
+      });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
@@ -73,25 +108,52 @@ router.post("/login", async (req, res, next) => {
   try {
     const parsed = loginSchema.parse(req.body);
     
-    const user = await storage.getUserByUsername(parsed.username);
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-    
-    const isValid = await storage.verifyPassword(parsed.password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-    
-    // Set session
-    req.session!.userId = user.id;
-    
-    res.json({ 
-      user: {
-        id: user.id,
-        username: user.username,
+    try {
+      // Проксировать вход в Bot.e-replika.ru API
+      const data = await botReplikaPost<{ user?: { id: string; username: string }; token?: string }>(
+        "/auth/login",
+        parsed,
+        undefined
+      );
+      
+      const user = data.user || data;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: "Invalid credentials" });
       }
-    });
+      
+      // Set session
+      req.session!.userId = user.id;
+      
+      res.json({ 
+        user: {
+          id: user.id,
+          username: user.username || parsed.username,
+        },
+        token: data.token,
+      });
+    } catch (apiError: any) {
+      // Fallback на локальный вход
+      console.warn("Bot.e-replika.ru API unavailable, using local login:", apiError.message);
+      
+      const user = await storage.getUserByUsername(parsed.username);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const isValid = await storage.verifyPassword(parsed.password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      req.session!.userId = user.id;
+      
+      res.json({ 
+        user: {
+          id: user.id,
+          username: user.username,
+        }
+      });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
@@ -115,6 +177,24 @@ router.get("/me", authMiddleware, async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   
+  try {
+    // Проксировать запрос профиля в Bot.e-replika.ru API
+    const apiUserId = getUserIdForApi(req);
+    const data = await botReplikaGet<{ user?: { id: string; username: string; [key: string]: any } }>(
+      "/auth/me",
+      apiUserId
+    );
+    
+    const user = data.user || data;
+    if (user && user.id) {
+      return res.json({ user });
+    }
+  } catch (apiError: any) {
+    // Fallback на локальный профиль
+    console.warn("Bot.e-replika.ru API unavailable, using local profile:", apiError.message);
+  }
+  
+  // Fallback на локальную БД
   const user = await storage.getUser(userId);
   if (!user) {
     return res.status(404).json({ error: "User not found" });
@@ -133,17 +213,33 @@ router.post("/validate-token", async (req, res) => {
   const token = req.headers.authorization?.replace("Bearer ", "") || 
                 req.body.token;
   
+  if (!token) {
+    return res.status(401).json({ valid: false, error: "Token is required" });
+  }
+  
+  // Сначала проверяем локальный токен
   if (token === TEST_TOKEN) {
     return res.json({ valid: true, userId: req.body.userId || "default-user" });
   }
   
-  // Could also validate with Bot.e-replika.ru API
-  // const response = await fetch(`${BOT_REPLIKA_API_URL}/validate`, {
-  //   method: 'POST',
-  //   headers: { 'Authorization': `Bearer ${token}` }
-  // });
-  
-  return res.status(401).json({ valid: false, error: "Invalid token" });
+  try {
+    // Валидация через Bot.e-replika.ru API
+    const data = await botReplikaPost<{ valid?: boolean; userId?: string }>(
+      "/auth/validate-token",
+      { token },
+      undefined
+    );
+    
+    if (data.valid) {
+      return res.json({ valid: true, userId: data.userId || req.body.userId || "default-user" });
+    }
+    
+    return res.status(401).json({ valid: false, error: "Invalid token" });
+  } catch (apiError: any) {
+    // Если API недоступен, используем локальную проверку
+    console.warn("Bot.e-replika.ru API unavailable, using local validation:", apiError.message);
+    return res.status(401).json({ valid: false, error: "Invalid token" });
+  }
 });
 
 export default router;

@@ -1,7 +1,15 @@
 // Общий модуль для работы с Bot.e-replika.ru API
 import { Request } from "express";
 
-const BOT_REPLIKA_API_URL = process.env.BOT_REPLIKA_API_URL || "https://Bot.e-replika.ru/docs";
+// Базовый URL API Bot.e-replika.ru
+// Правильный URL: https://bot.e-replika.ru/api
+const BOT_REPLIKA_API_BASE = process.env.BOT_REPLIKA_API_URL || "https://bot.e-replika.ru";
+// Если указан с /docs, убираем /docs и добавляем /api
+let apiUrl = BOT_REPLIKA_API_BASE.replace(/\/docs\/?$/, '');
+if (!apiUrl.includes("/api") && !apiUrl.endsWith("/api")) {
+  apiUrl = `${apiUrl}/api`;
+}
+const BOT_REPLIKA_API_URL = apiUrl;
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";
 
 export interface BotReplikaRequestOptions {

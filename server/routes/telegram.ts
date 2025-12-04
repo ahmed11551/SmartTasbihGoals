@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { z } from "zod";
 import crypto from "crypto";
+import { botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 
@@ -58,27 +59,63 @@ router.post("/auth", async (req, res, next) => {
       }
     }
     
-    // Создать или найти пользователя по Telegram ID
+    try {
+      // Проксировать авторизацию Telegram в Bot.e-replika.ru API
+      const data = await botReplikaPost<{ user?: { id: string; username: string; [key: string]: any } }>(
+        "/telegram/auth",
+        parsed,
+        undefined
+      );
+      
+      const user = data.user || data;
+      if (user && user.id) {
+        // Синхронизировать с локальной БД
+        try {
+          const existing = await storage.getUser(user.id);
+          if (!existing) {
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            await prisma.user.create({
+              data: {
+                id: user.id,
+                username: user.username || `tg_user_${parsed.id}`,
+                password: await storage.hashPassword(randomPassword),
+              },
+            });
+          }
+        } catch (localError) {
+          console.warn("Local user sync failed:", localError);
+        }
+        
+        req.session!.userId = user.id;
+        
+        return res.json({
+          user: {
+            id: user.id,
+            username: user.username,
+          }
+        });
+      }
+    } catch (apiError: any) {
+      // Fallback на локальную авторизацию
+      console.warn("Bot.e-replika.ru API unavailable, using local Telegram auth:", apiError.message);
+    }
+    
+    // Fallback: локальная авторизация Telegram
     const telegramId = `tg_${parsed.id}`;
     
-    // Попробовать найти по ID (если был создан с таким ID)
     let user = await storage.getUser(telegramId);
     
     if (!user) {
-      // Попробовать найти по username
       const telegramUsername = `tg_user_${parsed.id}`;
       user = await storage.getUserByUsername(telegramUsername);
     }
     
     if (!user) {
-      // Создать нового пользователя
-      // Для Telegram пользователей пароль не требуется, но Prisma требует
       const randomPassword = crypto.randomBytes(32).toString('hex');
       const username = parsed.username 
         ? `tg_${parsed.username}` 
         : `tg_user_${parsed.id}`;
       
-      // Создать через Prisma напрямую с указанным ID
       user = await prisma.user.create({
         data: {
           id: telegramId,
@@ -88,7 +125,6 @@ router.post("/auth", async (req, res, next) => {
       });
     }
     
-    // Установить сессию
     req.session!.userId = user.id;
     
     res.json({

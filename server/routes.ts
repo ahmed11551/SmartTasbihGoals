@@ -12,6 +12,8 @@ import telegramRoutes from "./routes/telegram";
 import qazaRoutes from "./routes/qaza";
 import badgesRoutes from "./routes/badges";
 import categoryStreaksRoutes from "./routes/category-streaks";
+import usersRoutes from "./routes/users";
+import notificationsRoutes from "./routes/notifications";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -30,6 +32,8 @@ export async function registerRoutes(
   app.use("/api/qaza", qazaRoutes);
   app.use("/api/badges", badgesRoutes);
   app.use("/api/category-streaks", categoryStreaksRoutes);
+  app.use("/api/users", usersRoutes);
+  app.use("/api/notifications", notificationsRoutes);
 
   return httpServer;
 }
