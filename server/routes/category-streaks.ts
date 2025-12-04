@@ -2,6 +2,7 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { requireAuth, getUserId } from "../middleware/auth";
+import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 router.use(requireAuth);
@@ -185,11 +186,16 @@ router.get("/", async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     
-    // Обновить streaks перед возвратом
-    await updateCategoryStreaks(userId);
-    
-    const streaks = await storage.getCategoryStreaks(userId);
-    res.json({ streaks });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ streaks?: unknown[] }>("/api/category-streaks", apiUserId);
+      res.json({ streaks: data.streaks || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      await updateCategoryStreaks(userId);
+      const streaks = await storage.getCategoryStreaks(userId);
+      res.json({ streaks });
+    }
   } catch (error) {
     next(error);
   }
@@ -202,8 +208,16 @@ router.post("/update", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const updated = await updateCategoryStreaks(userId);
-    res.json({ success: true, streaks: updated });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ success?: boolean; streaks?: unknown[] }>("/api/category-streaks/update", {}, apiUserId);
+      res.json({ success: data.success ?? true, streaks: data.streaks || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const updated = await updateCategoryStreaks(userId);
+      res.json({ success: true, streaks: updated });
+    }
   } catch (error) {
     next(error);
   }
@@ -222,14 +236,23 @@ router.get("/:category", async (req, res, next) => {
       return res.status(400).json({ error: "Invalid category. Must be 'prayer', 'quran', or 'dhikr'" });
     }
     
-    // Обновить streaks перед возвратом
-    await updateCategoryStreaks(userId);
-    
-    const streak = await storage.getCategoryStreak(userId, category);
-    if (!streak) {
-      return res.status(404).json({ error: "Streak not found" });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ streak?: unknown }>(`/api/category-streaks/${category}`, apiUserId);
+      const streak = data.streak || data;
+      if (!streak) {
+        return res.status(404).json({ error: "Streak not found" });
+      }
+      res.json({ streak });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      await updateCategoryStreaks(userId);
+      const streak = await storage.getCategoryStreak(userId, category);
+      if (!streak) {
+        return res.status(404).json({ error: "Streak not found" });
+      }
+      res.json({ streak });
     }
-    res.json({ streak });
   } catch (error) {
     next(error);
   }

@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { z } from "zod";
 import { requireAuth, getUserId } from "../middleware/auth";
+import { botReplikaGet, botReplikaPost, botReplikaPatch, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 
@@ -152,42 +153,48 @@ router.post("/calculate", requireAuth, async (req, res, next) => {
     
     const parsed = calculateQazaSchema.parse(req.body);
     
-    const debt = calculateQazaDebt(parsed);
-    
-    // Сохранить или обновить расчет
-    const qazaDebt = await prisma.qazaDebt.upsert({
-      where: { userId },
-      create: {
-        userId,
-        gender: parsed.gender,
-        birthYear: parsed.birthYear,
-        prayerStartYear: parsed.prayerStartYear,
-        haydNifasPeriods: parsed.haydNifasPeriods || [],
-        safarDays: parsed.safarDays || [],
-        fajrDebt: debt.fajr,
-        dhuhrDebt: debt.dhuhr,
-        asrDebt: debt.asr,
-        maghribDebt: debt.maghrib,
-        ishaDebt: debt.isha,
-        witrDebt: debt.witr,
-      },
-      update: {
-        gender: parsed.gender,
-        birthYear: parsed.birthYear,
-        prayerStartYear: parsed.prayerStartYear,
-        haydNifasPeriods: parsed.haydNifasPeriods || [],
-        safarDays: parsed.safarDays || [],
-        fajrDebt: debt.fajr,
-        dhuhrDebt: debt.dhuhr,
-        asrDebt: debt.asr,
-        maghribDebt: debt.maghrib,
-        ishaDebt: debt.isha,
-        witrDebt: debt.witr,
-        calculatedAt: new Date(),
-      },
-    });
-
-    res.json({ debt: qazaDebt });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ debt?: unknown }>("/api/qaza/calculate", parsed, apiUserId);
+      res.json({ debt: data.debt || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Fallback: расчет на локальной БД
+      const debt = calculateQazaDebt(parsed);
+      const qazaDebt = await prisma.qazaDebt.upsert({
+        where: { userId },
+        create: {
+          userId,
+          gender: parsed.gender,
+          birthYear: parsed.birthYear,
+          prayerStartYear: parsed.prayerStartYear,
+          haydNifasPeriods: parsed.haydNifasPeriods || [],
+          safarDays: parsed.safarDays || [],
+          fajrDebt: debt.fajr,
+          dhuhrDebt: debt.dhuhr,
+          asrDebt: debt.asr,
+          maghribDebt: debt.maghrib,
+          ishaDebt: debt.isha,
+          witrDebt: debt.witr,
+        },
+        update: {
+          gender: parsed.gender,
+          birthYear: parsed.birthYear,
+          prayerStartYear: parsed.prayerStartYear,
+          haydNifasPeriods: parsed.haydNifasPeriods || [],
+          safarDays: parsed.safarDays || [],
+          fajrDebt: debt.fajr,
+          dhuhrDebt: debt.dhuhr,
+          asrDebt: debt.asr,
+          maghribDebt: debt.maghrib,
+          ishaDebt: debt.isha,
+          witrDebt: debt.witr,
+          calculatedAt: new Date(),
+        },
+      });
+      res.json({ debt: qazaDebt });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
@@ -206,35 +213,44 @@ router.patch("/progress", requireAuth, async (req, res, next) => {
     
     const parsed = updateProgressSchema.parse(req.body);
     
-    const qazaDebt = await prisma.qazaDebt.findUnique({
-      where: { userId },
-    });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPatch<{ debt?: unknown }>("/api/qaza/progress", parsed, apiUserId);
+      res.json({ debt: data.debt || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Fallback на локальную БД
+      const qazaDebt = await prisma.qazaDebt.findUnique({
+        where: { userId },
+      });
 
-    if (!qazaDebt) {
-      return res.status(404).json({ error: "Qaza debt not found. Please calculate first." });
+      if (!qazaDebt) {
+        return res.status(404).json({ error: "Qaza debt not found. Please calculate first." });
+      }
+
+      const progressFieldMap: Record<string, string> = {
+        fajr: 'fajrProgress',
+        dhuhr: 'dhuhrProgress',
+        asr: 'asrProgress',
+        maghrib: 'maghribProgress',
+        isha: 'ishaProgress',
+        witr: 'witrProgress',
+      };
+      const progressField = progressFieldMap[parsed.prayer] as keyof typeof qazaDebt;
+      const newProgress = parsed.count;
+
+      const updateData: any = {
+        [progressField]: newProgress,
+      };
+
+      const updated = await prisma.qazaDebt.update({
+        where: { userId },
+        data: updateData,
+      });
+
+      res.json({ debt: updated });
     }
-
-    const progressFieldMap: Record<string, string> = {
-      fajr: 'fajrProgress',
-      dhuhr: 'dhuhrProgress',
-      asr: 'asrProgress',
-      maghrib: 'maghribProgress',
-      isha: 'ishaProgress',
-      witr: 'witrProgress',
-    };
-    const progressField = progressFieldMap[parsed.prayer] as keyof typeof qazaDebt;
-    const newProgress = parsed.count;
-
-    const updateData: any = {
-      [progressField]: newProgress,
-    };
-
-    const updated = await prisma.qazaDebt.update({
-      where: { userId },
-      data: updateData,
-    });
-
-    res.json({ debt: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
@@ -253,8 +269,18 @@ router.post("/calendar/mark", requireAuth, async (req, res, next) => {
     
     const parsed = markCalendarDaySchema.parse(req.body);
     
-    // Создать или обновить запись в календаре
-    const calendarEntry = await prisma.qazaCalendarEntry.upsert({
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ entry?: unknown; progress?: unknown }>("/api/qaza/calendar/mark", parsed, apiUserId);
+      res.json({ 
+        entry: data.entry || data,
+        progress: data.progress || {}
+      });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Fallback: создать или обновить запись в календаре
+      const calendarEntry = await prisma.qazaCalendarEntry.upsert({
       where: {
         userId_dateLocal: {
           userId,
@@ -317,22 +343,30 @@ router.get("/calendar", requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     
-    const { startDate, endDate } = req.query;
-
-    const where: any = { userId };
-    if (startDate && endDate) {
-      where.dateLocal = {
-        gte: startDate as string,
-        lte: endDate as string,
-      };
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const { startDate, endDate } = req.query;
+      const query = startDate && endDate ? `?startDate=${startDate}&endDate=${endDate}` : '';
+      const data = await botReplikaGet<{ entries?: unknown[] }>(`/api/qaza/calendar${query}`, apiUserId);
+      res.json({ entries: data.entries || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Fallback на локальную БД
+      const { startDate, endDate } = req.query;
+      const where: any = { userId };
+      if (startDate && endDate) {
+        where.dateLocal = {
+          gte: startDate as string,
+          lte: endDate as string,
+        };
+      }
+      const entries = await prisma.qazaCalendarEntry.findMany({
+        where,
+        orderBy: { dateLocal: 'asc' },
+      });
+      res.json({ entries });
     }
-
-    const entries = await prisma.qazaCalendarEntry.findMany({
-      where,
-      orderBy: { dateLocal: 'asc' },
-    });
-
-    res.json({ entries });
   } catch (error) {
     next(error);
   }
@@ -346,43 +380,52 @@ router.post("/create-goal", requireAuth, async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     
-    const qazaDebt = await prisma.qazaDebt.findUnique({
-      where: { userId },
-    });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ goal?: unknown }>("/api/qaza/create-goal", {}, apiUserId);
+      res.json({ goal: data.goal || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Fallback на локальную БД
+      const qazaDebt = await prisma.qazaDebt.findUnique({
+        where: { userId },
+      });
 
-    if (!qazaDebt) {
-      return res.status(404).json({ error: "Qaza debt not found. Please calculate first." });
+      if (!qazaDebt) {
+        return res.status(404).json({ error: "Qaza debt not found. Please calculate first." });
+      }
+
+      const totalDebt = qazaDebt.fajrDebt + qazaDebt.dhuhrDebt + qazaDebt.asrDebt + 
+                       qazaDebt.maghribDebt + qazaDebt.ishaDebt;
+      const totalProgress = qazaDebt.fajrProgress + qazaDebt.dhuhrProgress + qazaDebt.asrProgress +
+                           qazaDebt.maghribProgress + qazaDebt.ishaProgress;
+      const remaining = totalDebt - totalProgress;
+
+      if (remaining <= 0) {
+        return res.status(400).json({ error: "All prayers have been made up" });
+      }
+
+      // Создать цель
+      const goal = await storage.createGoal(userId, {
+        category: 'general',
+        goalType: 'recite',
+        title: 'Восполнение пропущенных намазов',
+        targetCount: remaining,
+        currentProgress: totalProgress,
+        status: 'active',
+        startDate: new Date(),
+        endDate: null, // Без срока
+      });
+
+      // Обновить QazaDebt с ID цели
+      await prisma.qazaDebt.update({
+        where: { userId },
+        data: { goalId: goal.id },
+      });
+
+      res.json({ goal });
     }
-
-    const totalDebt = qazaDebt.fajrDebt + qazaDebt.dhuhrDebt + qazaDebt.asrDebt + 
-                     qazaDebt.maghribDebt + qazaDebt.ishaDebt;
-    const totalProgress = qazaDebt.fajrProgress + qazaDebt.dhuhrProgress + qazaDebt.asrProgress +
-                         qazaDebt.maghribProgress + qazaDebt.ishaProgress;
-    const remaining = totalDebt - totalProgress;
-
-    if (remaining <= 0) {
-      return res.status(400).json({ error: "All prayers have been made up" });
-    }
-
-    // Создать цель
-    const goal = await storage.createGoal(userId, {
-      category: 'general',
-      goalType: 'recite',
-      title: 'Восполнение пропущенных намазов',
-      targetCount: remaining,
-      currentProgress: totalProgress,
-      status: 'active',
-      startDate: new Date(),
-      endDate: null, // Без срока
-    });
-
-    // Обновить QazaDebt с ID цели
-    await prisma.qazaDebt.update({
-      where: { userId },
-      data: { goalId: goal.id },
-    });
-
-    res.json({ goal });
   } catch (error) {
     next(error);
   }

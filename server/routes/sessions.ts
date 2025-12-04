@@ -2,6 +2,7 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { requireAuth, getUserId } from "../middleware/auth";
 import { z } from "zod";
+import { botReplikaGet, botReplikaPost, botReplikaPatch, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 router.use(requireAuth);
@@ -12,8 +13,16 @@ router.get("/", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const sessions = await storage.getSessions(userId);
-    res.json({ sessions });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ sessions?: unknown[] }>("/api/sessions", apiUserId);
+      res.json({ sessions: data.sessions || data });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const sessions = await storage.getSessions(userId);
+      res.json({ sessions });
+    }
   } catch (error) {
     next(error);
   }
@@ -21,6 +30,22 @@ router.get("/", async (req, res, next) => {
 
 // GET /api/sessions/unfinished - получить незавершенные сессии
 router.get("/unfinished", async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ sessions?: unknown[] }>("/api/sessions/unfinished", apiUserId);
+      res.json({ sessions: data.sessions || data });
+      return;
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      // Продолжаем с локальной БД
+    }
+  
   try {
     const userId = getUserId(req);
     if (!userId) {
@@ -89,11 +114,23 @@ router.get("/:id", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const session = await storage.getSession(req.params.id, userId);
-    if (!session) {
-      return res.status(404).json({ error: "Session not found" });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ session?: unknown }>(`/api/sessions/${req.params.id}`, apiUserId);
+      const session = data.session || data;
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json({ session });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const session = await storage.getSession(req.params.id, userId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json({ session });
     }
-    res.json({ session });
   } catch (error) {
     next(error);
   }
@@ -105,9 +142,17 @@ router.post("/", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const parsed = req.body;
-    const session = await storage.createSession(userId, parsed);
-    res.status(201).json({ session });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ session?: unknown }>("/api/sessions", req.body, apiUserId);
+      const session = data.session || data;
+      res.status(201).json({ session });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const session = await storage.createSession(userId, req.body);
+      res.status(201).json({ session });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });
@@ -122,9 +167,17 @@ router.patch("/:id", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const parsed = req.body;
-    const session = await storage.updateSession(req.params.id, userId, parsed);
-    res.json({ session });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPatch<{ session?: unknown }>(`/api/sessions/${req.params.id}`, req.body, apiUserId);
+      const session = data.session || data;
+      res.json({ session });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const session = await storage.updateSession(req.params.id, userId, req.body);
+      res.json({ session });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid input", details: error.errors });

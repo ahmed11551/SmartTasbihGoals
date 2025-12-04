@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { requireAuth, getUserId } from "../middleware/auth";
 import type { Prisma } from "@prisma/client";
+import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
 
 const router = Router();
 router.use(requireAuth);
@@ -277,18 +278,24 @@ router.get("/", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const badges = await storage.getBadges(userId);
     
-    // Проверить и присвоить новые бейджи
-    const newBadges = await checkAndAwardBadges(userId);
-    
-    // Если есть новые бейджи, обновить список
-    if (newBadges.length > 0) {
-      const updatedBadges = await storage.getBadges(userId);
-      return res.json({ badges: updatedBadges, newBadges });
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ badges?: unknown[]; newBadges?: unknown[] }>("/api/badges", apiUserId);
+      res.json({ 
+        badges: data.badges || data,
+        newBadges: data.newBadges || []
+      });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const badges = await storage.getBadges(userId);
+      const newBadges = await checkAndAwardBadges(userId);
+      if (newBadges.length > 0) {
+        const updatedBadges = await storage.getBadges(userId);
+        return res.json({ badges: updatedBadges, newBadges });
+      }
+      res.json({ badges });
     }
-
-    res.json({ badges });
   } catch (error) {
     next(error);
   }
@@ -301,8 +308,16 @@ router.post("/check", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const newBadges = await checkAndAwardBadges(userId);
-    res.json({ newBadges });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ newBadges?: unknown[] }>("/api/badges/check", {}, apiUserId);
+      res.json({ newBadges: data.newBadges || data || [] });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const newBadges = await checkAndAwardBadges(userId);
+      res.json({ newBadges });
+    }
   } catch (error) {
     next(error);
   }
@@ -315,11 +330,23 @@ router.get("/:id", async (req, res, next) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const badge = await storage.getBadge(req.params.id, userId);
-    if (!badge) {
-      return res.status(404).json({ error: "Badge not found" });
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ badge?: unknown }>(`/api/badges/${req.params.id}`, apiUserId);
+      const badge = data.badge || data;
+      if (!badge) {
+        return res.status(404).json({ error: "Badge not found" });
+      }
+      res.json({ badge });
+    } catch (apiError: any) {
+      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      const badge = await storage.getBadge(req.params.id, userId);
+      if (!badge) {
+        return res.status(404).json({ error: "Badge not found" });
+      }
+      res.json({ badge });
     }
-    res.json({ badge });
   } catch (error) {
     next(error);
   }
