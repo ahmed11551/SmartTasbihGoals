@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
-    "build:vercel": "npm run db:generate && vite build",
+    "build:vercel": "npm run db:generate && npx vite build",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "postinstall": "prisma generate",
