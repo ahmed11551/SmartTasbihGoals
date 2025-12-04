@@ -21,7 +21,7 @@ router.get("/", async (req, res, next) => {
         counts: data.counts || {},
       });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback: вычисляем статистику из локальной БД
       const [habits, tasks, goals, logs] = await Promise.all([

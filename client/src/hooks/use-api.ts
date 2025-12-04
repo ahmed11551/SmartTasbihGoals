@@ -230,7 +230,10 @@ export function useDhikrCatalog() {
         return res.catalog;
       } catch (error: any) {
         // Если API недоступен, возвращаем null (будет использован fallback на статические данные)
-        console.warn("Failed to load catalog from API, using fallback:", error);
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.warn("Failed to load catalog from API, using fallback:", error);
+        }
         return null;
       }
     },
@@ -247,7 +250,10 @@ export function useDhikrCatalogByCategory(category: string) {
         const res = await dhikrApi.getCatalogByCategory(category);
         return res.items || [];
       } catch (error: any) {
-        console.warn(`Failed to load catalog for category ${category}, using fallback:`, error);
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.warn(`Failed to load catalog for category ${category}, using fallback:`, error);
+        }
         return null;
       }
     },

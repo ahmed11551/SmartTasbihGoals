@@ -19,7 +19,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ user?: unknown }>("/users", apiUserId);
       res.json({ user: data.user || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -49,7 +49,7 @@ router.get("/profile", async (req, res, next) => {
       const data = await botReplikaGet<{ profile?: unknown }>("/users/profile", apiUserId);
       res.json({ profile: data.profile || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
@@ -79,7 +79,7 @@ router.patch("/profile", async (req, res, next) => {
       const data = await botReplikaPatch<{ profile?: unknown }>("/users/profile", req.body, apiUserId);
       res.json({ profile: data.profile || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       res.status(503).json({ error: "Profile update unavailable" });
     }
   } catch (error) {

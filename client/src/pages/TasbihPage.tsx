@@ -396,7 +396,10 @@ export default function TasbihPage() {
         });
         currentSessionIdRef.current = null;
       } catch (error) {
-        console.error('Failed to end session:', error);
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to end session:', error);
+        }
       }
     }
 

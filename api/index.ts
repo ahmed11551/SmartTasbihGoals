@@ -16,13 +16,32 @@ function getApp(): express.Express {
     app = express();
 
     // CORS для Telegram
+    const allowedOrigins = [
+      'https://web.telegram.org',
+      'https://telegram.org',
+    ];
+    
+    // Добавляем FRONTEND_URL если он указан
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+    
+    // В production не используем wildcard
+    const corsOrigin = process.env.NODE_ENV === 'production'
+      ? (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        }
+      : '*';
+    
     app.use(cors({
-      origin: [
-        'https://web.telegram.org',
-        'https://telegram.org',
-        process.env.FRONTEND_URL || '*',
-      ],
+      origin: corsOrigin,
       credentials: true,
+      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id', 'X-API-Token'],
     }));
 
     // Session

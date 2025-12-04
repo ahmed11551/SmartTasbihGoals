@@ -2,7 +2,10 @@
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
-    console.warn('This browser does not support notifications');
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('This browser does not support notifications');
+    }
     return false;
   }
 
@@ -41,7 +44,10 @@ export function scheduleNotification(
   const delay = scheduledTime - now;
 
   if (delay < 0) {
-    console.warn('Cannot schedule notification in the past');
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Cannot schedule notification in the past');
+    }
     return -1;
   }
 

@@ -19,7 +19,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ tasks?: unknown[] }>("/api/tasks", apiUserId);
       res.json({ tasks: data.tasks || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const tasks = await storage.getTasks(userId);
       res.json({ tasks });
     }
@@ -44,7 +44,7 @@ router.get("/:id", async (req, res, next) => {
       }
       res.json({ task });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const task = await storage.getTask(req.params.id, userId);
       if (!task) {
         return res.status(404).json({ error: "Task not found" });
@@ -69,7 +69,7 @@ router.post("/", async (req, res, next) => {
       const task = data.task || data;
       res.status(201).json({ task });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const task = await storage.createTask(userId, req.body);
       res.status(201).json({ task });
     }
@@ -94,7 +94,7 @@ router.patch("/:id", async (req, res, next) => {
       const task = data.task || data;
       res.json({ task });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const task = await storage.updateTask(req.params.id, userId, req.body);
       res.json({ task });
     }
@@ -121,7 +121,7 @@ router.delete("/:id", async (req, res, next) => {
       await botReplikaDelete(`/api/tasks/${req.params.id}`, apiUserId);
       res.json({ message: "Task deleted successfully" });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       await storage.deleteTask(req.params.id, userId);
       res.json({ message: "Task deleted successfully" });
     }

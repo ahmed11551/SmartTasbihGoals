@@ -4,15 +4,22 @@ async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = await res.text();
     let errorMessage = `${res.status}: ${text}`;
-    let errorData: any = null;
+    let errorData: Record<string, unknown> | null = null;
     try {
       const json = JSON.parse(text);
-      errorMessage = json.error || json.message || errorMessage;
+      errorMessage = (json.error as string) || (json.message as string) || errorMessage;
       errorData = json; // Сохраняем весь объект ответа
     } catch {
       // Not JSON, use text as is
     }
-    const error: any = new Error(errorMessage);
+    interface ApiError extends Error {
+      status?: number;
+      response?: Response;
+      responseData?: Record<string, unknown> | null;
+      isNetworkError?: boolean;
+      isTimeoutError?: boolean;
+    }
+    const error: ApiError = new Error(errorMessage);
     error.status = res.status;
     error.response = res;
     error.responseData = errorData; // Добавляем данные ответа
@@ -45,15 +52,38 @@ export async function apiRequest(
   
   let res: Response;
   try {
-    res = await fetch(apiUrl, {
-      method,
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+    // Добавляем timeout для fetch запросов
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд
+
+    try {
+      res = await fetch(apiUrl, {
+        method,
+        headers,
+        body: data ? JSON.stringify(data) : undefined,
+        credentials: "include",
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError: unknown) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        const timeoutError: any = new Error('Request timeout after 30s');
+        timeoutError.status = 408;
+        timeoutError.isTimeoutError = true;
+        throw timeoutError;
+      }
+      
+      throw fetchError;
+    }
   } catch (networkError: any) {
     // Обработка сетевых ошибок (нет интернета, сервер недоступен, CORS)
-    const error: any = new Error(
+    interface NetworkError extends Error {
+      status?: number;
+      isNetworkError?: boolean;
+    }
+    const error: NetworkError = new Error(
       networkError.message || 'Сервер недоступен. Проверьте подключение к интернету.'
     );
     error.status = 0;
@@ -71,30 +101,36 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 30000, // 30 seconds
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
+        const err = error as { status?: number };
         // Don't retry on 4xx errors (client errors)
-        if (error?.status >= 400 && error?.status < 500) {
+        if (err?.status && err.status >= 400 && err.status < 500) {
           return false;
         }
         // Don't retry on 503 (Service Unavailable - БД недоступна)
-        if (error?.status === 503) {
+        if (err?.status === 503) {
           return false;
         }
         // Retry up to 2 times for network errors
         return failureCount < 2;
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         // Ошибки обрабатываются через React Query UI компоненты
-        if (process.env.NODE_ENV === 'development' && error?.status === 503) {
-          console.error('Database unavailable');
+        if (process.env.NODE_ENV === 'development') {
+          const err = error as { status?: number };
+          if (err?.status === 503) {
+            // eslint-disable-next-line no-console
+            console.error('Database unavailable');
+          }
         }
       },
     },
     mutations: {
       retry: false,
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         // Ошибки обрабатываются через React Query UI компоненты
         if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
           console.error('Mutation error:', error);
         }
       },

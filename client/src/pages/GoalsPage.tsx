@@ -180,10 +180,10 @@ function HabitCard({ habit, weekDays, onToggleDay, onEdit, onDelete, isHighlight
   const todayKey = formatDateKey(today);
   const isTodayCompleted = habit.completedDates.includes(todayKey);
   
+  const weekDays: WeekDay[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const todayWeekDay: WeekDay = weekDays[today.getDay()];
   const shouldCompleteToday = habit.repeatType === 'daily' || 
-    (habit.repeatType === 'weekly' && habit.repeatDays?.includes(
-      ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][today.getDay()] as any
-    ));
+    (habit.repeatType === 'weekly' && habit.repeatDays?.includes(todayWeekDay));
   
   const missedDays = weekDays.filter(day => {
     if (day.date >= today) return false;
@@ -192,7 +192,7 @@ function HabitCard({ habit, weekDays, onToggleDay, onEdit, onDelete, isHighlight
     if (habit.repeatType === 'daily') return true;
     if (habit.repeatType === 'weekly' && habit.repeatDays) {
       const dayOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day.date.getDay()];
-      return habit.repeatDays.includes(dayOfWeek as any);
+      return habit.repeatDays.includes(dayOfWeek);
     }
     return true;
   }).length;

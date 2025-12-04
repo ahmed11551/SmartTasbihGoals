@@ -25,7 +25,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ notifications?: unknown[] }>(path, apiUserId);
       res.json({ notifications: data.notifications || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable:", apiError.message);
       res.json({ notifications: [] });
     }
   } catch (error) {
@@ -46,7 +46,7 @@ router.get("/unread", async (req, res, next) => {
       const data = await botReplikaGet<{ notifications?: unknown[] }>("/notifications/unread", apiUserId);
       res.json({ notifications: data.notifications || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable:", apiError.message);
       res.json({ notifications: [] });
     }
   } catch (error) {
@@ -71,7 +71,7 @@ router.patch("/:id/read", async (req, res, next) => {
       );
       res.json({ notification: data.notification || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable:", apiError.message);
       res.status(503).json({ error: "Notification update unavailable" });
     }
   } catch (error) {
@@ -96,7 +96,7 @@ router.post("/:id/read", async (req, res, next) => {
       );
       res.json({ notification: data.notification || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable:", apiError.message);
       res.status(503).json({ error: "Notification update unavailable" });
     }
   } catch (error) {
@@ -117,7 +117,7 @@ router.patch("/read-all", async (req, res, next) => {
       const data = await botReplikaPatch<{ count?: number }>("/notifications/read-all", {}, apiUserId);
       res.json({ count: data.count || 0 });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable:", apiError.message);
       res.status(503).json({ error: "Notification update unavailable" });
     }
   } catch (error) {

@@ -4,6 +4,7 @@ import { prisma } from "../db-prisma";
 import { requireAuth, getUserId } from "../middleware/auth";
 import type { Prisma } from "@prisma/client";
 import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
+import { logger } from "../lib/logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -266,7 +267,7 @@ async function checkAndAwardBadges(userId: string) {
 
     return newBadges;
   } catch (error) {
-    console.error('Error checking badges:', error);
+    logger.error('Error checking badges:', error);
     return [];
   }
 }
@@ -287,7 +288,7 @@ router.get("/", async (req, res, next) => {
         newBadges: data.newBadges || []
       });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const badges = await storage.getBadges(userId);
       const newBadges = await checkAndAwardBadges(userId);
       if (newBadges.length > 0) {
@@ -314,7 +315,7 @@ router.post("/check", async (req, res, next) => {
       const data = await botReplikaPost<{ newBadges?: unknown[] }>("/api/badges/check", {}, apiUserId);
       res.json({ newBadges: data.newBadges || data || [] });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const newBadges = await checkAndAwardBadges(userId);
       res.json({ newBadges });
     }
@@ -340,7 +341,7 @@ router.get("/:id", async (req, res, next) => {
       }
       res.json({ badge });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const badge = await storage.getBadge(req.params.id, userId);
       if (!badge) {
         return res.status(404).json({ error: "Badge not found" });

@@ -56,8 +56,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addHabit = async (habitData: Partial<Habit>) => {
-    const habit = await createHabitMutation.mutateAsync(habitData as any);
+  const addHabit = async (habitData: Partial<Habit>): Promise<Habit> => {
+    const habit = await createHabitMutation.mutateAsync(habitData as Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>);
     return habit;
   };
 

@@ -4,6 +4,7 @@ import { prisma } from "../db-prisma";
 import { z } from "zod";
 import crypto from "crypto";
 import { botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ function validateTelegramData(initData: string, botToken: string): boolean {
     
     return calculatedHash === hash;
   } catch (error) {
-    console.error('Telegram validation error:', error);
+    logger.error('Telegram validation error:', error);
     return false;
   }
 }
@@ -83,7 +84,7 @@ router.post("/auth", async (req, res, next) => {
             });
           }
         } catch (localError) {
-          console.warn("Local user sync failed:", localError);
+          logger.warn("Local user sync failed:", localError);
         }
         
         req.session!.userId = user.id;
@@ -97,7 +98,7 @@ router.post("/auth", async (req, res, next) => {
       }
     } catch (apiError: any) {
       // Fallback на локальную авторизацию
-      console.warn("Bot.e-replika.ru API unavailable, using local Telegram auth:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local Telegram auth:", apiError.message);
     }
     
     // Fallback: локальная авторизация Telegram

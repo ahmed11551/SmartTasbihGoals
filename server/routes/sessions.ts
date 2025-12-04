@@ -19,7 +19,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ sessions?: unknown[] }>("/api/sessions", apiUserId);
       res.json({ sessions: data.sessions || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const sessions = await storage.getSessions(userId);
       res.json({ sessions });
     }
@@ -42,7 +42,7 @@ router.get("/unfinished", async (req, res, next) => {
       res.json({ sessions: data.sessions || data });
       return;
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       // Продолжаем с локальной БД
     }
   
@@ -124,7 +124,7 @@ router.get("/:id", async (req, res, next) => {
       }
       res.json({ session });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const session = await storage.getSession(req.params.id, userId);
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
@@ -149,7 +149,7 @@ router.post("/", async (req, res, next) => {
       const session = data.session || data;
       res.status(201).json({ session });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const session = await storage.createSession(userId, req.body);
       res.status(201).json({ session });
     }
@@ -174,7 +174,7 @@ router.patch("/:id", async (req, res, next) => {
       const session = data.session || data;
       res.json({ session });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const session = await storage.updateSession(req.params.id, userId, req.body);
       res.json({ session });
     }

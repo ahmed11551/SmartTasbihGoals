@@ -141,7 +141,10 @@ class OfflineStorage {
           await this.clearQueueItem(item.id);
         }
       } catch (error) {
-        console.error('Failed to sync queue item:', error);
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to sync queue item:', error);
+        }
       }
     }
   }
@@ -151,11 +154,21 @@ export const offlineStorage = new OfflineStorage();
 
 // Initialize on load
 if (typeof window !== 'undefined') {
-  offlineStorage.init().catch(console.error);
+  offlineStorage.init().catch((error: unknown) => {
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.error('Failed to initialize offline storage:', error);
+    }
+  });
 
   // Sync queue when coming online
   window.addEventListener('online', () => {
-    offlineStorage.syncQueue().catch(console.error);
+    offlineStorage.syncQueue().catch((error: unknown) => {
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to sync queue:', error);
+      }
+    });
   });
 }
 

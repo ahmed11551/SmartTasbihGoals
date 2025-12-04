@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { z } from "zod";
 import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -65,7 +66,7 @@ router.post("/register", async (req, res, next) => {
         }
       } catch (localError) {
         // Игнорируем ошибки локальной синхронизации
-        console.warn("Local user sync failed:", localError);
+        logger.warn("Local user sync failed:", localError);
       }
       
       // Set session
@@ -79,7 +80,7 @@ router.post("/register", async (req, res, next) => {
       });
     } catch (apiError: any) {
       // Fallback на локальную регистрацию
-      console.warn("Bot.e-replika.ru API unavailable, using local registration:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local registration:", apiError.message);
       
       const existing = await storage.getUserByUsername(parsed.username);
       if (existing) {
@@ -133,7 +134,7 @@ router.post("/login", async (req, res, next) => {
       });
     } catch (apiError: any) {
       // Fallback на локальный вход
-      console.warn("Bot.e-replika.ru API unavailable, using local login:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local login:", apiError.message);
       
       const user = await storage.getUserByUsername(parsed.username);
       if (!user) {
@@ -191,7 +192,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     }
   } catch (apiError: any) {
     // Fallback на локальный профиль
-    console.warn("Bot.e-replika.ru API unavailable, using local profile:", apiError.message);
+    logger.warn("Bot.e-replika.ru API unavailable, using local profile:", apiError.message);
   }
   
   // Fallback на локальную БД
@@ -237,7 +238,7 @@ router.post("/validate-token", async (req, res) => {
     return res.status(401).json({ valid: false, error: "Invalid token" });
   } catch (apiError: any) {
     // Если API недоступен, используем локальную проверку
-    console.warn("Bot.e-replika.ru API unavailable, using local validation:", apiError.message);
+    logger.warn("Bot.e-replika.ru API unavailable, using local validation:", apiError.message);
     return res.status(401).json({ valid: false, error: "Invalid token" });
   }
 });

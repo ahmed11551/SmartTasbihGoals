@@ -197,3 +197,62 @@ export interface CalendarEvent {
   url?: string;
   createdAt: string;
 }
+
+export interface QazaDebt {
+  id: string;
+  userId: string;
+  gender: 'male' | 'female';
+  birthYear?: number;
+  prayerStartYear?: number;
+  haydNifasPeriods?: Array<{ startDate: string; endDate: string; type: 'hayd' | 'nifas' }>;
+  safarDays?: Array<{ startDate: string; endDate: string }>;
+  fajrDebt: number;
+  dhuhrDebt: number;
+  asrDebt: number;
+  maghribDebt: number;
+  ishaDebt: number;
+  witrDebt: number;
+  fajrProgress: number;
+  dhuhrProgress: number;
+  asrProgress: number;
+  maghribProgress: number;
+  ishaProgress: number;
+  witrProgress: number;
+  goalId?: string;
+  calculatedAt?: string;
+}
+
+export interface QazaCalendarEntry {
+  id: string;
+  userId: string;
+  dateLocal: string;
+  fajr: boolean;
+  dhuhr: boolean;
+  asr: boolean;
+  maghrib: boolean;
+  isha: boolean;
+  witr: boolean;
+}
+
+export interface AIContext {
+  habits?: Habit[];
+  tasks?: Task[];
+  goals?: Goal[];
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  subscriptionTier?: 'muslim' | 'mutahsin' | 'sahibAlWaqf';
+  [key: string]: unknown;
+}

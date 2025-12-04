@@ -57,22 +57,41 @@ export async function botReplikaRequest<T = unknown>(
   }
 
   try {
-    const response = await fetch(url, fetchOptions);
+    // Создаем AbortController для timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд timeout
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unknown error");
-      throw new Error(
-        `Bot.e-replika.ru API error: ${response.status} ${response.statusText} - ${errorText}`
-      );
+    try {
+      fetchOptions.signal = controller.signal;
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        throw new Error(
+          `Bot.e-replika.ru API error: ${response.status} ${response.statusText} - ${errorText}`
+        );
+      }
+
+      // Если ответ пустой (например, 204 No Content)
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        return {} as T;
+      }
+
+      const data = await response.json();
+      return data as T;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      // Проверяем timeout
+      if (fetchError.name === 'AbortError') {
+        throw new Error(
+          `Bot.e-replika.ru API request timeout after 30s. URL: ${url}`
+        );
+      }
+      
+      throw fetchError;
     }
-
-    // Если ответ пустой (например, 204 No Content)
-    if (response.status === 204 || response.headers.get("content-length") === "0") {
-      return {} as T;
-    }
-
-    const data = await response.json();
-    return data as T;
   } catch (error: any) {
     // Если ошибка сети или API недоступен
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {

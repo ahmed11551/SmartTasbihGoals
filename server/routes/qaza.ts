@@ -158,7 +158,7 @@ router.post("/calculate", requireAuth, async (req, res, next) => {
       const data = await botReplikaPost<{ debt?: unknown }>("/api/qaza/calculate", parsed, apiUserId);
       res.json({ debt: data.debt || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback: расчет на локальной БД
       const debt = calculateQazaDebt(parsed);
@@ -218,7 +218,7 @@ router.patch("/progress", requireAuth, async (req, res, next) => {
       const data = await botReplikaPatch<{ debt?: unknown }>("/api/qaza/progress", parsed, apiUserId);
       res.json({ debt: data.debt || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback на локальную БД
       const qazaDebt = await prisma.qazaDebt.findUnique({
@@ -277,7 +277,7 @@ router.post("/calendar/mark", requireAuth, async (req, res, next) => {
         progress: data.progress || {}
       });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback: создать или обновить запись в календаре
       const calendarEntry = await prisma.qazaCalendarEntry.upsert({
@@ -350,7 +350,7 @@ router.get("/calendar", requireAuth, async (req, res, next) => {
       const data = await botReplikaGet<{ entries?: unknown[] }>(`/api/qaza/calendar${query}`, apiUserId);
       res.json({ entries: data.entries || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback на локальную БД
       const { startDate, endDate } = req.query;
@@ -385,7 +385,7 @@ router.post("/create-goal", requireAuth, async (req, res, next) => {
       const data = await botReplikaPost<{ goal?: unknown }>("/api/qaza/create-goal", {}, apiUserId);
       res.json({ goal: data.goal || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
       // Fallback на локальную БД
       const qazaDebt = await prisma.qazaDebt.findUnique({

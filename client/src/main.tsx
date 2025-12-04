@@ -8,7 +8,10 @@ if (typeof window !== 'undefined') {
   try {
     initTelegramWebApp();
   } catch (error) {
-    console.error('Telegram WebApp initialization error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.error('Telegram WebApp initialization error:', error);
+    }
   }
 }
 
@@ -21,7 +24,10 @@ try {
   const root = createRoot(rootElement);
   root.render(<App />);
 } catch (error) {
-  console.error('Failed to render app:', error);
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.error('Failed to render app:', error);
+  }
   rootElement.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
       <div>

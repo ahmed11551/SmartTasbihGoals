@@ -52,7 +52,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ goals?: unknown[] }>("/api/goals", apiUserId);
       res.json({ goals: data.goals || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const goals = await storage.getGoals(userId);
       res.json({ goals });
     }
@@ -77,7 +77,7 @@ router.get("/:id", async (req, res, next) => {
       }
       res.json({ goal });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const goal = await storage.getGoal(req.params.id, userId);
       if (!goal) {
         return res.status(404).json({ error: "Goal not found" });
@@ -118,7 +118,7 @@ router.post("/", async (req, res, next) => {
       }
       
       // Fallback: проверка лимита и создание в локальной БД
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const limitCheck = await checkGoalLimit(userId);
       if (!limitCheck.allowed) {
         return res.status(403).json({
@@ -168,7 +168,7 @@ router.patch("/:id", async (req, res, next) => {
         } catch {}
       }
       
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const parsed = req.body;
       if (parsed.status === 'active') {
         const existingGoal = await storage.getGoal(req.params.id, userId);
@@ -212,7 +212,7 @@ router.delete("/:id", async (req, res, next) => {
       await botReplikaDelete(`/api/goals/${req.params.id}`, apiUserId);
       res.json({ message: "Goal deleted successfully" });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       await storage.deleteGoal(req.params.id, userId);
       res.json({ message: "Goal deleted successfully" });
     }

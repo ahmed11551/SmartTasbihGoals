@@ -1,5 +1,6 @@
 import { apiRequest } from "./queryClient";
 import { getAuthToken, getUserId } from "./auth";
+import type { QazaDebt, QazaCalendarEntry, Badge, CategoryStreak, Goal } from "./types";
 
 // Get auth options for API requests
 export function getAuthOptions() {
@@ -208,9 +209,11 @@ export const statsApi = {
   },
 };
 
+import type { AIContext } from "./types";
+
 // AI API
 export const aiApi = {
-  assistant: async (message: string, context: any): Promise<{ response: string }> => {
+  assistant: async (message: string, context?: AIContext): Promise<{ response: string }> => {
     const res = await apiRequest("POST", "/api/ai/assistant", { message, context }, getAuthOptions());
     return res.json();
   },
@@ -218,7 +221,7 @@ export const aiApi = {
 
 // Qaza API
 export const qazaApi = {
-  getDebt: async (): Promise<{ debt: any | null }> => {
+  getDebt: async (): Promise<{ debt: QazaDebt | null }> => {
     const res = await apiRequest("GET", "/api/qaza", undefined, getAuthOptions());
     return res.json();
   },
@@ -230,12 +233,12 @@ export const qazaApi = {
     haydNifasPeriods?: Array<{ startDate: string; endDate: string; type: 'hayd' | 'nifas' }>;
     safarDays?: Array<{ startDate: string; endDate: string }>;
     manualPeriod?: { years: number; months: number };
-  }): Promise<{ debt: any }> => {
+  }): Promise<{ debt: QazaDebt }> => {
     const res = await apiRequest("POST", "/api/qaza/calculate", params, getAuthOptions());
     return res.json();
   },
   
-  updateProgress: async (prayer: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | 'witr', count: number): Promise<{ debt: any }> => {
+  updateProgress: async (prayer: 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha' | 'witr', count: number): Promise<{ debt: QazaDebt }> => {
     const res = await apiRequest("PATCH", "/api/qaza/progress", { prayer, count }, getAuthOptions());
     return res.json();
   },
@@ -247,12 +250,12 @@ export const qazaApi = {
     maghrib?: boolean;
     isha?: boolean;
     witr?: boolean;
-  }): Promise<{ entry: any; progress: any }> => {
+  }): Promise<{ entry: QazaCalendarEntry; progress: Record<string, number> }> => {
     const res = await apiRequest("POST", "/api/qaza/calendar/mark", { dateLocal, prayers }, getAuthOptions());
     return res.json();
   },
   
-  getCalendar: async (startDate?: string, endDate?: string): Promise<{ entries: any[] }> => {
+  getCalendar: async (startDate?: string, endDate?: string): Promise<{ entries: QazaCalendarEntry[] }> => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
@@ -261,7 +264,7 @@ export const qazaApi = {
     return res.json();
   },
   
-  createGoal: async (): Promise<{ goal: any }> => {
+  createGoal: async (): Promise<{ goal: Goal }> => {
     const res = await apiRequest("POST", "/api/qaza/create-goal", undefined, getAuthOptions());
     return res.json();
   },
@@ -269,17 +272,17 @@ export const qazaApi = {
 
 // Badges API
 export const badgesApi = {
-  getAll: async (): Promise<{ badges: any[]; newBadges?: any[] }> => {
+  getAll: async (): Promise<{ badges: Badge[]; newBadges?: Badge[] }> => {
     const res = await apiRequest("GET", "/api/badges", undefined, getAuthOptions());
     return res.json();
   },
   
-  check: async (): Promise<{ newBadges: any[] }> => {
+  check: async (): Promise<{ newBadges: Badge[] }> => {
     const res = await apiRequest("POST", "/api/badges/check", undefined, getAuthOptions());
     return res.json();
   },
   
-  getById: async (id: string): Promise<{ badge: any }> => {
+  getById: async (id: string): Promise<{ badge: Badge }> => {
     const res = await apiRequest("GET", `/api/badges/${id}`, undefined, getAuthOptions());
     return res.json();
   },
@@ -287,17 +290,17 @@ export const badgesApi = {
 
 // Category Streaks API
 export const categoryStreaksApi = {
-  getAll: async (): Promise<{ streaks: any[] }> => {
+  getAll: async (): Promise<{ streaks: CategoryStreak[] }> => {
     const res = await apiRequest("GET", "/api/category-streaks", undefined, getAuthOptions());
     return res.json();
   },
   
-  getByCategory: async (category: string): Promise<{ streak: any }> => {
+  getByCategory: async (category: string): Promise<{ streak: CategoryStreak }> => {
     const res = await apiRequest("GET", `/api/category-streaks/${category}`, undefined, getAuthOptions());
     return res.json();
   },
   
-  update: async (): Promise<{ success: boolean; streaks: any }> => {
+  update: async (): Promise<{ success: boolean; streaks: CategoryStreak[] }> => {
     const res = await apiRequest("POST", "/api/category-streaks/update", undefined, getAuthOptions());
     return res.json();
   },

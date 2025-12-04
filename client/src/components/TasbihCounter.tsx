@@ -271,7 +271,7 @@ export default function TasbihCounter({
               </p>
               
               {showTranscription && (
-                <p className="text-base text-muted-foreground italic break-words">
+                <p className="text-base text-muted-foreground italic break-words" aria-label="Транслитерация">
                   {transcriptionType === 'cyrillic' 
                     ? item.transcriptionCyrillic 
                     : item.transcriptionLatin}
@@ -279,7 +279,7 @@ export default function TasbihCounter({
               )}
               
               {showTranslation && item.translation && (
-                <p className="text-sm text-muted-foreground break-words">
+                <p className="text-sm text-muted-foreground break-words" aria-label="Перевод">
                   {item.translation}
                 </p>
               )}
@@ -482,6 +482,8 @@ export default function TasbihCounter({
               onClick={handleReset}
               data-testid="button-reset"
               aria-label="Сбросить счетчик"
+              role="button"
+              tabIndex={0}
               className="gap-1.5 text-xs"
             >
               <RotateCcw className="w-4 h-4" />
@@ -505,6 +507,8 @@ export default function TasbihCounter({
               onClick={handleFullReset}
               data-testid="button-full-reset"
               aria-label="Сбросить всё"
+              role="button"
+              tabIndex={0}
               className="gap-1.5 text-xs text-muted-foreground"
             >
               <RefreshCw className="w-4 h-4" />

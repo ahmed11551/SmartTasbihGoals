@@ -58,9 +58,33 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: (id) => {
+          // Code splitting для оптимизации bundle size
+          if (id.includes('node_modules')) {
+            // Разделяем крупные библиотеки
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-radix';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            return 'vendor';
+          }
+          // Страницы в отдельные чанки для lazy loading
+          if (id.includes('/pages/')) {
+            const pageName = id.split('/pages/')[1]?.split('.')[0];
+            return `page-${pageName}`;
+          }
+        },
       },
     },
+    chunkSizeWarningLimit: 1000, // Предупреждение при размере > 1MB
   },
   server: {
     fs: {

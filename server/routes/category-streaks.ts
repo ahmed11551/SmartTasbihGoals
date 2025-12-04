@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { requireAuth, getUserId } from "../middleware/auth";
 import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
+import { logger } from "../lib/logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -173,7 +174,7 @@ async function updateCategoryStreaks(userId: string) {
       dhikr: dhikrStreak,
     };
   } catch (error) {
-    console.error('Error updating category streaks:', error);
+    logger.error('Error updating category streaks:', error);
     throw error;
   }
 }
@@ -191,7 +192,7 @@ router.get("/", async (req, res, next) => {
       const data = await botReplikaGet<{ streaks?: unknown[] }>("/api/category-streaks", apiUserId);
       res.json({ streaks: data.streaks || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       await updateCategoryStreaks(userId);
       const streaks = await storage.getCategoryStreaks(userId);
       res.json({ streaks });
@@ -214,7 +215,7 @@ router.post("/update", async (req, res, next) => {
       const data = await botReplikaPost<{ success?: boolean; streaks?: unknown[] }>("/api/category-streaks/update", {}, apiUserId);
       res.json({ success: data.success ?? true, streaks: data.streaks || data });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const updated = await updateCategoryStreaks(userId);
       res.json({ success: true, streaks: updated });
     }
@@ -245,7 +246,7 @@ router.get("/:category", async (req, res, next) => {
       }
       res.json({ streak });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       await updateCategoryStreaks(userId);
       const streak = await storage.getCategoryStreak(userId, category);
       if (!streak) {

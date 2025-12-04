@@ -69,7 +69,10 @@ export async function getAllDhikrItemsFromAPI(): Promise<DhikrItem[]> {
     // Если формат другой, возвращаем fallback
     return getAllDhikrItems();
   } catch (error) {
-    console.warn("Failed to load catalog from API, using fallback:", error);
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn("Failed to load catalog from API, using fallback:", error);
+    }
     return getAllDhikrItems();
   }
 }
@@ -96,7 +99,10 @@ export async function getDhikrItemsByCategoryFromAPI(category: Category): Promis
     // Fallback на статические данные
     return getDhikrItemsByCategory(category);
   } catch (error) {
-    console.warn(`Failed to load category ${category} from API, using fallback:`, error);
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to load category ${category} from API, using fallback:`, error);
+    }
     return getDhikrItemsByCategory(category);
   }
 }

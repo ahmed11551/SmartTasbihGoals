@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { requireAuth, getUserId } from "../middleware/auth";
 import { z } from "zod";
 import { botReplikaGet, botReplikaPost, botReplikaPatch, botReplikaDelete, getUserIdForApi } from "../lib/bot-replika-api";
+import { logger } from "../lib/logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -21,7 +22,7 @@ router.get("/", async (req, res, next) => {
       res.json({ habits: data.habits || data });
     } catch (apiError: any) {
       // Fallback на локальную БД если API недоступен
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const habits = await storage.getHabits(userId);
       res.json({ habits });
     }
@@ -47,7 +48,7 @@ router.get("/:id", async (req, res, next) => {
       res.json({ habit });
     } catch (apiError: any) {
       // Fallback на локальную БД
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const habit = await storage.getHabit(req.params.id, userId);
       if (!habit) {
         return res.status(404).json({ error: "Habit not found" });
@@ -73,7 +74,7 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({ habit });
     } catch (apiError: any) {
       // Fallback на локальную БД
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const parsed = req.body;
       const habit = await storage.createHabit(userId, parsed);
       res.status(201).json({ habit });
@@ -99,7 +100,7 @@ router.patch("/:id", async (req, res, next) => {
       const habit = data.habit || data;
       res.json({ habit });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const parsed = req.body;
       const habit = await storage.updateHabit(req.params.id, userId, parsed);
       res.json({ habit });
@@ -127,7 +128,7 @@ router.delete("/:id", async (req, res, next) => {
       await botReplikaDelete(`/api/habits/${req.params.id}`, apiUserId);
       res.json({ message: "Habit deleted successfully" });
     } catch (apiError: any) {
-      console.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       await storage.deleteHabit(req.params.id, userId);
       res.json({ message: "Habit deleted successfully" });
     }
