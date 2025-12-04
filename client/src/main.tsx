@@ -2,6 +2,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { initTelegramWebApp } from "./lib/telegram";
+import { initSentry } from "./lib/sentry";
+
+// Инициализация Sentry (если настроен)
+if (typeof window !== 'undefined') {
+  initSentry();
+}
 
 // Инициализация Telegram WebApp
 if (typeof window !== 'undefined') {
