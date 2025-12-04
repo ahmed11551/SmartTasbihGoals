@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 import { prisma } from "../db-prisma";
 import { z } from "zod";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, getUserId } from "../middleware/auth";
 
 const router = Router();
 
@@ -235,7 +235,11 @@ router.patch("/progress", requireAuth, async (req, res, next) => {
 // POST /api/qaza/calendar/mark - отметить день в календаре
 router.post("/calendar/mark", requireAuth, async (req, res, next) => {
   try {
-    const userId = req.session!.userId;
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
     const parsed = markCalendarDaySchema.parse(req.body);
     
     // Создать или обновить запись в календаре
@@ -322,7 +326,10 @@ router.get("/calendar", requireAuth, async (req, res, next) => {
 // POST /api/qaza/create-goal - создать цель восполнения
 router.post("/create-goal", requireAuth, async (req, res, next) => {
   try {
-    const userId = req.session!.userId;
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     
     const qazaDebt = await prisma.qazaDebt.findUnique({
       where: { userId },
