@@ -80,6 +80,7 @@ import {
   useCheckBadges,
 } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 function getWeekDays(baseDate: Date = new Date()): { date: Date; dayName: string; dayNum: number; isToday: boolean }[] {
   const days = [];
@@ -506,6 +507,7 @@ export default function GoalsPage() {
   const { toast } = useToast();
   
   // API hooks
+  const queryClient = useQueryClient();
   const { data: goals = [], isLoading: goalsLoading } = useGoals();
   const createGoalMutation = useCreateGoal();
   const updateGoalMutation = useUpdateGoal();
