@@ -84,19 +84,19 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
       onError: (error: any) => {
-        // Логируем ошибки, но не крашим приложение
-        console.error('Query error:', error);
-        // Если это ошибка подключения к БД, показываем дружелюбное сообщение
-        if (error?.status === 503) {
-          console.warn('База данных временно недоступна. Проверьте подключение.');
+        // Ошибки обрабатываются через React Query UI компоненты
+        if (process.env.NODE_ENV === 'development' && error?.status === 503) {
+          console.error('Database unavailable');
         }
       },
     },
     mutations: {
       retry: false,
       onError: (error: any) => {
-        // Логируем ошибки мутаций
-        console.error('Mutation error:', error);
+        // Ошибки обрабатываются через React Query UI компоненты
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Mutation error:', error);
+        }
       },
     },
   },

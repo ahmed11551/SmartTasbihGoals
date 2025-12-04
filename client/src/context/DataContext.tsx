@@ -45,11 +45,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // These are kept for backward compatibility but don't actually update local state
   // The React Query cache handles state management
   const setHabits = () => {
-    console.warn("setHabits is deprecated, use mutations instead");
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("setHabits is deprecated, use mutations instead");
+    }
   };
   
   const setTasks = () => {
-    console.warn("setTasks is deprecated, use mutations instead");
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("setTasks is deprecated, use mutations instead");
+    }
   };
 
   const addHabit = async (habitData: Partial<Habit>) => {
