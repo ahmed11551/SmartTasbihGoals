@@ -72,19 +72,41 @@ NODE_ENV=production
 
 ### Для Vercel
 
-Добавьте переменные в **Vercel Dashboard → Settings → Environment Variables**.
+Добавьте переменные в **Vercel Dashboard → Settings → Environment Variables**:
 
-**Подробная инструкция:** См. [DEPLOY.md](./DEPLOY.md)
+1. Перейдите на https://vercel.com
+2. Выберите проект
+3. Settings → Environment Variables
+4. Добавьте все переменные из списка выше
+5. После добавления выполните Redeploy проекта
+
+### Настройка базы данных
+
+Проект требует PostgreSQL базу данных. Рекомендуемые провайдеры:
+
+**Supabase (рекомендуется):**
+1. Создайте проект на https://supabase.com
+2. Settings → Database → Connection string → URI
+3. Скопируйте connection string
+4. Добавьте `?sslmode=require` в конец строки
+5. Добавьте в `DATABASE_URL` в Vercel или `.env`
+
+**Альтернативы:** Neon (https://neon.tech), Railway (https://railway.app)
+
+После настройки базы данных примените миграции:
+```bash
+npx prisma migrate deploy
+```
 
 ## Telegram Mini App
 
-Для Telegram Mini App требуется деплой на Vercel:
+Для Telegram Mini App требуется:
 
 1. Деплой на Vercel (см. выше)
-2. Создание бота через `@BotFather`
-3. Настройка кнопки меню: `/setmenubutton`
-
-Подробная инструкция: [TELEGRAM_MINI_APP_GUIDE.md](./TELEGRAM_MINI_APP_GUIDE.md)
+2. Создание бота через `@BotFather` в Telegram
+3. Получение токена бота
+4. Добавление токена в `TELEGRAM_BOT_TOKEN`
+5. Настройка кнопки меню: отправьте `/setmenubutton` боту BotFather, выберите бота, введите текст кнопки и URL вашего приложения (например: `https://your-app.vercel.app`)
 
 ## Технологии
 
@@ -109,13 +131,7 @@ NODE_ENV=production
 
 ## Документация
 
-- [DEPLOY.md](./DEPLOY.md) - Финальный чеклист деплоя на Vercel
-- [TELEGRAM_MINI_APP_GUIDE.md](./TELEGRAM_MINI_APP_GUIDE.md) - Полная инструкция по Telegram Mini App
-- [DATABASE_SETUP.md](./DATABASE_SETUP.md) - Настройка базы данных
-- [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) - Настройка Supabase
-- [QUICK_VERCEL_SETUP.md](./QUICK_VERCEL_SETUP.md) - Быстрая настройка Vercel
-- [DOCKER_CHECK.md](./DOCKER_CHECK.md) - Проверка Docker
-- [PRE_DEPLOY_CHECKLIST.md](./PRE_DEPLOY_CHECKLIST.md) - Чеклист перед деплоем
+- [PROJECT_READINESS_REPORT.md](./PROJECT_READINESS_REPORT.md) - Отчет о готовности проекта к сдаче
 
 ## Управление Docker
 
