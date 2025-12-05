@@ -82,6 +82,9 @@ import {
 } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { GoalsListSkeleton, HabitsListSkeleton, TasksListSkeleton } from '@/components/ui/loading-skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 
 function getWeekDays(baseDate: Date = new Date()): { date: Date; dayName: string; dayNum: number; isToday: boolean }[] {
   const days = [];
