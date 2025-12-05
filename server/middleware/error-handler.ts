@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
+import { logger } from "../lib/logger";
 
 export interface ApiError extends Error {
   status?: number;
@@ -43,14 +44,14 @@ export function errorHandler(
       case "P1008":
       case "P1017":
         // Database connection errors
-        console.error("Database connection error:", err);
+        logger.error("Database connection error:", err);
         return res.status(503).json({
           error: "Database connection failed",
           message: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL.",
           code: err.code,
         });
       default:
-        console.error("Prisma error:", err);
+        logger.error("Prisma error:", err);
         return res.status(500).json({
           error: "Database error",
           code: err.code,
@@ -61,7 +62,7 @@ export function errorHandler(
 
   // Prisma initialization errors
   if (err instanceof Prisma.PrismaClientInitializationError) {
-    console.error("Prisma initialization error:", err);
+    logger.error("Prisma initialization error:", err);
     return res.status(503).json({
       error: "Database initialization failed",
       message: "Не удалось инициализировать подключение к базе данных. Проверьте DATABASE_URL.",
@@ -81,7 +82,7 @@ export function errorHandler(
       errorMessage.includes('p1002') ||
       errorMessage.includes('p1003')
     ) {
-      console.error("Database connection error:", err);
+      logger.error("Database connection error:", err);
       return res.status(503).json({
         error: "Database connection failed",
         message: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL в настройках Vercel.",
@@ -95,11 +96,11 @@ export function errorHandler(
 
   // Log unexpected errors
   if (status >= 500) {
-    console.error("Server error:", err);
+    logger.error("Server error:", err);
     // В production логируем больше информации для отладки
     if (process.env.NODE_ENV === 'production') {
-      console.error("Error stack:", err instanceof Error ? err.stack : 'No stack');
-      console.error("Error name:", err instanceof Error ? err.name : 'Unknown');
+      logger.error("Error stack:", err instanceof Error ? err.stack : 'No stack');
+      logger.error("Error name:", err instanceof Error ? err.name : 'Unknown');
     }
   }
 
