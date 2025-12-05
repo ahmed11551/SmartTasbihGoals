@@ -515,6 +515,7 @@ export default function GoalsPage() {
   
   // API hooks
   const queryClient = useQueryClient();
+  // ВАЖНО: useGoals возвращает массив, поэтому data: goals (множественное число)
   const { data: goals = [], isLoading: goalsLoading } = useGoals();
   const { data: habits: apiHabits = [], isLoading: habitsLoading } = useHabits();
   const { data: tasks: apiTasks = [], isLoading: tasksLoading } = useTasks();
