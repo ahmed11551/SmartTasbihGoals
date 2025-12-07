@@ -81,27 +81,29 @@ export function generateGoalNotificationMessage(params: {
   message += `Прогресс: ${goal.currentProgress.toLocaleString()} из ${goal.targetCount.toLocaleString()} (${progressPercent}%)\n\n`;
 
   // Умный подсчет
-  if (dailyPlan !== null && dailyPlan > 0) {
+  if (dailyPlan !== null && dailyPlan !== undefined && dailyPlan > 0) {
     message += `📅 <b>Ежедневный план:</b> ${dailyPlan.toLocaleString()}/день\n`;
   }
 
-  if (daysLeft !== null) {
+  if (daysLeft !== null && daysLeft !== undefined) {
     if (daysLeft < 0) {
-      message += `⏰ <b>Срок истек!</b> Просрочено на ${Math.abs(daysLeft)} ${Math.abs(daysLeft) === 1 ? 'день' : 'дней'}\n\n`;
+      const absDaysLeft = Math.abs(daysLeft);
+      message += `⏰ <b>Срок истек!</b> Просрочено на ${absDaysLeft} ${absDaysLeft === 1 ? 'день' : 'дней'}\n\n`;
     } else {
       message += `⏰ <b>Осталось ${daysLeft}</b> ${daysLeft === 1 ? 'день' : daysLeft < 5 ? 'дня' : 'дней'}\n\n`;
     }
   }
 
   // Мотивация при отставании
-  if (isLagging && dailyPlan !== null) {
-    const currentDaily = Math.ceil(remaining / Math.max(1, daysLeft || 1));
+  if (isLagging && dailyPlan !== null && dailyPlan !== undefined) {
+    const daysLeftValue = daysLeft !== null && daysLeft !== undefined ? daysLeft : 1;
+    const currentDaily = Math.ceil(remaining / Math.max(1, daysLeftValue));
     message += `⚠️ <b>Вы отстаете от графика</b>\n`;
     message += `Чтобы достичь цель, нужно делать <b>${currentDaily.toLocaleString()}/день</b>\n`;
     message += `Не сдавайтесь! Давайте увеличим усилия! 💪\n\n`;
-  } else if (dailyPlan !== null && remaining > 0) {
+  } else if (dailyPlan !== null && dailyPlan !== undefined && remaining > 0) {
     message += `Для достижения цели осталось выполнить <b>${remaining.toLocaleString()}</b>\n`;
-    if (daysLeft !== null && daysLeft > 0) {
+    if (daysLeft !== null && daysLeft !== undefined && daysLeft > 0) {
       message += `Ежедневный план: <b>${dailyPlan.toLocaleString()}/день</b> ✅\n\n`;
     }
   }

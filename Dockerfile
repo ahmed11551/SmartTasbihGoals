@@ -11,7 +11,11 @@ COPY package.json ./
 COPY prisma ./prisma/
 
 # Install dependencies (postinstall will run prisma generate)
-RUN npm install --legacy-peer-deps --no-package-lock --ignore-scripts && \
+# Добавляем retry и таймауты для надежности
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm install --legacy-peer-deps --no-package-lock --ignore-scripts && \
     npx prisma generate
 
 # Rebuild the source code only when needed
