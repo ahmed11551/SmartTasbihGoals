@@ -63,6 +63,16 @@ export default defineConfig({
     minify: isProduction,
     cssCodeSplit: false,
     sourcemap: false,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react/jsx-runtime'],
+      esbuildOptions: {
+        target: 'esnext',
+      },
+    },
     rollupOptions: {
       external: (id) => {
         // Исключаем @sentry/react из сборки - будем загружать его динамически во время выполнения
@@ -86,6 +96,11 @@ export default defineConfig({
         manualChunks: (id) => {
           // Для Docker и Vercel production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
           if (isDocker || isVercel) {
+            // КРИТИЧНО: React и react-dom ДОЛЖНЫ быть в vendor chunk для правильной загрузки
+            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || 
+                id.includes('node_modules/react/index') || id.includes('node_modules/react-dom/index')) {
+              return 'vendor';
+            }
             // В Docker и Vercel все vendor библиотеки в одном chunk
             if (id.includes('node_modules')) {
               return 'vendor';
