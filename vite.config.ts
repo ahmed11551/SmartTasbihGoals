@@ -51,12 +51,14 @@ export default defineConfig({
     },
   },
   root: path.resolve(__dirname, "client"),
+  base: '/',
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
     target: 'esnext',
     minify: isProduction,
     cssCodeSplit: false,
+    sourcemap: false,
     rollupOptions: {
       external: (id) => {
         // Исключаем @sentry/react из сборки - будем загружать его динамически во время выполнения
@@ -78,9 +80,9 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
-          // Для Docker production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
-          if (isDocker) {
-            // В Docker все vendor библиотеки в одном chunk
+          // Для Docker и Vercel production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
+          if (isDocker || isVercel) {
+            // В Docker и Vercel все vendor библиотеки в одном chunk
             if (id.includes('node_modules')) {
               return 'vendor';
             }
@@ -92,7 +94,7 @@ export default defineConfig({
             return null;
           }
           
-          // Code splitting для оптимизации bundle size (не Docker)
+          // Code splitting для оптимизации bundle size (не Docker, не Vercel)
           if (id.includes('node_modules')) {
             // Разделяем крупные библиотеки
             if (id.includes('react') || id.includes('react-dom')) {
