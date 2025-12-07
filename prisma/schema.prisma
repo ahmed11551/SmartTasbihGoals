@@ -94,6 +94,11 @@ enum SubscriptionTier {
   sahibAlWaqf
 }
 
+enum Gender {
+  male
+  female
+}
+
 model User {
   id                  String           @id @default(uuid())
   username            String           @unique
@@ -206,6 +211,7 @@ model Goal {
   sessions        Session[]
   dhikrLogs       DhikrLog[]
   notificationLogs NotificationLog[]
+  qazaDebt        QazaDebt?         @relation("QazaGoal")
 
   @@index([userId])
   @@index([status, repeatType])
@@ -308,40 +314,67 @@ model CalendarEvent {
 }
 
 model QazaDebt {
-  id               String   @id @default(uuid())
-  userId           String   @unique
-  gender           String   // 'male' | 'female'
-  birthYear        Int?
-  prayerStartYear  Int?
-  calculatedAt     DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  gender               Gender
+  birthDate            DateTime?  // Полная дата рождения для расчета булюга
+  birthYear            Int?      // Оставлено для обратной совместимости
+  bulughAge            Int       @default(15)  // Возраст совершеннолетия (customizable)
+  bulughDate           DateTime?  // Рассчитанная дата булюга (по хиджре → грегориан)
+  prayerStartDate      DateTime?  // Дата начала регулярных намазов
+  prayerStartYear      Int?      // Оставлено для обратной совместимости
+  todayAsStart         Boolean  @default(false)  // Если с сегодняшнего дня
+  madhab               String   @default("hanafi")  // Для вариаций (e.g., витр в шафии)
+  calcVersion          String   @default("1.0.0")  // Для совместимости
+  calculationMethod    String   @default("calculator") // "manual" | "calculator"
+  calculatedAt         DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Женские данные (для исключений)
+  haidDaysPerMonth     Int      @default(7)  // Дней хайда в месяц
+  childbirthCount      Int      @default(0)  // Кол-во родов
+  nifasDaysPerChildbirth Int    @default(40)  // Дней нифаса на роды
+
+  // Периоды (улучшено: отдельные JSON для типов)
+  haidPeriods          Json     @default("[]")  // [{startDate: Date, endDate: Date, days: Int}]
+  nifasPeriods         Json     @default("[]")  // Аналогично
+  safarPeriods         Json     @default("[]")  // [{startDate: Date, endDate: Date, days: Int}]
+  haydNifasPeriods     Json     @default("[]")  // Оставлено для обратной совместимости
   
-  // Расчетный долг по каждому намазу
-  fajrDebt         Int      @default(0)
-  dhuhrDebt        Int      @default(0)
-  asrDebt          Int      @default(0)
-  maghribDebt      Int      @default(0)
-  ishaDebt         Int      @default(0)
-  witrDebt         Int      @default(0)
+  // Дни в пути (сафар) - для обратной совместимости
+  totalTravelDays      Int      @default(0)
+  safarDays            Json     @default("[]")  // Оставлено для обратной совместимости
+  
+  // Рассчитанный долг
+  totalDays            Int      @default(0)
+  excludedDays         Int      @default(0)
+  effectiveDays        Int      @default(0)
+  missedPrayers        Json     @default("{}")  // {fajr: Int, dhuhr: Int, asr: Int, maghrib: Int, isha: Int, witr: Int}
+  safarPrayers         Json     @default("{}")  // {dhuhr_safar: Int, asr_safar: Int, isha_safar: Int}
+
+  // Расчетный долг по каждому намазу (для обратной совместимости)
+  fajrDebt             Int      @default(0)
+  dhuhrDebt            Int      @default(0)
+  asrDebt              Int      @default(0)
+  maghribDebt          Int      @default(0)
+  ishaDebt             Int      @default(0)
+  witrDebt             Int      @default(0)
   
   // Прогресс восполнения
-  fajrProgress     Int      @default(0)
-  dhuhrProgress    Int      @default(0)
-  asrProgress      Int      @default(0)
-  maghribProgress  Int      @default(0)
-  ishaProgress     Int      @default(0)
-  witrProgress     Int      @default(0)
+  completedPrayers     Json     @default("{}")  // {fajr: Int, ...}
+  lastUpdated          DateTime?
+  fajrProgress         Int      @default(0)
+  dhuhrProgress        Int      @default(0)
+  asrProgress          Int      @default(0)
+  maghribProgress      Int      @default(0)
+  ishaProgress         Int      @default(0)
+  witrProgress         Int      @default(0)
   
-  // Периоды освобождения (для женщин)
-  haydNifasPeriods Json     @default("[]") // [{startDate, endDate, type}]
-  
-  // Дни в пути (сафар)
-  safarDays        Json     @default("[]") // [{startDate, endDate}]
-  
-  // ID связанной цели (если создана)
-  goalId           String?
+  // Связь с целью
+  goalId               String?  @unique
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal                 Goal?    @relation("QazaGoal", fields: [goalId], references: [id], onDelete: SetNull)
 
   @@index([userId])
 }
@@ -349,16 +382,17 @@ model QazaDebt {
 model QazaCalendarEntry {
   id           String   @id @default(uuid())
   userId       String
-  dateLocal    String   // YYYY-MM-DD
+  dateLocal    String   // YYYY-MM-DD в tz пользователя
   fajr         Boolean  @default(false)
   dhuhr        Boolean  @default(false)
   asr          Boolean  @default(false)
   maghrib      Boolean  @default(false)
   isha         Boolean  @default(false)
   witr         Boolean  @default(false)
+  isDebtDay    Boolean  @default(true)  // День с долгом (🔴) или исключённый
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, dateLocal])
   @@index([userId])

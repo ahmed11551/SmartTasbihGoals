@@ -5,6 +5,10 @@ import { z } from "zod";
 import { requireAuth, getUserId } from "../middleware/auth";
 import { botReplikaGet, botReplikaPost, botReplikaPatch, getUserIdForApi } from "../lib/bot-replika-api";
 import { logger } from "../lib/logger";
+import { calculateBulughDate as calculateBulughDateHijri } from "../lib/hijri-calculator";
+import { differenceInDays, addDays } from "date-fns";
+import { calculateQazaDebtImproved, generateDebtCalendarEntries, validatePeriods } from "../lib/qaza-calculator-service";
+import { optimizeRepaymentSchedule, generateMotivationalMessage, detectMissedPrayerPatterns } from "../lib/qaza-ai-service";
 
 const router = Router();
 
@@ -111,11 +115,18 @@ router.get("/terms", async (req, res, next) => {
   }
 });
 
-// Функция расчета даты булюга (упрощенная версия, без хиджры пока)
-function calculateBulughDate(birthDate: Date, customBulughAge: number = 15): Date {
-  const bulughDate = new Date(birthDate);
-  bulughDate.setFullYear(bulughDate.getFullYear() + customBulughAge);
-  return bulughDate;
+// Функция расчета даты булюга с учетом хиджры (использует новый сервис)
+async function calculateBulughDate(birthDate: Date, customBulughAge: number = 15): Promise<Date> {
+  try {
+    // Используем новый сервис с расчетом по хиджре
+    return await calculateBulughDateHijri(birthDate, customBulughAge);
+  } catch (error: any) {
+    logger.warn(`Failed to calculate bulugh date with Hijri, using fallback: ${error.message}`);
+    // Fallback: упрощенный расчет
+    const bulughDate = new Date(birthDate);
+    bulughDate.setFullYear(bulughDate.getFullYear() + customBulughAge);
+    return bulughDate;
+  }
 }
 
 // Функция расчета долга (ханафитский мазхаб)
@@ -296,40 +307,163 @@ router.post("/calculate", requireAuth, async (req, res, next) => {
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       
-      // Fallback: расчет на локальной БД
-      const debt = calculateQazaDebt(parsed);
+      // Fallback: расчет на локальной БД с использованием улучшенного сервиса
+      
+      // Валидация периодов перед расчетом
+      if (parsed.haydNifasPeriods && parsed.haydNifasPeriods.length > 0) {
+        const validation = validatePeriods(parsed.haydNifasPeriods);
+        if (!validation.valid) {
+          return res.status(400).json({ error: "Invalid periods", details: validation.errors });
+        }
+      }
+      
+      if (parsed.safarDays && parsed.safarDays.length > 0) {
+        const validation = validatePeriods(parsed.safarDays);
+        if (!validation.valid) {
+          return res.status(400).json({ error: "Invalid travel periods", details: validation.errors });
+        }
+      }
+      
+      // Используем улучшенный сервис расчета
+      const calculationResult = await calculateQazaDebtImproved(parsed);
+      
+      // Подготовка данных для сохранения
+      const birthDateValue = parsed.birthDate ? new Date(parsed.birthDate) : null;
+      const prayerStartDateValue = parsed.prayerStartDate ? new Date(parsed.prayerStartDate) : null;
+      
+      // Разделяем периоды для женщин
+      const haydPeriods = parsed.haydNifasPeriods?.filter(p => p.type === 'hayd').map(p => ({
+        startDate: p.startDate,
+        endDate: p.endDate,
+        days: Math.floor((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
+      })) || [];
+      
+      const nifasPeriods = parsed.haydNifasPeriods?.filter(p => p.type === 'nifas').map(p => ({
+        startDate: p.startDate,
+        endDate: p.endDate,
+        days: Math.floor((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
+      })) || [];
+      
+      const safarPeriods = parsed.safarDays?.map(p => ({
+        startDate: p.startDate,
+        endDate: p.endDate,
+        days: Math.floor((new Date(p.endDate).getTime() - new Date(p.startDate).getTime()) / (1000 * 60 * 60 * 24)),
+      })) || [];
+      
+      const missedPrayersJson = {
+        fajr: calculationResult.fajr,
+        dhuhr: calculationResult.dhuhr,
+        asr: calculationResult.asr,
+        maghrib: calculationResult.maghrib,
+        isha: calculationResult.isha,
+        witr: calculationResult.witr,
+      };
+      
+      const safarPrayersJson = {
+        dhuhr_safar: calculationResult.dhuhrSafar || 0,
+        asr_safar: calculationResult.asrSafar || 0,
+        isha_safar: calculationResult.ishaSafar || 0,
+      };
+      
       const qazaDebt = await prisma.qazaDebt.upsert({
         where: { userId },
         create: {
           userId,
           gender: parsed.gender,
+          birthDate: birthDateValue,
           birthYear: parsed.birthYear,
+          bulughAge: parsed.bulughAge || 15,
+          bulughDate: calculationResult.bulughDate || null,
+          prayerStartDate: prayerStartDateValue,
           prayerStartYear: parsed.prayerStartYear,
+          todayAsStart: parsed.todayAsStart || false,
+          madhab: parsed.madhab || 'hanafi',
+          calcVersion: '1.0.0',
+          calculationMethod: parsed.manualPeriod ? 'manual' : 'calculator',
+          haidDaysPerMonth: parsed.haidDaysPerMonth || 7,
+          childbirthCount: parsed.childbirthCount || 0,
+          nifasDaysPerChildbirth: parsed.nifasDaysPerChildbirth || 40,
+          haidPeriods: haydPeriods,
+          nifasPeriods: nifasPeriods,
+          safarPeriods: safarPeriods,
           haydNifasPeriods: parsed.haydNifasPeriods || [],
+          totalTravelDays: calculationResult.dhuhrSafar || 0,
           safarDays: parsed.safarDays || [],
-          fajrDebt: debt.fajr,
-          dhuhrDebt: debt.dhuhr,
-          asrDebt: debt.asr,
-          maghribDebt: debt.maghrib,
-          ishaDebt: debt.isha,
-          witrDebt: debt.witr,
+          totalDays: calculationResult.totalDays,
+          excludedDays: calculationResult.excludedDays,
+          effectiveDays: calculationResult.effectiveDays,
+          missedPrayers: missedPrayersJson,
+          safarPrayers: safarPrayersJson,
+          fajrDebt: calculationResult.fajr,
+          dhuhrDebt: calculationResult.dhuhr,
+          asrDebt: calculationResult.asr,
+          maghribDebt: calculationResult.maghrib,
+          ishaDebt: calculationResult.isha,
+          witrDebt: calculationResult.witr,
+          completedPrayers: {},
+          fajrProgress: 0,
+          dhuhrProgress: 0,
+          asrProgress: 0,
+          maghribProgress: 0,
+          ishaProgress: 0,
+          witrProgress: 0,
         },
         update: {
           gender: parsed.gender,
+          birthDate: birthDateValue,
           birthYear: parsed.birthYear,
+          bulughAge: parsed.bulughAge || 15,
+          bulughDate: calculationResult.bulughDate || null,
+          prayerStartDate: prayerStartDateValue,
           prayerStartYear: parsed.prayerStartYear,
+          todayAsStart: parsed.todayAsStart || false,
+          madhab: parsed.madhab || 'hanafi',
+          calcVersion: '1.0.0',
+          calculationMethod: parsed.manualPeriod ? 'manual' : 'calculator',
+          haidDaysPerMonth: parsed.haidDaysPerMonth || 7,
+          childbirthCount: parsed.childbirthCount || 0,
+          nifasDaysPerChildbirth: parsed.nifasDaysPerChildbirth || 40,
+          haidPeriods: haydPeriods,
+          nifasPeriods: nifasPeriods,
+          safarPeriods: safarPeriods,
           haydNifasPeriods: parsed.haydNifasPeriods || [],
+          totalTravelDays: calculationResult.dhuhrSafar || 0,
           safarDays: parsed.safarDays || [],
-          fajrDebt: debt.fajr,
-          dhuhrDebt: debt.dhuhr,
-          asrDebt: debt.asr,
-          maghribDebt: debt.maghrib,
-          ishaDebt: debt.isha,
-          witrDebt: debt.witr,
+          totalDays: calculationResult.totalDays,
+          excludedDays: calculationResult.excludedDays,
+          effectiveDays: calculationResult.effectiveDays,
+          missedPrayers: missedPrayersJson,
+          safarPrayers: safarPrayersJson,
+          fajrDebt: calculationResult.fajr,
+          dhuhrDebt: calculationResult.dhuhr,
+          asrDebt: calculationResult.asr,
+          maghribDebt: calculationResult.maghrib,
+          ishaDebt: calculationResult.isha,
+          witrDebt: calculationResult.witr,
           calculatedAt: new Date(),
         },
       });
-      res.json({ debt: qazaDebt, calculation: { effectiveDays: debt.effectiveDays, excludedDays: debt.excludedDays } });
+      
+      // Генерируем календарные записи для карты долга
+      try {
+        await generateDebtCalendarEntries(userId, calculationResult);
+      } catch (calendarError: any) {
+        logger.warn(`Failed to generate calendar entries: ${calendarError.message}`);
+        // Не прерываем запрос, если генерация календаря не удалась
+      }
+      
+      res.json({ 
+        debt: qazaDebt, 
+        calculation: { 
+          effectiveDays: calculationResult.effectiveDays, 
+          excludedDays: calculationResult.excludedDays,
+          totalDays: calculationResult.totalDays,
+          period: {
+            start: calculationResult.period.start.toISOString(),
+            end: calculationResult.period.end.toISOString(),
+          },
+        } 
+      });
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -562,6 +696,100 @@ router.post("/create-goal", requireAuth, async (req, res, next) => {
       });
 
       res.json({ goal });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/qaza/ai/optimize-schedule - получить AI-оптимизированный план восполнения
+router.get("/ai/optimize-schedule", requireAuth, async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ schedule?: unknown }>("/api/qaza/ai/optimize-schedule", apiUserId);
+      res.json({ schedule: data.schedule || data });
+    } catch (apiError: any) {
+      logger.warn("Bot.e-replika.ru API unavailable, using local AI:", apiError.message);
+      
+      // Fallback: локальный AI
+      const schedule = await optimizeRepaymentSchedule(userId);
+      res.json({ schedule });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/qaza/ai/motivation - получить мотивационное сообщение
+router.get("/ai/motivation", requireAuth, async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    const qazaDebt = await prisma.qazaDebt.findUnique({
+      where: { userId },
+    });
+    
+    if (!qazaDebt) {
+      return res.status(404).json({ error: "Qaza debt not found" });
+    }
+    
+    const totalProgress = qazaDebt.fajrProgress + qazaDebt.dhuhrProgress + 
+                         qazaDebt.asrProgress + qazaDebt.maghribProgress + 
+                         qazaDebt.ishaProgress + qazaDebt.witrProgress;
+    
+    const totalDebt = qazaDebt.fajrDebt + qazaDebt.dhuhrDebt + 
+                     qazaDebt.asrDebt + qazaDebt.maghribDebt + 
+                     qazaDebt.ishaDebt + qazaDebt.witrDebt;
+    
+    const message = await generateMotivationalMessage(totalProgress, totalDebt);
+    
+    // Также проверяем паттерны пропусков
+    const patternMessage = await detectMissedPrayerPatterns(userId);
+    
+    res.json({ 
+      message,
+      patternMessage,
+      progress: totalProgress,
+      total: totalDebt,
+      percentage: Math.round((totalProgress / totalDebt) * 100),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/qaza/report.pdf - скачать PDF отчет
+router.get("/report.pdf", requireAuth, async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const pdfData = await botReplikaGet<Blob>("/api/qaza/report.pdf", apiUserId);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="qaza-report.pdf"');
+      res.send(pdfData);
+    } catch (apiError: any) {
+      logger.warn("Bot.e-replika.ru API unavailable for PDF:", apiError.message);
+      
+      // Fallback: простая HTML версия или ошибка
+      return res.status(503).json({ 
+        error: "PDF generation is currently unavailable. Please use the web interface.",
+        fallbackUrl: `/qaza`,
+      });
     }
   } catch (error) {
     next(error);
