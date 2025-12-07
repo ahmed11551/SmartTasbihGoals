@@ -193,9 +193,23 @@ router.get("/", async (req, res, next) => {
       res.json({ streaks: data.streaks || data });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
-      await updateCategoryStreaks(userId);
-      const streaks = await storage.getCategoryStreaks(userId);
-      res.json({ streaks });
+      try {
+        // Проверяем существование пользователя перед обновлением streaks
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.json({ streaks: [] });
+        }
+        await updateCategoryStreaks(userId);
+        const streaks = await storage.getCategoryStreaks(userId);
+        res.json({ streaks });
+      } catch (dbError: any) {
+        // Если ошибка P2003 (foreign key constraint), пользователь не существует
+        if (dbError.code === 'P2003') {
+          logger.warn("User does not exist, returning empty streaks:", userId);
+          return res.json({ streaks: [] });
+        }
+        throw dbError;
+      }
     }
   } catch (error) {
     next(error);

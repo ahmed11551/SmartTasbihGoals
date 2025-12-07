@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { RotateCcw, Undo2, RefreshCw, Volume2, VolumeX, Target, RotateCw, CheckCircle2 } from 'lucide-react';
+import { RotateCcw, Undo2, RefreshCw, Volume2, VolumeX, Target, RotateCw, CheckCircle2, Play, Pause, Timer } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { DhikrItem } from '@/lib/types';
 
 interface TasbihCounterProps {
@@ -52,10 +54,13 @@ export default function TasbihCounter({
   const [audioSupported, setAudioSupported] = useState(true);
   const [repeatCount, setRepeatCount] = useState(0);
   const [isLearned, setIsLearned] = useState(false);
+  const [autoIntervalEnabled, setAutoIntervalEnabled] = useState(false);
+  const [autoIntervalSeconds, setAutoIntervalSeconds] = useState(1);
   const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTapTimeRef = useRef<number>(0);
   const prevKeyRef = useRef<string | undefined>(counterKey);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const autoIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const ROUND_SIZE = 100;
   const isLearnMode = goalType === 'learn';
@@ -135,11 +140,76 @@ export default function TasbihCounter({
     if (isGoalComplete && onComplete) {
       onComplete();
     }
-  }, [isGoalComplete, onComplete]);
+    // Остановить автоинтервал при достижении цели
+    if (isGoalComplete && autoIntervalEnabled) {
+      setAutoIntervalEnabled(false);
+    }
+  }, [isGoalComplete, onComplete, autoIntervalEnabled]);
+
+  // Автоинтервал для автоматических тапов
+  useEffect(() => {
+    if (!autoIntervalEnabled || isGoalComplete || isLearnMode) {
+      // Остановить интервал
+      if (autoIntervalRef.current) {
+        clearInterval(autoIntervalRef.current);
+        autoIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Очистить предыдущий интервал
+    if (autoIntervalRef.current) {
+      clearInterval(autoIntervalRef.current);
+    }
+    
+    // Создать новый интервал
+    autoIntervalRef.current = setInterval(() => {
+      // Используем функциональное обновление для получения актуального состояния
+      setCount((prevCount) => {
+        const currentGoalTarget = goalTarget;
+        const currentRounds = Math.floor(prevCount / ROUND_SIZE);
+        
+        // Проверка на достижение цели
+        if (currentGoalTarget && prevCount >= currentGoalTarget) {
+          if (autoIntervalRef.current) {
+            clearInterval(autoIntervalRef.current);
+            autoIntervalRef.current = null;
+          }
+          setAutoIntervalEnabled(false);
+          return prevCount;
+        }
+
+        const delta = 1;
+        const newCount = currentGoalTarget && prevCount + delta > currentGoalTarget
+          ? currentGoalTarget
+          : prevCount + delta;
+        
+        const newRounds = Math.floor(newCount / ROUND_SIZE);
+        
+        // Вызвать callback
+        onCountChange?.(newCount, delta, newRounds);
+        
+        // Обновить rounds если нужно
+        if (newRounds > currentRounds) {
+          setRounds(newRounds);
+        }
+        
+        return newCount;
+      });
+    }, autoIntervalSeconds * 1000);
+
+    return () => {
+      if (autoIntervalRef.current) {
+        clearInterval(autoIntervalRef.current);
+        autoIntervalRef.current = null;
+      }
+    };
+  }, [autoIntervalEnabled, autoIntervalSeconds, isGoalComplete, isLearnMode, goalTarget, onCountChange]);
 
   const handleTap = useCallback((delta: number) => {
     const now = Date.now();
-    if (now - lastTapTimeRef.current < 100) return;
+    // Блокировка спама: не чаще 2 раз в секунду (500мс между тапами)
+    if (now - lastTapTimeRef.current < 500) return;
     lastTapTimeRef.current = now;
 
     if (goalTarget && count + delta > goalTarget) {
@@ -192,7 +262,11 @@ export default function TasbihCounter({
     onCountChange?.(0, -count, rounds);
     setShowUndo(false);
     setLastAction(null);
-  }, [count, rounds, onCountChange]);
+    // Остановить автоинтервал при сбросе
+    if (autoIntervalEnabled) {
+      setAutoIntervalEnabled(false);
+    }
+  }, [count, rounds, onCountChange, autoIntervalEnabled]);
 
   const handleFullReset = useCallback(() => {
     setCount(0);
@@ -201,7 +275,11 @@ export default function TasbihCounter({
     onCountChange?.(0, -count, 0);
     setShowUndo(false);
     setLastAction(null);
-  }, [count, onCountChange]);
+    // Остановить автоинтервал при полном сбросе
+    if (autoIntervalEnabled) {
+      setAutoIntervalEnabled(false);
+    }
+  }, [count, onCountChange, autoIntervalEnabled]);
 
   const handleSetGoal = useCallback((target: number) => {
     setGoalTarget(target);
@@ -523,6 +601,68 @@ export default function TasbihCounter({
               </p>
             </div>
           )}
+
+          {/* Настройка автоинтервала */}
+          <Card className="p-3 mt-4 space-y-3 border-primary/20">
+            <div className="flex items-center gap-2">
+              <Timer className="w-4 h-4 text-primary" />
+              <Label className="text-sm font-medium">Задать автоинтервал (сек)</Label>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="1"
+                max="60"
+                value={autoIntervalSeconds}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  if (!isNaN(value) && value >= 1 && value <= 60) {
+                    setAutoIntervalSeconds(value);
+                  }
+                }}
+                disabled={autoIntervalEnabled}
+                className="w-20"
+                data-testid="input-auto-interval"
+              />
+              <span className="text-xs text-muted-foreground">от 1 до 60 сек</span>
+            </div>
+
+            <Button
+              variant={autoIntervalEnabled ? "destructive" : "default"}
+              size="sm"
+              onClick={() => {
+                if (autoIntervalEnabled) {
+                  setAutoIntervalEnabled(false);
+                } else {
+                  if (autoIntervalSeconds >= 1 && autoIntervalSeconds <= 60) {
+                    setAutoIntervalEnabled(true);
+                  }
+                }
+              }}
+              disabled={isGoalComplete || isLearnMode}
+              className="w-full gap-2"
+              data-testid="button-toggle-auto-interval"
+            >
+              {autoIntervalEnabled ? (
+                <>
+                  <Pause className="w-4 h-4" />
+                  Остановить авто-тап
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Включить авто-тап
+                </>
+              )}
+            </Button>
+
+            {autoIntervalEnabled && (
+              <p className="text-xs text-center text-muted-foreground">
+                Тап будет нажиматься автоматически каждые {autoIntervalSeconds} {autoIntervalSeconds === 1 ? 'секунду' : autoIntervalSeconds < 5 ? 'секунды' : 'секунд'}
+              </p>
+            )}
+          </Card>
         </>
       )}
     </div>

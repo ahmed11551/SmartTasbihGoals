@@ -42,3 +42,18 @@ export const habitCategoryToGoalCategory: Record<string, string> = {
   etiquette: 'general', // Этикет -> Общее
 };
 
+// Подкатегории для категории "Знания"
+export const knowledgeSubcategoryLabels: Record<string, string> = {
+  books: 'Книги',
+  alifba: 'Алифба',
+  tajweed: 'Таджвид',
+};
+
+export type KnowledgeSubcategory = 'books' | 'alifba' | 'tajweed';
+
+export const knowledgeSubcategories: { id: KnowledgeSubcategory; label: string; icon: string }[] = [
+  { id: 'books', label: 'Книги', icon: 'BookOpen' },
+  { id: 'alifba', label: 'Алифба', icon: 'Languages' },
+  { id: 'tajweed', label: 'Таджвид', icon: 'ScrollText' },
+];
+

@@ -4,12 +4,15 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Copy package files first
+COPY package.json ./
 
-# Generate Prisma Client
+# Copy prisma schema before npm install (needed for postinstall script)
 COPY prisma ./prisma/
-RUN npx prisma generate
+
+# Install dependencies (postinstall will run prisma generate)
+RUN npm install --legacy-peer-deps --no-package-lock --ignore-scripts && \
+    npx prisma generate
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -25,6 +28,13 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV DOCKER=1
+
+# Install OpenSSL для Prisma (пробуем разные варианты в зависимости от архитектуры)
+RUN apk add --no-cache openssl || \
+    apk add --no-cache openssl-dev || \
+    apk add --no-cache openssl1.1-compat || \
+    echo "OpenSSL installation skipped - may cause Prisma warnings"
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs

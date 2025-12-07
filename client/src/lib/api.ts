@@ -19,6 +19,7 @@ export interface AuthResponse {
     id: string;
     username: string;
   };
+  token?: string;
 }
 
 export interface ApiError {
@@ -35,6 +36,11 @@ export const authApi = {
   
   login: async (username: string, password: string): Promise<AuthResponse> => {
     const res = await apiRequest("POST", "/api/auth/login", { username, password });
+    return res.json();
+  },
+  
+  createGuest: async (): Promise<AuthResponse> => {
+    const res = await apiRequest("POST", "/api/auth/guest", undefined, { credentials: 'include' });
     return res.json();
   },
   
@@ -199,6 +205,47 @@ export const dhikrApi = {
     const res = await apiRequest("POST", "/api/dhikr/daily-azkar", data, getAuthOptions());
     return res.json();
   },
+  
+  deleteLastLog: async (sessionId?: string) => {
+    const url = sessionId 
+      ? `/api/dhikr/logs/last?sessionId=${sessionId}`
+      : '/api/dhikr/logs/last';
+    const res = await apiRequest("DELETE", url, undefined, getAuthOptions());
+    return res.json();
+  },
+};
+
+// Reports API
+export const reportsApi = {
+  getDaily: async (date?: string) => {
+    const url = date ? `/api/v1/reports/daily?date=${date}` : '/api/v1/reports/daily';
+    const res = await apiRequest("GET", url, undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  getActivityHeatmap: async (params?: {
+    startDate?: string;
+    endDate?: string;
+    days?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.days) queryParams.append('days', params.days.toString());
+    
+    const query = queryParams.toString();
+    const url = `/api/v1/reports/activity-heatmap${query ? `?${query}` : ''}`;
+    const res = await apiRequest("GET", url, undefined, getAuthOptions());
+    return res.json();
+  },
+};
+
+// Learn API
+export const learnApi = {
+  mark: async (goalId: string) => {
+    const res = await apiRequest("POST", "/api/v1/learn/mark", { goal_id: goalId }, getAuthOptions());
+    return res.json();
+  },
 };
 
 // Stats API
@@ -215,6 +262,11 @@ import type { AIContext } from "./types";
 export const aiApi = {
   assistant: async (message: string, context?: AIContext): Promise<{ response: string }> => {
     const res = await apiRequest("POST", "/api/ai/assistant", { message, context }, getAuthOptions());
+    return res.json();
+  },
+  
+  getReport: async (period: 'week' | 'month' | 'quarter' | 'year' = 'week'): Promise<{ report: any }> => {
+    const res = await apiRequest("GET", `/api/ai/report?period=${period}`, undefined, getAuthOptions());
     return res.json();
   },
 };
@@ -302,6 +354,32 @@ export const categoryStreaksApi = {
   
   update: async (): Promise<{ success: boolean; streaks: CategoryStreak[] }> => {
     const res = await apiRequest("POST", "/api/category-streaks/update", undefined, getAuthOptions());
+    return res.json();
+  },
+};
+
+// Notification Settings API
+export interface NotificationSettings {
+  notificationsEnabled: boolean;
+  notificationTime: string;
+  notificationDays: string[];
+  telegramId?: string;
+  firstName?: string;
+}
+
+export const notificationSettingsApi = {
+  get: async (): Promise<{ settings: NotificationSettings }> => {
+    const res = await apiRequest("GET", "/api/notification-settings", undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  update: async (data: Partial<NotificationSettings>): Promise<{ settings: NotificationSettings }> => {
+    const res = await apiRequest("PUT", "/api/notification-settings", data, getAuthOptions());
+    return res.json();
+  },
+  
+  test: async (): Promise<{ success: boolean; message?: string }> => {
+    const res = await apiRequest("POST", "/api/notification-settings/test", {}, getAuthOptions());
     return res.json();
   },
 };

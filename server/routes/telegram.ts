@@ -80,6 +80,17 @@ router.post("/auth", async (req, res, next) => {
                 id: user.id,
                 username: user.username || `tg_user_${parsed.id}`,
                 password: await storage.hashPassword(randomPassword),
+                telegramId: String(parsed.id),
+                firstName: parsed.firstName || null,
+              },
+            });
+          } else {
+            // Обновить telegramId и firstName если их нет
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                telegramId: String(parsed.id),
+                firstName: parsed.firstName || existing.firstName || null,
               },
             });
           }
@@ -122,8 +133,21 @@ router.post("/auth", async (req, res, next) => {
           id: telegramId,
           username: username,
           password: await storage.hashPassword(randomPassword),
+          telegramId: String(parsed.id),
+          firstName: parsed.firstName || null,
         },
       });
+    } else {
+      // Обновить telegramId и firstName если их нет
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          telegramId: String(parsed.id),
+          firstName: parsed.firstName || user.firstName || null,
+        },
+      });
+      // Обновить объект user для ответа
+      user = await storage.getUser(user.id);
     }
     
     req.session!.userId = user.id;

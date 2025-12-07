@@ -14,10 +14,8 @@ if (typeof window !== 'undefined') {
   try {
     initTelegramWebApp();
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.error('Telegram WebApp initialization error:', error);
-    }
+    // eslint-disable-next-line no-console
+    console.error('Telegram WebApp initialization error:', error);
   }
 }
 
@@ -30,10 +28,8 @@ try {
   const root = createRoot(rootElement);
   root.render(<App />);
 } catch (error) {
-  if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.error('Failed to render app:', error);
-  }
+  // eslint-disable-next-line no-console
+  console.error('Failed to render app:', error);
   rootElement.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
       <div>
@@ -44,9 +40,20 @@ try {
         </button>
         <details style="margin-top: 20px; text-align: left;">
           <summary style="cursor: pointer; color: #666;">Подробности ошибки</summary>
-          <pre style="margin-top: 8px; padding: 12px; background: #f5f5f5; border-radius: 4px; overflow: auto; font-size: 12px;">${String(error)}</pre>
+          <pre style="margin-top: 8px; padding: 12px; background: #f5f5f5; border-radius: 4px; overflow: auto; font-size: 12px;">${String(error)}\n\n${error instanceof Error ? error.stack : ''}</pre>
         </details>
       </div>
     </div>
   `;
 }
+
+// Добавляем глобальный обработчик ошибок для отлова необработанных ошибок
+window.addEventListener('error', (event) => {
+  // eslint-disable-next-line no-console
+  console.error('Unhandled error:', event.error);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  // eslint-disable-next-line no-console
+  console.error('Unhandled promise rejection:', event.reason);
+});

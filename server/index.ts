@@ -85,6 +85,20 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+
+      // Собирать метрики производительности
+      try {
+        const { performanceMetrics } = require("./lib/performance-metrics");
+        performanceMetrics.addMetric({
+          path,
+          method: req.method,
+          duration,
+          timestamp: Date.now(),
+          statusCode: res.statusCode,
+        });
+      } catch (error) {
+        // Игнорировать ошибки при сборе метрик
+      }
     }
   });
 
@@ -93,9 +107,6 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
-
-  // Error handling middleware (must be last)
-  app.use(errorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -107,10 +118,24 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
+  // Error handling middleware (must be last, after static files)
+  app.use(errorHandler);
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
+  // Start notification scheduler
+  if (process.env.NODE_ENV === "production" || process.env.ENABLE_NOTIFICATIONS === "true") {
+    try {
+      const { notificationScheduler } = await import("./lib/notification-scheduler");
+      notificationScheduler.start();
+      log("Notification scheduler started");
+    } catch (error) {
+      log(`Failed to start notification scheduler: ${error}`);
+    }
+  }
+
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {

@@ -12,7 +12,9 @@ import {
   Sparkles,
   ChevronRight,
   Calendar,
-  Play
+  Play,
+  Pause,
+  PlayCircle
 } from 'lucide-react';
 import type { Goal } from '@/lib/types';
 import { goalCategoryLabels as categoryLabels } from '@/lib/constants';
@@ -21,6 +23,8 @@ interface GoalCardProps {
   goal: Goal;
   onContinue?: (goal: Goal) => void;
   onEdit?: (goal: Goal) => void;
+  onPause?: (goal: Goal) => void;
+  onResume?: (goal: Goal) => void;
   compact?: boolean;
 }
 
@@ -38,6 +42,10 @@ const categoryIcons: Record<string, typeof BookOpen> = {
 function getStatusIndicator(goal: Goal): { color: string; label: string } {
   if (goal.status === 'completed') {
     return { color: 'bg-green-500', label: 'Выполнено' };
+  }
+  
+  if (goal.status === 'paused') {
+    return { color: 'bg-gray-500', label: 'Приостановлено' };
   }
   
   if (!goal.endDate) {
@@ -77,7 +85,7 @@ function getDailyPlan(goal: Goal): number | null {
   return Math.ceil(remaining / daysLeft);
 }
 
-export default function GoalCard({ goal, onContinue, onEdit, compact = false }: GoalCardProps) {
+export default function GoalCard({ goal, onContinue, onEdit, onPause, onResume, compact = false }: GoalCardProps) {
   const Icon = categoryIcons[goal.category] || Sparkles;
   const progress = (goal.currentProgress / goal.targetCount) * 100;
   const status = getStatusIndicator(goal);
@@ -172,11 +180,21 @@ export default function GoalCard({ goal, onContinue, onEdit, compact = false }: 
       </div>
 
       {dailyPlan !== null && (
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Ежедневный план:</span>
-          <span className="font-medium text-primary">{dailyPlan.toLocaleString()}/день</span>
-        </div>
+        <Card className="p-3 bg-primary/5 border-primary/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Ежедневный план</span>
+          </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            Для достижения цели делайте <span className="font-semibold text-primary">{dailyPlan.toLocaleString()}</span> в день
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Осталось дней:</span>
+            <span className="font-medium">
+              {goal.endDate ? Math.max(0, Math.ceil((new Date(goal.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0}
+            </span>
+          </div>
+        </Card>
       )}
 
       {goal.endDate && (
@@ -189,16 +207,39 @@ export default function GoalCard({ goal, onContinue, onEdit, compact = false }: 
       )}
 
       <div className="flex items-center gap-2 pt-1">
-        {goal.status !== 'completed' && (
+        {goal.status === 'paused' ? (
           <Button 
             size="sm" 
             className="flex-1 gap-2"
-            onClick={() => onContinue?.(goal)}
-            data-testid={`button-continue-goal-${goal.id}`}
+            onClick={() => onResume?.(goal)}
+            data-testid={`button-resume-goal-${goal.id}`}
           >
-            <Play className="w-4 h-4" />
-            {goal.linkedCounterType ? 'Перейти к тасбиху' : 'Продолжить'}
+            <PlayCircle className="w-4 h-4" />
+            Возобновить
           </Button>
+        ) : goal.status !== 'completed' && (
+          <>
+            <Button 
+              size="sm" 
+              className="flex-1 gap-2"
+              onClick={() => onContinue?.(goal)}
+              data-testid={`button-continue-goal-${goal.id}`}
+            >
+              <Play className="w-4 h-4" />
+              {goal.linkedCounterType ? 'Перейти к тасбиху' : 'Продолжить'}
+            </Button>
+            {goal.status === 'active' && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => onPause?.(goal)}
+                data-testid={`button-pause-goal-${goal.id}`}
+                title="Приостановить цель"
+              >
+                <Pause className="w-4 h-4" />
+              </Button>
+            )}
+          </>
         )}
         
         <Button 

@@ -291,7 +291,18 @@ router.get("/", async (req, res, next) => {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const badges = await storage.getBadges(userId);
       const newBadges = await checkAndAwardBadges(userId);
+      
+      // Отправить уведомления о новых бейджах
       if (newBadges.length > 0) {
+        try {
+          const { notificationScheduler } = await import("../lib/notification-scheduler");
+          for (const badge of newBadges) {
+            await notificationScheduler.sendBadgeNotification(userId, badge);
+          }
+        } catch (notifError) {
+          logger.error(`Error sending badge notifications:`, notifError);
+        }
+        
         const updatedBadges = await storage.getBadges(userId);
         return res.json({ badges: updatedBadges, newBadges });
       }
@@ -317,6 +328,19 @@ router.post("/check", async (req, res, next) => {
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       const newBadges = await checkAndAwardBadges(userId);
+      
+      // Отправить уведомления о новых бейджах
+      if (newBadges.length > 0) {
+        try {
+          const { notificationScheduler } = await import("../lib/notification-scheduler");
+          for (const badge of newBadges) {
+            await notificationScheduler.sendBadgeNotification(userId, badge);
+          }
+        } catch (notifError) {
+          logger.error(`Error sending badge notifications:`, notifError);
+        }
+      }
+      
       res.json({ newBadges });
     }
   } catch (error) {

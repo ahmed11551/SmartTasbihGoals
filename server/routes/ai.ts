@@ -68,5 +68,31 @@ Always respond in Russian. Be helpful, respectful, and supportive.`;
   }
 });
 
+// GET /api/ai/report - получить AI-отчет с дифференциацией по тарифам
+router.get("/report", async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const period = (req.query.period as 'week' | 'month' | 'quarter' | 'year') || 'week';
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({ 
+        error: "AI service is not configured",
+        message: "AI-отчеты недоступны. Настройте OPENAI_API_KEY."
+      });
+    }
+
+    const { generateAIReport } = await import("../lib/ai-reports");
+    const report = await generateAIReport(userId, period);
+
+    res.json({ report });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
 

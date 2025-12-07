@@ -26,9 +26,26 @@ export type FilterTag =
   | 'women'
   | 'youth';
 
+export type HabitSubcategory = 
+  // Намазы
+  | 'sunnah-namaz' | 'voluntary-namaz' | 'wudu'
+  // Коран
+  | 'surah' | 'juz' | 'study' | 'tajweed'
+  // Зикр
+  | 'tasbih' | 'dua' | 'morning-evening'
+  // Садака
+  | 'daily' | 'jariya' | 'help'
+  // Знания (уже есть)
+  | 'books' | 'alifba' | 'tajweed'
+  // Посты
+  | 'monday-thursday' | 'white-days' | 'moderation'
+  // Этикет
+  | 'gratitude' | 'behavior' | 'family';
+
 export interface HabitTemplate {
   id: string;
   category: HabitCategory;
+  subcategory?: HabitSubcategory;
   title: string;
   description: string;
   iconName: string;
@@ -74,6 +91,7 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'namaz-duha',
     category: 'namaz',
+    subcategory: 'sunnah-namaz',
     title: 'Намаз Духа',
     description: 'Совершать молитву в середине утра',
     iconName: 'Sunrise',
@@ -81,10 +99,12 @@ export const habitsCatalog: HabitTemplate[] = [
     tags: ['daily', 'recommended'],
     suggestedRepeat: 'daily',
     suggestedTime: '09:00',
+    hadithRef: 'muslim-720',
   },
   {
     id: 'namaz-tahajjud',
     category: 'namaz',
+    subcategory: 'voluntary-namaz',
     title: 'Намаз Тахаджуд',
     description: 'Вставать на ночную молитву',
     iconName: 'Moon',
@@ -118,6 +138,7 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'wudu-before-sleep',
     category: 'namaz',
+    subcategory: 'wudu',
     title: 'Совершать вуду перед сном',
     description: 'Усиление баракаи очищение',
     iconName: 'Droplets',
@@ -171,16 +192,19 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'surah-kahf',
     category: 'quran',
+    subcategory: 'surah',
     title: 'Читать суру Аль-Кахф',
     description: 'Каждый пятничный день',
     iconName: 'Mountain',
     difficulty: 'medium',
     tags: ['recommended'],
     suggestedRepeat: 'weekly',
+    hadithRef: 'bukhari-5017',
   },
   {
     id: 'surah-mulk',
     category: 'quran',
+    subcategory: 'surah',
     title: 'Читать суру Аль-Мульк',
     description: 'Каждый вечер перед сном',
     iconName: 'Crown',
@@ -188,6 +212,7 @@ export const habitsCatalog: HabitTemplate[] = [
     tags: ['daily', 'beginners'],
     suggestedRepeat: 'daily',
     suggestedTime: '22:00',
+    hadithRef: 'muslim-2699',
   },
   {
     id: 'surah-waqia',
@@ -212,6 +237,7 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'quran-juz-weekly',
     category: 'quran',
+    subcategory: 'juz',
     title: 'Читать 1 джуз в неделю',
     description: 'Для последовательного чтения всего Корана',
     iconName: 'Library',
@@ -222,6 +248,7 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'quran-tajweed',
     category: 'quran',
+    subcategory: 'tajweed',
     title: 'Читать Коран с таджвидом',
     description: 'Исправлять произношение',
     iconName: 'Target',
@@ -243,6 +270,7 @@ export const habitsCatalog: HabitTemplate[] = [
   {
     id: 'tasbih-after-namaz',
     category: 'dhikr',
+    subcategory: 'tasbih',
     title: '33× СубханАллах, 33× Альхамдулиллях, 34× Аллаху Акбар',
     description: 'После каждого намаза',
     iconName: 'CircleDot',
@@ -275,10 +303,12 @@ export const habitsCatalog: HabitTemplate[] = [
     suggestedRepeat: 'daily',
     linkedToTasbih: true,
     targetCount: 100,
+    hadithRef: 'muslim-408',
   },
   {
     id: 'morning-evening-azkar',
     category: 'dhikr',
+    subcategory: 'morning-evening',
     title: 'Утренние и вечерние азкары',
     description: 'До восхода и после захода солнца',
     iconName: 'Sunrise',
@@ -298,6 +328,7 @@ export const habitsCatalog: HabitTemplate[] = [
     suggestedRepeat: 'daily',
     linkedToTasbih: true,
     targetCount: 100,
+    hadithRef: 'bukhari-1981',
   },
   {
     id: 'dua-before-sleep',
@@ -584,4 +615,43 @@ export function searchHabits(query: string): HabitTemplate[] {
     h.title.toLowerCase().includes(lowerQuery) || 
     h.description.toLowerCase().includes(lowerQuery)
   );
+}
+
+// Маппинг подкатегорий для отображения
+export const subcategoryLabels: Record<HabitSubcategory, string> = {
+  // Намазы
+  'sunnah-namaz': 'Сунна намазы',
+  'voluntary-namaz': 'Добровольные намазы',
+  'wudu': 'Вуду',
+  // Коран
+  'surah': 'Суры',
+  'juz': 'Джузы',
+  'study': 'Изучение',
+  'tajweed': 'Таджвид',
+  // Зикр
+  'tasbih': 'Тасбих',
+  'dua': 'Дуа',
+  'morning-evening': 'Утренние и вечерние',
+  // Садака
+  'daily': 'Ежедневная',
+  'jariya': 'Джария',
+  'help': 'Помощь',
+  // Знания
+  'books': 'Книги',
+  'alifba': 'Алифба',
+  // Посты
+  'monday-thursday': 'Понедельник/Четверг',
+  'white-days': 'Белые дни',
+  'moderation': 'Умеренность',
+  // Этикет
+  'gratitude': 'Благодарность',
+  'behavior': 'Поведение',
+  'family': 'Семья',
+};
+
+// Получить подкатегории для категории
+export function getSubcategoriesForCategory(category: HabitCategory): HabitSubcategory[] {
+  const habits = habitsCatalog.filter(h => h.category === category && h.subcategory);
+  const subcategories = new Set(habits.map(h => h.subcategory!).filter(Boolean));
+  return Array.from(subcategories) as HabitSubcategory[];
 }

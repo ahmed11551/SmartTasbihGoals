@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi, qazaApi, badgesApi, categoryStreaksApi } from "@/lib/api";
+import { habitsApi, tasksApi, goalsApi, sessionsApi, dhikrApi, statsApi, qazaApi, badgesApi, categoryStreaksApi, notificationSettingsApi, aiApi, type NotificationSettings } from "@/lib/api";
 import type { Habit, Task, Goal, Badge, CategoryStreak } from "@/lib/types";
 
 // Habits
@@ -641,6 +641,112 @@ export function useUpdateCategoryStreaks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["category-streaks"] });
       queryClient.invalidateQueries({ queryKey: ["category-streak"] });
+    },
+  });
+}
+
+// Notification Settings
+export function useNotificationSettings() {
+  return useQuery({
+    queryKey: ["notification-settings"],
+    queryFn: async () => {
+      const res = await notificationSettingsApi.get();
+      return res.settings;
+    },
+  });
+}
+
+export function useUpdateNotificationSettings() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Partial<NotificationSettings>) => {
+      const res = await notificationSettingsApi.update(data);
+      return res.settings;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notification-settings"] });
+    },
+  });
+}
+
+export function useTestNotification() {
+  return useMutation({
+    mutationFn: notificationSettingsApi.test,
+  });
+}
+
+// AI Reports
+export function useAIReport(period: 'week' | 'month' | 'quarter' | 'year' = 'week') {
+  return useQuery({
+    queryKey: ["ai-report", period],
+    queryFn: async () => {
+      const res = await aiApi.getReport(period);
+      return res.report;
+    },
+    staleTime: 1000 * 60 * 60, // 1 час
+    retry: 1,
+  });
+}
+
+// Reports
+export function useDailyReport(date?: string) {
+  return useQuery({
+    queryKey: ["daily-report", date],
+    queryFn: async () => {
+      const { reportsApi } = await import("../lib/api");
+      const res = await reportsApi.getDaily(date);
+      return res;
+    },
+  });
+}
+
+export function useActivityHeatmap(params?: {
+  startDate?: string;
+  endDate?: string;
+  days?: number;
+}) {
+  return useQuery({
+    queryKey: ["activity-heatmap", params],
+    queryFn: async () => {
+      const { reportsApi } = await import("../lib/api");
+      const res = await reportsApi.getActivityHeatmap(params);
+      return res.data || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 минут
+  });
+}
+
+// Learn
+export function useLearnMark() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (goalId: string) => {
+      const { learnApi } = await import("../lib/api");
+      const res = await learnApi.mark(goalId);
+      return res.goal;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["dhikr-logs"] });
+    },
+  });
+}
+
+// Dhikr Logs - Delete Last (Undo)
+export function useDeleteLastDhikrLog() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId?: string) => {
+      const { dhikrApi } = await import("../lib/api");
+      const res = await dhikrApi.deleteLastLog(sessionId);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dhikr-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-azkar"] });
     },
   });
 }

@@ -1,18 +1,16 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// В CJS формате используем только process.cwd() - это безопасно и работает везде
 
 export function serveStatic(app: Express) {
   // Путь к статическим файлам: dist/public (куда собирается vite)
   // В зависимости от того, откуда запускается (source или compiled), путь может быть разный
+  // В CJS формате используем process.cwd() для определения корня проекта
   const possiblePaths = [
-    path.resolve(__dirname, "public"), // Если запускается из dist/ (собранный сервер)
-    path.resolve(process.cwd(), "dist", "public"), // Если запускается из корня проекта
-    path.resolve(__dirname, "..", "dist", "public"), // Если запускается из server/
+    path.resolve(process.cwd(), "dist", "public"), // Основной путь - из корня проекта
+    path.resolve(process.cwd(), "public"), // Альтернативный путь
   ];
 
   let distPath: string | null = null;

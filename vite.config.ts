@@ -11,14 +11,15 @@ const __dirname = path.dirname(__filename);
 const isProduction = process.env.NODE_ENV === "production";
 const isReplit = process.env.REPL_ID !== undefined;
 const isVercel = process.env.VERCEL === "1";
+const isDocker = process.env.DOCKER === "1" || (process.env.NODE_ENV === "production" && !process.env.VERCEL);
 
 export default defineConfig({
   plugins: [
     react(),
     // Runtime error overlay только в dev на Replit
     ...(!isProduction && isReplit ? [runtimeErrorOverlay()] : []),
-    // Module Federation только если не на Vercel (чтобы избежать проблем при сборке)
-    ...(!isVercel ? [
+    // Module Federation только если не на Vercel и не в Docker (чтобы избежать проблем при сборке)
+    ...(!isVercel && !isDocker ? [
       federation({
         name: 'smartTasbih',
         filename: 'remoteEntry.js',
@@ -77,7 +78,21 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
-          // Code splitting для оптимизации bundle size
+          // Для Docker production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
+          if (isDocker) {
+            // В Docker все vendor библиотеки в одном chunk
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+            // Страницы в отдельные чанки для lazy loading
+            if (id.includes('/pages/')) {
+              const pageName = id.split('/pages/')[1]?.split('.')[0];
+              return `page-${pageName}`;
+            }
+            return null;
+          }
+          
+          // Code splitting для оптимизации bundle size (не Docker)
           if (id.includes('node_modules')) {
             // Разделяем крупные библиотеки
             if (id.includes('react') || id.includes('react-dom')) {

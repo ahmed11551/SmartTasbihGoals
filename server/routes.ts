@@ -14,12 +14,18 @@ import badgesRoutes from "./routes/badges";
 import categoryStreaksRoutes from "./routes/category-streaks";
 import usersRoutes from "./routes/users";
 import notificationsRoutes from "./routes/notifications";
+import notificationSettingsRoutes from "./routes/notification-settings";
+import groupsRoutes from "./routes/groups";
+import bootstrapRoutes from "./routes/bootstrap";
+import reportsRoutes from "./routes/reports";
+import learnRoutes from "./routes/learn";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   // API routes
+  app.use("/api/bootstrap", bootstrapRoutes);
   app.use("/api/auth", authRoutes);
   app.use("/api/habits", habitsRoutes);
   app.use("/api/tasks", tasksRoutes);
@@ -34,6 +40,10 @@ export async function registerRoutes(
   app.use("/api/category-streaks", categoryStreaksRoutes);
   app.use("/api/users", usersRoutes);
   app.use("/api/notifications", notificationsRoutes);
+  app.use("/api/notification-settings", notificationSettingsRoutes);
+  app.use("/api/groups", groupsRoutes);
+  app.use("/api/v1/reports", reportsRoutes);
+  app.use("/api/v1/learn", learnRoutes);
 
   return httpServer;
 }

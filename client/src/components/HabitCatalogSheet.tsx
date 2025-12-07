@@ -27,11 +27,15 @@ import {
   filterTags,
   habitsCatalog,
   difficultyLabels,
+  subcategoryLabels,
+  getSubcategoriesForCategory,
   type HabitTemplate,
   type HabitCategory,
   type FilterTag,
+  type HabitSubcategory,
 } from '@/lib/habitsCatalog';
 import { getIconByName } from '@/lib/iconUtils';
+import HabitDetailSheet from './HabitDetailSheet';
 
 interface HabitCatalogSheetProps {
   onSelectHabit: (habit: HabitTemplate) => void;
@@ -47,8 +51,11 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
   const setOpen = onOpenChange ?? setInternalOpen;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<HabitCategory | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<FilterTag | null>(null);
   const [selectedHabitForAction, setSelectedHabitForAction] = useState<HabitTemplate | null>(null);
+  const [selectedHabitForDetail, setSelectedHabitForDetail] = useState<HabitTemplate | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   const filteredHabits = useMemo(() => {
     let habits = habitsCatalog;
@@ -65,12 +72,21 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
       habits = habits.filter(h => h.category === selectedCategory);
     }
 
+    if (selectedSubcategory) {
+      habits = habits.filter(h => h.subcategory === selectedSubcategory);
+    }
+
     if (selectedTag) {
       habits = habits.filter(h => h.tags.includes(selectedTag));
     }
 
     return habits;
-  }, [searchQuery, selectedCategory, selectedTag]);
+  }, [searchQuery, selectedCategory, selectedSubcategory, selectedTag]);
+
+  const subcategories = useMemo(() => {
+    if (!selectedCategory) return [];
+    return getSubcategoriesForCategory(selectedCategory);
+  }, [selectedCategory]);
 
   const handleCreateHabit = () => {
     if (selectedHabitForAction) {
@@ -96,11 +112,12 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
 
   const clearFilters = () => {
     setSelectedCategory(null);
+    setSelectedSubcategory(null);
     setSelectedTag(null);
     setSearchQuery('');
   };
 
-  const hasActiveFilters = selectedCategory || selectedTag || searchQuery;
+  const hasActiveFilters = selectedCategory || selectedSubcategory || selectedTag || searchQuery;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -199,15 +216,57 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
             {(selectedCategory || searchQuery || selectedTag) && (
               <div className="space-y-2">
                 {selectedCategory && !searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCategory(null)}
-                    className="mb-2 -ml-2 text-primary"
-                  >
-                    <ChevronRight className="w-4 h-4 mr-1 rotate-180" />
-                    Все категории
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setSelectedSubcategory(null);
+                      }}
+                      className="mb-2 -ml-2 text-primary"
+                    >
+                      <ChevronRight className="w-4 h-4 mr-1 rotate-180" />
+                      Все категории
+                    </Button>
+                    
+                    {/* Подкатегории */}
+                    {subcategories.length > 0 && !selectedSubcategory && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <Button
+                          variant={selectedSubcategory === null ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedSubcategory(null)}
+                          className="text-xs"
+                        >
+                          Все
+                        </Button>
+                        {subcategories.map((subcat) => (
+                          <Button
+                            key={subcat}
+                            variant={selectedSubcategory === subcat ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedSubcategory(subcat)}
+                            className="text-xs"
+                          >
+                            {subcategoryLabels[subcat]}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {selectedSubcategory && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedSubcategory(null)}
+                        className="mb-2 -ml-2 text-primary text-xs"
+                      >
+                        <ChevronRight className="w-3 h-3 mr-1 rotate-180" />
+                        {subcategoryLabels[selectedSubcategory as HabitSubcategory]}
+                      </Button>
+                    )}
+                  </div>
                 )}
 
                 {filteredHabits.length === 0 ? (
@@ -229,19 +288,11 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
                     return (
                       <Card
                         key={habit.id}
-                        className="p-4 hover-elevate transition-all"
+                        className="p-4 hover-elevate transition-all cursor-pointer"
                         onClick={() => {
-                          // Если есть опция создания цели, показываем диалог при клике на карточку
-                          if (onSelectHabitForGoal) {
-                            setSelectedHabitForAction(habit);
-                          } else {
-                            // Иначе сразу создаем привычку
-                            onSelectHabit(habit);
-                            setOpen(false);
-                            setSearchQuery('');
-                            setSelectedCategory(null);
-                            setSelectedTag(null);
-                          }
+                          // Показываем детальную карточку при клике на карточку
+                          setSelectedHabitForDetail(habit);
+                          setDetailSheetOpen(true);
                         }}
                         data-testid={`habit-card-${habit.id}`}
                       >
@@ -286,38 +337,14 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
                                 className="flex-1 h-8 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onSelectHabit(habit);
-                                  setOpen(false);
-                                  setSearchQuery('');
-                                  setSelectedCategory(null);
-                                  setSelectedTag(null);
+                                  // Показываем детальную карточку
+                                  setSelectedHabitForDetail(habit);
+                                  setDetailSheetOpen(true);
                                 }}
-                                data-testid={`button-create-habit-${habit.id}`}
+                                data-testid={`button-view-detail-${habit.id}`}
                               >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Привычка
+                                Подробнее
                               </Button>
-                              {onSelectHabitForGoal && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="flex-1 h-8 text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onSelectHabitForGoal) {
-                                      onSelectHabitForGoal(habit);
-                                      setOpen(false);
-                                      setSearchQuery('');
-                                      setSelectedCategory(null);
-                                      setSelectedTag(null);
-                                    }
-                                  }}
-                                  data-testid={`button-create-goal-${habit.id}`}
-                                >
-                                  <Target className="w-3 h-3 mr-1" />
-                                  Цель
-                                </Button>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -373,6 +400,31 @@ export default function HabitCatalogSheet({ onSelectHabit, onSelectHabitForGoal,
           </div>
         )}
       </SheetContent>
+
+      {/* Детальная карточка с хадисом */}
+      <HabitDetailSheet
+        habit={selectedHabitForDetail}
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        onAddHabit={() => {
+          if (selectedHabitForDetail) {
+            onSelectHabit(selectedHabitForDetail);
+            setOpen(false);
+            setSearchQuery('');
+            setSelectedCategory(null);
+            setSelectedTag(null);
+          }
+        }}
+        onAddGoal={() => {
+          if (selectedHabitForDetail && onSelectHabitForGoal) {
+            onSelectHabitForGoal(selectedHabitForDetail);
+            setOpen(false);
+            setSearchQuery('');
+            setSelectedCategory(null);
+            setSelectedTag(null);
+          }
+        }}
+      />
     </Sheet>
   );
 }

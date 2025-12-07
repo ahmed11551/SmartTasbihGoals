@@ -52,6 +52,8 @@ import {
   Square,
   X,
   Calculator,
+  Play,
+  Clock,
 } from 'lucide-react';
 import HabitCatalogSheet from '@/components/HabitCatalogSheet';
 import HabitCreationSheet from '@/components/HabitCreationSheet';
@@ -63,7 +65,7 @@ import CalendarSheet from '@/components/CalendarSheet';
 import type { Habit, Task, Goal, WeekDay } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { habitCategories } from '@/lib/habitsCatalog';
-import { goalCategoryLabels } from '@/lib/constants';
+import { goalCategoryLabels, prayerLabels } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { getIconByName } from '@/lib/iconUtils';
 import { useData } from '@/context/DataContext';
@@ -72,19 +74,24 @@ import {
   useCreateGoal, 
   useUpdateGoal, 
   useDeleteGoal,
+  useHabits,
   useCreateHabit,
   useUpdateHabit,
   useDeleteHabit,
+  useTasks,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
   useCheckBadges,
+  useUnfinishedSessions,
+  useUpdateSession,
 } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { GoalsListSkeleton, HabitsListSkeleton, TasksListSkeleton } from '@/components/ui/loading-skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
+import { findDhikrItemById } from '@/lib/dhikrUtils';
 
 function getWeekDays(baseDate: Date = new Date()): { date: Date; dayName: string; dayNum: number; isToday: boolean }[] {
   const days = [];
@@ -517,8 +524,8 @@ export default function GoalsPage() {
   const queryClient = useQueryClient();
   // ВАЖНО: useGoals возвращает массив, поэтому data: goals (множественное число)
   const { data: goals = [], isLoading: goalsLoading } = useGoals();
-  const { data: habits: apiHabits = [], isLoading: habitsLoading } = useHabits();
-  const { data: tasks: apiTasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: apiHabits = [], isLoading: habitsLoading } = useHabits();
+  const { data: apiTasks = [], isLoading: tasksLoading } = useTasks();
   const createGoalMutation = useCreateGoal();
   const updateGoalMutation = useUpdateGoal();
   const deleteGoalMutation = useDeleteGoal();
@@ -548,7 +555,7 @@ export default function GoalsPage() {
   const [tasksOpen, setTasksOpen] = useState(true);
   const [habitsOpen, setHabitsOpen] = useState(true);
   const [taskFilter, setTaskFilter] = useState<'all' | 'today' | 'tomorrow' | 'no_date'>('all');
-  const [goalFilter, setGoalFilter] = useState<'all' | 'active' | 'completed' | 'archived'>('all');
+  const [goalFilter, setGoalFilter] = useState<'all' | 'active' | 'paused' | 'completed' | 'archived'>('all');
   const [highlightedHabitId, setHighlightedHabitId] = useState<string | null>(null);
   
   const habitRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -576,8 +583,12 @@ export default function GoalsPage() {
   const [habitCategoryFilter, setHabitCategoryFilter] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [sessionDeleteDialogOpen, setSessionDeleteDialogOpen] = useState(false);
 
   const weekDays = useMemo(() => getWeekDays(), []);
+  const { data: unfinishedSessions = [] } = useUnfinishedSessions();
+  const updateSessionMutation = useUpdateSession();
 
   // Автоматическое обновление данных при смене дня
   useEffect(() => {
@@ -842,6 +853,44 @@ export default function GoalsPage() {
     setGoalDeleteDialogOpen(true);
   };
 
+  const handlePauseGoal = async (goal: Goal) => {
+    try {
+      await updateGoalMutation.mutateAsync({
+        id: goal.id,
+        data: { status: 'paused' },
+      });
+      toast({
+        title: "Цель приостановлена",
+        description: "Цель временно приостановлена. Вы можете возобновить её позже.",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось приостановить цель",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResumeGoal = async (goal: Goal) => {
+    try {
+      await updateGoalMutation.mutateAsync({
+        id: goal.id,
+        data: { status: 'active' },
+      });
+      toast({
+        title: "Цель возобновлена",
+        description: "Цель снова активна.",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось возобновить цель",
+        variant: "destructive",
+      });
+    }
+  };
+
   const confirmDeleteGoal = async () => {
     if (goalToDelete) {
       try {
@@ -860,6 +909,50 @@ export default function GoalsPage() {
       }
     }
     setGoalDeleteDialogOpen(false);
+  };
+
+  const formatTimeAgo = (date: Date) => {
+    const minutes = Math.floor((Date.now() - date.getTime()) / 1000 / 60);
+    if (minutes < 60) return `${minutes} мин назад`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ч назад`;
+    return `${Math.floor(hours / 24)} дн назад`;
+  };
+
+  const handleContinueSession = (session: any) => {
+    // Переход на страницу тасбиха с сохранением информации о сессии
+    window.location.href = `/tasbih?sessionId=${session.id}`;
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    setSessionToDelete(sessionId);
+    setSessionDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (sessionToDelete) {
+      try {
+        // Завершаем сессию (устанавливаем endedAt)
+        await updateSessionMutation.mutateAsync({
+          id: sessionToDelete,
+          data: { endedAt: new Date().toISOString() },
+        });
+        toast({
+          title: "Сессия удалена",
+          description: "Незавершенная сессия успешно удалена",
+        });
+        setSessionToDelete(null);
+        // Инвалидируем кэш незавершенных сессий
+        queryClient.invalidateQueries({ queryKey: ['unfinished-sessions'] });
+      } catch (error) {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось удалить сессию",
+          variant: "destructive",
+        });
+      }
+    }
+    setSessionDeleteDialogOpen(false);
   };
 
   const handleCreateTask = async (taskData: Partial<Task>) => {
@@ -1011,6 +1104,24 @@ export default function GoalsPage() {
           <div className="space-y-4">
             <AIInsight habits={habitsList} />
 
+        {/* Быстрое действие: После намаза */}
+        <Card className="p-3 bg-primary/5 border-primary/20">
+          <Link href="/tasbih">
+            <div className="flex items-center justify-between cursor-pointer hover:bg-primary/10 rounded-lg p-2 -m-2 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm">После намаза</h3>
+                  <p className="text-xs text-muted-foreground">Зикры и салаваты после намаза</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </Link>
+        </Card>
+
         {/* Быстрый доступ к калькулятору Каза */}
         <Card className="p-3 bg-primary/5 border-primary/20">
           <Link href="/qaza-calculator">
@@ -1029,6 +1140,79 @@ export default function GoalsPage() {
           </Link>
         </Card>
 
+        {/* Блок "Тасбих" с незавершенными действиями */}
+        {unfinishedSessions.length > 0 && (
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold text-base">Тасбих</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Недавние незавершенные действия
+            </p>
+            
+            <div className="space-y-2">
+              {unfinishedSessions.map((session: any) => {
+                const dhikrItem = session.category && session.itemId
+                  ? findDhikrItemById(session.category, session.itemId)
+                  : null;
+                const sessionTitle = dhikrItem 
+                  ? dhikrItem.titleRu 
+                  : session.goal?.title || 'Неизвестный зикр';
+                const startedDate = new Date(session.startedAt);
+                const currentCount = session.currentCount || 0;
+                const targetCount = session.goal?.targetCount || 100;
+                const progress = Math.min((currentCount / targetCount) * 100, 100);
+
+                return (
+                  <Card
+                    key={session.id}
+                    className="p-3 border-border"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" title={sessionTitle}>
+                            {sessionTitle}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <span>{currentCount}/{targetCount}</span>
+                            <span>•</span>
+                            <span>{formatTimeAgo(startedDate)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Progress value={progress} className="h-2" />
+                      
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1"
+                          onClick={() => handleContinueSession(session)}
+                          data-testid={`button-continue-session-${session.id}`}
+                        >
+                          <Play className="w-4 h-4 mr-1" />
+                          Продолжить
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteSession(session.id)}
+                          data-testid={`button-delete-session-${session.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </Card>
+        )}
+
         <Collapsible open={goalsOpen} onOpenChange={setGoalsOpen}>
           <CollapsibleTrigger className="w-full">
             <div className="flex items-center justify-between py-2">
@@ -1042,7 +1226,7 @@ export default function GoalsPage() {
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {(['all', 'active', 'completed', 'archived'] as const).map((filter) => (
+              {(['all', 'active', 'paused', 'completed', 'archived'] as const).map((filter) => (
                 <Button
                   key={filter}
                   variant={goalFilter === filter ? 'default' : 'outline'}
@@ -1051,7 +1235,7 @@ export default function GoalsPage() {
                   className="text-xs whitespace-nowrap"
                   data-testid={`button-filter-goal-${filter}`}
                 >
-                  {filter === 'all' ? 'Все' : filter === 'active' ? 'Активные' : filter === 'completed' ? 'Выполненные' : 'Архив'}
+                  {filter === 'all' ? 'Все' : filter === 'active' ? 'Активные' : filter === 'paused' ? 'Приостановленные' : filter === 'completed' ? 'Выполненные' : 'Архив'}
                 </Button>
               ))}
             </div>
@@ -1098,7 +1282,8 @@ export default function GoalsPage() {
                             key={goal.id} 
                             goal={goal} 
                             onEdit={handleEditGoal}
-                            onDelete={handleDeleteGoal}
+                            onPause={handlePauseGoal}
+                            onResume={handleResumeGoal}
                           />
                         ))}
                       </div>
@@ -1124,7 +1309,8 @@ export default function GoalsPage() {
                             key={goal.id} 
                             goal={goal} 
                             onEdit={handleEditGoal}
-                            onDelete={handleDeleteGoal}
+                            onPause={handlePauseGoal}
+                            onResume={handleResumeGoal}
                           />
                         ))}
                       </div>
@@ -1344,9 +1530,6 @@ export default function GoalsPage() {
                     </Button>
                   }
                 />
-              </div>
-            ) : (
-              <>
                 <ScrollArea className="w-full pb-1">
                   <div className="flex gap-1.5 pb-1">
                     <button
@@ -1566,6 +1749,23 @@ export default function GoalsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteGoal} className="bg-destructive text-destructive-foreground">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={sessionDeleteDialogOpen} onOpenChange={setSessionDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить незавершенную сессию?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Сессия будет завершена и удалена из списка незавершенных.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteSession} className="bg-destructive text-destructive-foreground">
               Удалить
             </AlertDialogAction>
           </AlertDialogFooter>

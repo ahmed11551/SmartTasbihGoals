@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getTelegramUser, isTelegramWebApp, getTelegramInitData } from '@/lib/telegram';
 import { useQuery } from '@tanstack/react-query';
-import { setAuthToken, setUserId } from '@/lib/auth';
+import { setAuthToken, setUserId, getUserId } from '@/lib/auth';
 
 export default function TelegramAuth() {
   const [initData, setInitData] = useState<string | null>(null);
@@ -60,16 +60,49 @@ export default function TelegramAuth() {
     retry: false,
   });
 
-  // Также установить токен для обычных пользователей (без Telegram)
-  useEffect(() => {
-    if (!isTelegramWebApp()) {
-      // Для тестирования без Telegram - установить дефолтные значения
-      const userId = localStorage.getItem('user_id') || 'default-user';
-      const token = localStorage.getItem('api_token') || 'test_token_123';
-      setUserId(userId, true);
-      setAuthToken(token, true);
-    }
-  }, []);
+  // Автоматическая гостеневая авторизация для пользователей без Telegram
+  const { data: guestUser } = useQuery({
+    queryKey: ['guest-auth'],
+    queryFn: async () => {
+      if (isTelegramWebApp()) return null; // Пропускаем для Telegram пользователей
+      
+      // Проверяем, есть ли уже авторизованный пользователь
+      const existingUserId = getUserId();
+      if (existingUserId && existingUserId !== 'default-user') {
+        return null; // Уже авторизован
+      }
+
+      try {
+        const response = await fetch('/api/auth/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.user?.id) {
+            setUserId(data.user.id, true);
+            setAuthToken('test_token_123', true);
+            return data.user;
+          }
+        }
+      } catch (error) {
+        // Ошибка при создании гостя - используем дефолтного пользователя
+        console.warn('Failed to create guest session, using default user:', error);
+      }
+      
+      // Fallback: используем дефолтного пользователя
+      const defaultUserId = 'default-user';
+      setUserId(defaultUserId, true);
+      setAuthToken('test_token_123', true);
+      return { id: defaultUserId, username: 'Гость' };
+    },
+    enabled: !isTelegramWebApp(),
+    retry: false,
+    staleTime: Infinity, // Не обновлять гостевую сессию
+  });
 
   // Компонент работает в фоне, не рендерит UI
   return null;

@@ -39,9 +39,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import type { Habit, RepeatType, WeekDay, HabitCategory, HabitDifficulty } from '@/lib/types';
+import type { Habit, RepeatType, WeekDay, HabitCategory, HabitDifficulty, KnowledgeSubcategory } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { habitCategories, repeatLabels } from '@/lib/habitsCatalog';
+import { knowledgeSubcategories } from '@/lib/constants';
 import { getIconByName } from '@/lib/iconUtils';
 
 interface HabitCreationSheetProps {
@@ -88,6 +89,7 @@ export default function HabitCreationSheet({
   const [notes, setNotes] = useState('');
   const [url, setUrl] = useState('');
   const [category, setCategory] = useState<HabitCategory>('dhikr');
+  const [subcategory, setSubcategory] = useState<KnowledgeSubcategory | undefined>(undefined);
   const [iconName, setIconName] = useState('CircleDot');
   
   const [hasTime, setHasTime] = useState(false);
@@ -115,6 +117,7 @@ export default function HabitCreationSheet({
       setNotes(habit.description || '');
       setUrl(habit.url || '');
       setCategory(habit.category);
+      setSubcategory(habit.subcategory);
       setIconName(habit.iconName);
       setHasTime(!!habit.time);
       setTime(habit.time || '20:00');
@@ -136,6 +139,7 @@ export default function HabitCreationSheet({
       setNotes(tmpl.description);
       setUrl('');
       setCategory(tmpl.category);
+      setSubcategory(undefined); // Шаблоны не имеют подкатегорий
       setIconName(tmpl.iconName);
       setHasTime(!!tmpl.suggestedTime);
       setTime(tmpl.suggestedTime || '20:00');
@@ -154,6 +158,7 @@ export default function HabitCreationSheet({
       setNotes('');
       setUrl('');
       setCategory('dhikr');
+      setSubcategory(undefined);
       setIconName('CircleDot');
       setHasTime(false);
       setTime('20:00');
@@ -173,6 +178,13 @@ export default function HabitCreationSheet({
   useEffect(() => {
     initializeFromSource(editingHabit || null, template || null);
   }, [editingHabit, template, open]);
+
+  // Очищаем subcategory если категория не knowledge
+  useEffect(() => {
+    if (category !== 'knowledge') {
+      setSubcategory(undefined);
+    }
+  }, [category]);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -198,6 +210,7 @@ export default function HabitCreationSheet({
     const habit: Partial<Habit> = {
       templateId: template?.id,
       category,
+      subcategory: category === 'knowledge' ? subcategory : undefined, // Только для knowledge
       title: title.trim(),
       description: notes.trim() || undefined,
       iconName,
@@ -232,6 +245,7 @@ export default function HabitCreationSheet({
     setNotes('');
     setUrl('');
     setCategory('dhikr');
+    setSubcategory(undefined);
     setIconName('CircleDot');
     setHasTime(false);
     setTime('20:00');
@@ -512,6 +526,28 @@ export default function HabitCreationSheet({
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
+
+                {category === 'knowledge' && (
+                  <div className="p-4 space-y-2">
+                    <Label className="text-sm">Подкатегория</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {knowledgeSubcategories.map((subcat) => (
+                        <Button
+                          key={subcat.id}
+                          type="button"
+                          variant={subcategory === subcat.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSubcategory(subcategory === subcat.id ? undefined : subcat.id)}
+                          className="flex items-center gap-2"
+                          data-testid={`button-subcategory-${subcat.id}`}
+                        >
+                          {getIconByName(subcat.icon, "w-4 h-4")}
+                          {subcat.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {linkedToTasbih && (
                   <div className="flex items-center justify-between p-4">

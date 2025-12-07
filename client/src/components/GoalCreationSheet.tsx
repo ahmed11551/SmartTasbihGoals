@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import {
   Sheet,
   SheetContent,
@@ -7,7 +8,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,6 +24,7 @@ import { Plus, Calendar } from 'lucide-react';
 import type { Category, GoalType } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { goalCategoryLabels as categoryLabels, habitCategoryToGoalCategory } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 interface GoalCreationSheetProps {
   onSubmit?: (goal: {
@@ -39,6 +41,16 @@ interface GoalCreationSheetProps {
   habitTemplate?: HabitTemplate | null;
   editingGoal?: any;
 }
+
+type GoalFormData = {
+  category: Category;
+  goalType: GoalType;
+  title: string;
+  targetCount: number;
+  hasDeadline: boolean;
+  endDate: string;
+  linkedToTasbih: boolean;
+};
 
 export default function GoalCreationSheet({ onSubmit, trigger, open: controlledOpen, onOpenChange, habitTemplate, editingGoal }: GoalCreationSheetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -166,6 +178,30 @@ export default function GoalCreationSheet({ onSubmit, trigger, open: controlledO
   };
 
   const presetTargets = [33, 99, 100, 500, 1000, 5000, 10000];
+
+  // Функция для вычисления даты окончания периода
+  const getPeriodEndDate = (period: 'week' | 'month' | 'forty' | 'year'): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(today);
+    
+    switch (period) {
+      case 'week':
+        endDate.setDate(today.getDate() + 7);
+        break;
+      case 'month':
+        endDate.setMonth(today.getMonth() + 1);
+        break;
+      case 'forty':
+        endDate.setDate(today.getDate() + 40);
+        break;
+      case 'year':
+        endDate.setFullYear(today.getFullYear() + 1);
+        break;
+    }
+    
+    return endDate.toISOString().split('T')[0];
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -345,7 +381,62 @@ export default function GoalCreationSheet({ onSubmit, trigger, open: controlledO
 
           {hasDeadline && (
             <div className="space-y-2">
-              <Label htmlFor="endDate">Срок выполнения</Label>
+              <Label>Период выполнения</Label>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                <Button
+                  type="button"
+                  variant={!endDate || endDate === getPeriodEndDate('week') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    const date = getPeriodEndDate('week');
+                    setValue('endDate', date, { shouldValidate: true });
+                  }}
+                  className="shrink-0"
+                  data-testid="button-period-week"
+                >
+                  Неделя
+                </Button>
+                <Button
+                  type="button"
+                  variant={endDate === getPeriodEndDate('month') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    const date = getPeriodEndDate('month');
+                    setValue('endDate', date, { shouldValidate: true });
+                  }}
+                  className="shrink-0"
+                  data-testid="button-period-month"
+                >
+                  Месяц
+                </Button>
+                <Button
+                  type="button"
+                  variant={endDate === getPeriodEndDate('forty') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    const date = getPeriodEndDate('forty');
+                    setValue('endDate', date, { shouldValidate: true });
+                  }}
+                  className="shrink-0"
+                  data-testid="button-period-forty"
+                >
+                  40 дней
+                </Button>
+                <Button
+                  type="button"
+                  variant={endDate === getPeriodEndDate('year') ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    const date = getPeriodEndDate('year');
+                    setValue('endDate', date, { shouldValidate: true });
+                  }}
+                  className="shrink-0"
+                  data-testid="button-period-year"
+                >
+                  Год
+                </Button>
+              </div>
+              <Label htmlFor="endDate">Или выберите конкретную дату</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -370,6 +461,12 @@ export default function GoalCreationSheet({ onSubmit, trigger, open: controlledO
                   data-testid="input-end-date"
                 />
               </div>
+              {errors.endDate && (
+                <div className="flex items-center gap-1 text-sm text-destructive">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.endDate.message}</span>
+                </div>
+              )}
             </div>
           )}
 

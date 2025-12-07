@@ -34,6 +34,14 @@ export function errorHandler(
           error: "Unique constraint violation",
           field: err.meta?.target,
         });
+      case "P2003":
+        // Foreign key constraint violation - обычно пользователь не существует
+        logger.error("ForeignKey constraint violation:", err);
+        return res.status(404).json({
+          error: "Record not found",
+          message: "Связанная запись не найдена. Возможно, пользователь не существует.",
+          code: err.code,
+        });
       case "P2025":
         return res.status(404).json({
           error: "Record not found",

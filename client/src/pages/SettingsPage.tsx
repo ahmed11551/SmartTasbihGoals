@@ -26,6 +26,8 @@ import {
   Crown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ProfileSheet from '@/components/ProfileSheet';
+import NotificationSettingsSheet from '@/components/NotificationSettingsSheet';
 
 export default function SettingsPage() {
   const [darkMode, setDarkMode] = useState(false);
@@ -34,6 +36,8 @@ export default function SettingsPage() {
   const [soundEffects, setSoundEffects] = useState(false);
   const [language, setLanguage] = useState('ru');
   const [transcriptionType, setTranscriptionType] = useState('cyrillic');
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
 
   const handleDarkModeChange = (enabled: boolean) => {
     setDarkMode(enabled);
@@ -71,7 +75,11 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground px-1">Профиль</h2>
           <Card className="divide-y divide-border">
-            <button className="flex items-center gap-4 p-4 w-full hover-elevate" data-testid="button-profile">
+            <button 
+              className="flex items-center gap-4 p-4 w-full hover-elevate" 
+              data-testid="button-profile"
+              onClick={() => setProfileOpen(true)}
+            >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="w-5 h-5 text-primary" />
               </div>
@@ -104,18 +112,17 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4">
+            <button 
+              className="flex items-center justify-between p-4 w-full hover-elevate" 
+              onClick={() => setNotificationSettingsOpen(true)}
+              data-testid="button-notification-settings"
+            >
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-muted-foreground" />
-                <Label htmlFor="notifications">Уведомления</Label>
+                <Label htmlFor="notifications" className="cursor-pointer">Умные уведомления</Label>
               </div>
-              <Switch
-                id="notifications"
-                checked={notifications}
-                onCheckedChange={setNotifications}
-                data-testid="switch-notifications"
-              />
-            </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
 
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
@@ -212,6 +219,12 @@ export default function SettingsPage() {
           </p>
         </div>
       </main>
+
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
+      <NotificationSettingsSheet 
+        open={notificationSettingsOpen} 
+        onOpenChange={setNotificationSettingsOpen} 
+      />
     </div>
   );
 }

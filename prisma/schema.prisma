@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -94,24 +95,38 @@ enum SubscriptionTier {
 }
 
 model User {
-  id              String           @id @default(uuid())
-  username        String           @unique
-  password        String
-  subscriptionTier SubscriptionTier @default(muslim)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                  String           @id @default(uuid())
+  username            String           @unique
+  password            String
+  subscriptionTier    SubscriptionTier @default(muslim)
+  telegramId          String?
+  firstName           String?
+  locale              String?          // 'ru', 'en', 'ar' - язык интерфейса
+  madhab              String?          // 'hanafi', 'shafii', 'maliki', 'hanbali' - мазхаб
+  tz                  String           @default("UTC") // Часовой пояс, например "Europe/Moscow"
+  notificationsEnabled Boolean          @default(true)
+  notificationTime    String?          @default("09:00")
+  notificationDays    String[]         @default(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
-  habits        Habit[]
-  tasks         Task[]
-  goals         Goal[]
-  sessions      Session[]
-  dhikrLogs     DhikrLog[]
-  dailyAzkar    DailyAzkar[]
-  badges        Badge[]
-  calendarEvents CalendarEvent[]
-  qazaDebt      QazaDebt?
-  qazaCalendar  QazaCalendarEntry[]
-  categoryStreaks CategoryStreak[]
+  habits              Habit[]
+  tasks               Task[]
+  goals               Goal[]
+  sessions            Session[]
+  dhikrLogs           DhikrLog[]
+  dailyAzkar          DailyAzkar[]
+  badges              Badge[]
+  calendarEvents      CalendarEvent[]
+  qazaDebt            QazaDebt?
+  qazaCalendar        QazaCalendarEntry[]
+  categoryStreaks     CategoryStreak[]
+  notificationLogs    NotificationLog[]
+  ownedGroups         Group[]             @relation("GroupOwner")
+  groupMemberships    GroupMember[]       @relation("GroupMembers")
+  groupGoalProgress   GroupGoalProgress[] @relation("GroupGoalProgress")
+
+  @@index([telegramId])
 }
 
 model Habit {
@@ -119,6 +134,7 @@ model Habit {
   userId        String
   templateId    String?
   category      HabitCategory
+  subcategory   String?       // Подкатегория для категории "knowledge" (books, alifba, tajweed)
   title         String
   description   String?
   iconName      String
@@ -146,6 +162,7 @@ model Habit {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([category, subcategory]) // Индекс для фильтрации по категории и подкатегории
 }
 
 model Task {
@@ -180,14 +197,18 @@ model Goal {
   startDate       DateTime
   endDate         DateTime?
   linkedCounterType String?
+  repeatType      RepeatType @default(never)
+  lastResetDate   DateTime?
   createdAt       DateTime   @default(now())
   completedAt     DateTime?
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions  Session[]
-  dhikrLogs DhikrLog[]
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions        Session[]
+  dhikrLogs       DhikrLog[]
+  notificationLogs NotificationLog[]
 
   @@index([userId])
+  @@index([status, repeatType])
 }
 
 model Session {
@@ -358,5 +379,135 @@ model CategoryStreak {
 
   @@unique([userId, category])
   @@index([userId])
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  userId    String
+  goalId    String?
+  type      String   // 'daily_plan', 'motivation', 'badge', 'goal_completed'
+  message   String   @db.Text
+  sentAt    DateTime @default(now())
+  success   Boolean  @default(true)
+  error     String?  @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal Goal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sentAt])
+}
+
+// Групповые цели (совместные челленджи) - только для Premium тарифа
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  inviteCode  String   @unique
+  isPublic    Boolean  @default(false)
+  maxMembers  Int      @default(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  goals       GroupGoal[]
+  invites     GroupInvite[]
+
+  @@index([ownerId])
+  @@index([inviteCode])
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  groupId   String
+  userId    String
+  role      String   @default("member") // 'owner', 'admin', 'member'
+  joinedAt  DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation("GroupMembers", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupGoal {
+  id              String     @id @default(uuid())
+  groupId         String
+  category        Category
+  itemId          String?
+  goalType        GoalType
+  title           String
+  targetCount     Int
+  currentProgress Int        @default(0)
+  status          GoalStatus @default(active)
+  startDate       DateTime
+  endDate         DateTime?
+  linkedCounterType String?
+  createdAt       DateTime   @default(now())
+  completedAt     DateTime?
+
+  group           Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  memberProgress  GroupGoalProgress[]
+
+  @@index([groupId])
+}
+
+model GroupGoalProgress {
+  id              String   @id @default(uuid())
+  groupGoalId     String
+  userId          String
+  currentProgress Int      @default(0)
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  groupGoal       GroupGoal @relation(fields: [groupGoalId], references: [id], onDelete: Cascade)
+  user            User      @relation("GroupGoalProgress", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupGoalId, userId])
+  @@index([groupGoalId])
+  @@index([userId])
+}
+
+model GroupInvite {
+  id          String    @id @default(uuid())
+  groupId     String
+  inviteCode  String    @unique
+  invitedBy   String
+  expiresAt   DateTime?
+  maxUses     Int       @default(1)
+  currentUses Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([inviteCode])
+}
+
+// Каталог контента (дуа, азкары, суры и т.д.)
+model Item {
+  id                  String   @id @default(uuid())
+  category            Category
+  slug                String   @unique
+  titleAr             String?
+  titleRu             String?
+  titleEn             String?
+  transcriptionLatin  String?
+  transcriptionCyrillic String?
+  translation         String?  @db.Text
+  audioUrl            String?
+  source              String?
+  benefits            String?  @db.Text
+  metaJson            Json?    // Метаданные: для сур {surah_number: 1, ayah_count: 7}, для дуа {text: "..."}
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([category])
+  @@index([slug])
 }
 

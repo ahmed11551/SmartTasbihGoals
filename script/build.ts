@@ -74,10 +74,15 @@ async function buildAll() {
         "process.env.NODE_ENV": '"production"',
       },
       minify: true,
+      plugins: [{
+        name: 'external-regex',
+        setup(build) {
+          build.onResolve({ filter: /^@shared\/.*/ }, () => ({ external: true }));
+          build.onResolve({ filter: /^shared\/.*/ }, () => ({ external: true }));
+        },
+      }],
       external: [
         ...externals,
-        /^@shared\/.*/,
-        /^shared\/.*/,
         "drizzle-orm",
         "drizzle-orm/pg-core",
         "drizzle-orm/neon-serverless",

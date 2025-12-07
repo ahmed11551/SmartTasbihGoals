@@ -16,9 +16,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Settings2, Target, ChevronRight, History, Play, Volume2 } from 'lucide-react';
-import type { DhikrItem, PrayerSegment, TranscriptionType } from '@/lib/types';
+import type { DhikrItem, PrayerSegment, TranscriptionType, Goal } from '@/lib/types';
 import { Link } from 'wouter';
-import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 import { 
   useGoals, 
   useStats, 
@@ -26,6 +25,7 @@ import {
   useCreateSession, 
   useUpdateSession,
   useCreateDhikrLog,
+  useCreateGoal,
   useUpdateGoal,
   useUpsertDailyAzkar,
   useQazaDebt,
@@ -38,6 +38,7 @@ import {
 import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDhikrItems } from '@/lib/dhikrUtils';
 import { useDhikrCatalogByCategory } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
+import { prayerLabels } from '@/lib/constants';
 
 interface RecentAction {
   id: string;
@@ -57,6 +58,7 @@ export default function TasbihPage() {
   const createSessionMutation = useCreateSession();
   const updateSessionMutation = useUpdateSession();
   const createDhikrLogMutation = useCreateDhikrLog();
+  const createGoalMutation = useCreateGoal();
   const updateGoalMutation = useUpdateGoal();
   const upsertDailyAzkarMutation = useUpsertDailyAzkar();
   const updateQazaProgressMutation = useUpdateQazaProgress();
@@ -335,6 +337,42 @@ export default function TasbihPage() {
     }
 
     setSelectedPrayer(prayer);
+    
+    // Автоматическое создание цели azkar при тапе на сегмент
+    if (prayer !== 'none') {
+      try {
+        const goalTitle = `Салаваты после ${prayerLabels[prayer]}`;
+        
+        // Проверяем, есть ли уже активная цель azkar для этого сегмента
+        const existingGoal = goals.find(
+          (g: Goal) => g.category === 'azkar' 
+            && g.status === 'active' 
+            && g.title === goalTitle
+        );
+
+        if (!existingGoal) {
+          // Создаем новую цель azkar автоматически
+          await createGoalMutation.mutateAsync({
+            category: 'azkar',
+            goalType: 'recite',
+            title: goalTitle,
+            targetCount: 99,
+            linkedCounterType: 'azkar',
+            status: 'active',
+            startDate: new Date().toISOString(),
+            currentProgress: 0,
+          });
+
+          toast({
+            title: "Цель создана",
+            description: `Автоматически создана цель: ${goalTitle}`,
+          });
+        }
+      } catch (error) {
+        console.error('Error creating azkar goal:', error);
+        // Не показываем ошибку пользователю, чтобы не прерывать его работу
+      }
+    }
     
     // Активируем режим последовательности зикров после намаза
     setIsPrayerSequenceMode(true);
@@ -739,9 +777,9 @@ export default function TasbihPage() {
                   >
                     <div className="flex items-center justify-between pointer-events-none">
                       <div className="flex-1 min-w-0">
-                        <TextWithTooltip as="p" className="text-sm font-medium">
+                        <p className="text-sm font-medium truncate" title={sessionTitle}>
                           {sessionTitle}
-                        </TextWithTooltip>
+                        </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{session.currentCount || 0} счёт</span>
                           {rounds > 0 && (

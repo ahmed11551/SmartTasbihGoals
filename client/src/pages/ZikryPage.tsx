@@ -35,6 +35,7 @@ import {
   type ZikrCatalogCategory,
 } from '@/lib/zikryCatalog';
 import { useToast } from '@/hooks/use-toast';
+import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 
 interface CategoryCardProps {
   category: ZikrCatalogCategory;

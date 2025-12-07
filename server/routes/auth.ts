@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { z } from "zod";
 import { botReplikaGet, botReplikaPost, getUserIdForApi } from "../lib/bot-replika-api";
 import { logger } from "../lib/logger";
+import { randomUUID } from "crypto";
 
 const router = Router();
 
@@ -39,6 +40,48 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
+});
+
+// Создание гостевой сессии автоматически
+router.post("/guest", async (req, res, next) => {
+  try {
+    // Проверяем, есть ли уже сессия
+    if (req.session?.userId) {
+      const user = await storage.getUser(req.session.userId);
+      if (user) {
+        return res.json({
+          user: {
+            id: user.id,
+            username: user.username,
+          }
+        });
+      }
+    }
+
+    // Создаем временного пользователя
+    const guestUsername = `Гость_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    try {
+      const user = await storage.createUser({
+        username: guestUsername,
+        password: randomUUID(), // Случайный пароль, будет захеширован в storage.createUser
+      });
+
+      req.session!.userId = user.id;
+      
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+        }
+      });
+    } catch (error: any) {
+      logger.error("Failed to create guest user:", error);
+      return res.status(500).json({ error: "Failed to create guest session" });
+    }
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.post("/register", async (req, res, next) => {
@@ -244,4 +287,3 @@ router.post("/validate-token", async (req, res) => {
 });
 
 export default router;
-

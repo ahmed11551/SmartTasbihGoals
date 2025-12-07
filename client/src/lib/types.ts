@@ -8,6 +8,7 @@ export type TranscriptionType = 'latin' | 'cyrillic';
 
 export type HabitCategory = 'namaz' | 'quran' | 'dhikr' | 'sadaqa' | 'knowledge' | 'fasting' | 'etiquette';
 export type HabitDifficulty = 'easy' | 'medium' | 'advanced';
+export type KnowledgeSubcategory = 'books' | 'alifba' | 'tajweed';
 export type RepeatType = 'never' | 'daily' | 'weekly' | 'monthly' | 'custom';
 export type WeekDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export type ItemType = 'task' | 'habit' | 'event' | 'reminder';
@@ -45,6 +46,8 @@ export interface Goal {
   startDate: string;
   endDate?: string;
   linkedCounterType?: string;
+  repeatType?: RepeatType;
+  lastResetDate?: string;
   createdAt: string;
   completedAt?: string;
 }
@@ -134,6 +137,7 @@ export interface Habit {
   userId: string;
   templateId?: string;
   category: HabitCategory;
+  subcategory?: KnowledgeSubcategory; // Только для category === 'knowledge'
   title: string;
   description?: string;
   iconName: string;

@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
 import CategorySelector from './CategorySelector';
 import DhikrItemCard from './DhikrItemCard';
+import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 import { Search, ChevronDown, BookOpen } from 'lucide-react';
 import type { DhikrItem, Category } from '@/lib/types';
 import { categoryLabels } from '@/lib/constants';
