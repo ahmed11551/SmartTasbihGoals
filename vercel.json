@@ -10,7 +10,7 @@
       "destination": "/api/index.ts"
     },
     {
-      "source": "/((?!assets|favicon|_next|api|.*\\.).*)",
+      "source": "/((?!assets|favicon|api|.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)|vendor|page-).*)",
       "destination": "/index.html"
     }
   ],
