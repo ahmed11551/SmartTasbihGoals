@@ -107,7 +107,17 @@ router.post("/register", async (req, res, next) => {
         try {
           const existing = await storage.getUserByUsername(parsed.username);
           if (!existing) {
-            await storage.createUser({ ...parsed, id: userId });
+            // Создаем пользователя с существующим ID из внешнего API
+            // Используем Prisma напрямую, так как storage.createUser не принимает id
+            const { prisma } = await import("../db-prisma");
+            const hashedPassword = await storage.hashPassword(parsed.password);
+            await prisma.user.create({
+              data: {
+                id: userId,
+                username: parsed.username,
+                password: hashedPassword,
+              },
+            });
           }
         } catch (localError) {
           // Игнорируем ошибки локальной синхронизации
