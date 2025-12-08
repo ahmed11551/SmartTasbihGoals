@@ -68,10 +68,11 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react/jsx-runtime'],
+      include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
       esbuildOptions: {
         target: 'esnext',
       },
+      force: isVercel, // Принудительная оптимизация для Vercel
     },
     rollupOptions: {
       external: (id) => {
