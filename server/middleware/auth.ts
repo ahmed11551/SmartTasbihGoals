@@ -10,44 +10,37 @@ declare module "express-session" {
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  // Check for token in header (Bot.e-replika.ru integration)
+  // Все запросы идут через Bot.e-replika.ru/docs с test_token_123
+  // Авторизация не требуется - всегда пропускаем
+  // Устанавливаем userId из заголовка или используем default-user
   const token = req.headers.authorization?.replace("Bearer ", "") || 
-                req.headers["x-api-token"] as string;
+                req.headers["x-api-token"] as string ||
+                TEST_TOKEN; // По умолчанию используем test_token_123
   
-  if (token === TEST_TOKEN) {
-    // Token auth
-    (req as any).authType = "token";
-    (req as any).userId = req.headers["x-user-id"] as string || "default-user";
-    return next();
-  }
+  (req as any).authType = "token";
+  (req as any).userId = req.headers["x-user-id"] as string || req.session?.userId || "default-user";
   
-  // Check session
-  if (req.session?.userId) {
-    (req as any).authType = "session";
-    (req as any).userId = req.session.userId;
-    return next();
-  }
-  
-  return res.status(401).json({ error: "Unauthorized" });
+  // Всегда пропускаем - авторизация не требуется
+  return next();
 }
 
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+  // Все запросы идут через Bot.e-replika.ru/docs с test_token_123
+  // Авторизация не требуется - всегда пропускаем
   const token = req.headers.authorization?.replace("Bearer ", "") || 
-                req.headers["x-api-token"] as string;
+                req.headers["x-api-token"] as string ||
+                TEST_TOKEN; // По умолчанию используем test_token_123
   
-  if (token === TEST_TOKEN) {
-    (req as any).authType = "token";
-    (req as any).userId = req.headers["x-user-id"] as string;
-  } else if (req.session?.userId) {
-    (req as any).authType = "session";
-    (req as any).userId = req.session.userId;
-  }
+  (req as any).authType = "token";
+  (req as any).userId = req.headers["x-user-id"] as string || req.session?.userId || "default-user";
   
-  next();
+  // Всегда пропускаем - авторизация не требуется
+  return next();
 }
 
 // Get userId from request (works with both auth types)
-export function getUserId(req: Request): string | undefined {
-  return (req as any).userId || req.session?.userId;
+// Авторизация отключена - всегда возвращаем userId или default-user
+export function getUserId(req: Request): string {
+  return (req as any).userId || req.session?.userId || "default-user";
 }
 

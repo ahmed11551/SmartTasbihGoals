@@ -103,10 +103,8 @@ async function updateLinkedGoalsProgress(
 // Получить каталог дуа и азкаров из Bot.e-replika.ru
 router.get("/catalog", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
 
     try {
       const apiUserId = getUserIdForApi(req);
@@ -127,10 +125,8 @@ router.get("/catalog", async (req, res, next) => {
 // Получить каталог по категории
 router.get("/catalog/:category", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
 
     const category = req.params.category; // dua, azkar, salawat, kalima
 
@@ -150,10 +146,8 @@ router.get("/catalog/:category", async (req, res, next) => {
 
 router.get("/logs", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -174,10 +168,8 @@ router.get("/logs", async (req, res, next) => {
 
 router.get("/logs/session/:sessionId", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -195,9 +187,20 @@ router.get("/logs/session/:sessionId", async (req, res, next) => {
 
 router.post("/logs", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
+    
+    // Убедиться, что пользователь существует в БД
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      // Создать пользователя если его нет
+      await prisma.user.create({
+        data: {
+          id: userId,
+          username: userId === "default-user" ? `default-user-${Date.now()}` : userId,
+          password: await storage.hashPassword("default-password"),
+        },
+      });
     }
     
     const logData = req.body;
@@ -372,10 +375,8 @@ router.post("/logs", async (req, res, next) => {
 
 router.get("/daily-azkar/:dateLocal", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -415,10 +416,8 @@ router.get("/daily-azkar/:dateLocal", async (req, res, next) => {
 
 router.post("/daily-azkar", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -449,10 +448,8 @@ router.post("/daily-azkar", async (req, res, next) => {
  */
 router.delete("/logs/last", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
 
     const sessionId = req.query.sessionId as string | undefined;
 

@@ -53,7 +53,7 @@ import {
   X,
   Calculator,
   Play,
-  Clock,
+  Moon,
 } from 'lucide-react';
 import HabitCatalogSheet from '@/components/HabitCatalogSheet';
 import HabitCreationSheet from '@/components/HabitCreationSheet';
@@ -62,7 +62,7 @@ import GoalCreationSheet from '@/components/GoalCreationSheet';
 import GoalCard from '@/components/GoalCard';
 import AIAssistantSheet from '@/components/AIAssistantSheet';
 import CalendarSheet from '@/components/CalendarSheet';
-import type { Habit, Task, Goal, WeekDay } from '@/lib/types';
+import type { Habit, Task, Goal, WeekDay, Category } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { habitCategories } from '@/lib/habitsCatalog';
 import { goalCategoryLabels, prayerLabels } from '@/lib/constants';
@@ -891,6 +891,18 @@ export default function GoalsPage() {
     }
   };
 
+  const handleContinueGoal = (goal: Goal) => {
+    // Если цель связана с тасбихом, переходим на страницу тасбиха с выбранной категорией
+    // Страница тасбиха находится на маршруте "/"
+    if (goal.linkedCounterType) {
+      // Переход на страницу тасбиха с фильтром по категории и привязкой к цели
+      window.location.href = `/?category=${goal.linkedCounterType}&goalId=${goal.id}`;
+    } else {
+      // Если цель не связана с тасбихом, просто открываем страницу тасбиха
+      window.location.href = '/';
+    }
+  };
+
   const confirmDeleteGoal = async () => {
     if (goalToDelete) {
       try {
@@ -921,7 +933,8 @@ export default function GoalsPage() {
 
   const handleContinueSession = (session: any) => {
     // Переход на страницу тасбиха с сохранением информации о сессии
-    window.location.href = `/tasbih?sessionId=${session.id}`;
+    // Страница тасбиха находится на маршруте "/"
+    window.location.href = `/?sessionId=${session.id}`;
   };
 
   const handleDeleteSession = (sessionId: string) => {
@@ -1281,6 +1294,7 @@ export default function GoalsPage() {
                           <GoalCard 
                             key={goal.id} 
                             goal={goal} 
+                            onContinue={handleContinueGoal}
                             onEdit={handleEditGoal}
                             onPause={handlePauseGoal}
                             onResume={handleResumeGoal}
@@ -1308,6 +1322,7 @@ export default function GoalsPage() {
                           <GoalCard 
                             key={goal.id} 
                             goal={goal} 
+                            onContinue={handleContinueGoal}
                             onEdit={handleEditGoal}
                             onPause={handlePauseGoal}
                             onResume={handleResumeGoal}

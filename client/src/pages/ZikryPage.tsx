@@ -36,6 +36,7 @@ import {
 } from '@/lib/zikryCatalog';
 import { useToast } from '@/hooks/use-toast';
 import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface CategoryCardProps {
   category: ZikrCatalogCategory;
@@ -144,7 +145,16 @@ function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetail
     if (!item) return;
     const text = `${item.titleRu}\n\n${item.titleAr}\n\n${item.transcriptionCyrillic}\n\n${item.translation}`;
     if (navigator.share) {
-      await navigator.share({ title: item.titleRu, text });
+      try {
+        await navigator.share({ title: item.titleRu, text });
+      } catch (error: any) {
+        // Игнорируем AbortError (пользователь отменил шаринг)
+        if (error.name !== 'AbortError') {
+          // Для других ошибок - используем fallback на clipboard
+          await navigator.clipboard.writeText(text);
+          toast({ title: "Скопировано для отправки" });
+        }
+      }
     } else {
       await navigator.clipboard.writeText(text);
       toast({ title: "Скопировано для отправки" });

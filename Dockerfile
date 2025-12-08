@@ -4,18 +4,24 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
+# Install OpenSSL для Prisma ДО npm install
+RUN apk add --no-cache openssl openssl-dev
+
 # Copy package files first
-COPY package.json ./
+COPY package.json package-lock.json* ./
 
 # Copy prisma schema before npm install (needed for postinstall script)
 COPY prisma ./prisma/
 
 # Install dependencies (postinstall will run prisma generate)
-# Добавляем retry и таймауты для надежности
-RUN npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm install --legacy-peer-deps --no-package-lock --ignore-scripts && \
+# Добавляем retry и таймауты для надежности с множественными попытками
+RUN     npm config set fetch-retries 15 && \
+    npm config set fetch-retry-mintimeout 30000 && \
+    npm config set fetch-retry-maxtimeout 180000 && \
+    npm config set registry https://registry.npmjs.org/ && \
+    (npm ci --legacy-peer-deps --ignore-scripts || \
+     (sleep 15 && npm install --legacy-peer-deps --ignore-scripts) || \
+     (sleep 30 && npm install --legacy-peer-deps --ignore-scripts)) && \
     npx prisma generate
 
 # Rebuild the source code only when needed

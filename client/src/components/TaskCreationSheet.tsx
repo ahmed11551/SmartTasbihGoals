@@ -39,6 +39,14 @@ interface TaskCreationSheetProps {
 type DateOption = 'none' | 'today' | 'tomorrow' | 'custom';
 type Priority = 'low' | 'medium' | 'high';
 
+type TaskFormData = {
+  title: string;
+  notes: string;
+  time: string;
+  hasTime: boolean;
+  priority: Priority;
+};
+
 export default function TaskCreationSheet({ 
   editingTask,
   onSubmit, 
@@ -63,12 +71,39 @@ export default function TaskCreationSheet({
   
   const [priority, setPriority] = useState<Priority>('medium');
 
+  // Добавляем useForm для валидации
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    control,
+    reset,
+  } = useForm<TaskFormData>({
+    defaultValues: {
+      title: '',
+      notes: '',
+      time: '12:00',
+      hasTime: false,
+      priority: 'medium' as Priority,
+    },
+  });
+
   useEffect(() => {
     if (editingTask && open) {
       setTitle(editingTask.title);
       setNotes(editingTask.description || '');
       setSubtasks(editingTask.subtasks || []);
       setPriority(editingTask.priority || 'medium');
+      
+      // Обновляем значения формы
+      reset({
+        title: editingTask.title,
+        notes: editingTask.description || '',
+        time: editingTask.dueTime || '12:00',
+        hasTime: !!editingTask.dueTime,
+        priority: (editingTask.priority || 'medium') as Priority,
+      });
       
       if (editingTask.dueTime) {
         setHasTime(true);
@@ -97,40 +132,39 @@ export default function TaskCreationSheet({
     } else if (!open) {
       resetForm();
     }
-  }, [editingTask, open]);
+  }, [editingTask, open, reset]);
 
   const onFormSubmit = async (data: TaskFormData) => {
     if (isSubmitting) return;
     
     setIsSubmitting(true);
     try {
-    
-    let dueDate: string | undefined;
-    const today = new Date();
-    
-    if (dateOption === 'today') {
-      dueDate = today.toISOString().split('T')[0];
-    } else if (dateOption === 'tomorrow') {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dueDate = tomorrow.toISOString().split('T')[0];
-    } else if (dateOption === 'custom' && customDate) {
-      dueDate = customDate.toISOString().split('T')[0];
-    }
+      let dueDate: string | undefined;
+      const today = new Date();
+      
+      if (dateOption === 'today') {
+        dueDate = today.toISOString().split('T')[0];
+      } else if (dateOption === 'tomorrow') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dueDate = tomorrow.toISOString().split('T')[0];
+      } else if (dateOption === 'custom' && customDate) {
+        dueDate = customDate.toISOString().split('T')[0];
+      }
 
-    const task: Partial<Task> = {
-      id: editingTask?.id,
-      title: title.trim(),
-      description: notes.trim() || undefined,
-      dueDate,
-      dueTime: hasTime ? time : undefined,
-      priority,
-      isCompleted: editingTask?.isCompleted ?? false,
-      completedAt: editingTask?.completedAt,
-      subtasks: subtasks.length > 0 ? subtasks : undefined,
-      reminders: [],
-      createdAt: editingTask?.createdAt ?? new Date().toISOString(),
-    };
+      const task: Partial<Task> = {
+        id: editingTask?.id,
+        title: data.title.trim(),
+        description: data.notes.trim() || undefined,
+        dueDate,
+        dueTime: data.hasTime ? data.time : undefined,
+        priority: data.priority,
+        isCompleted: editingTask?.isCompleted ?? false,
+        completedAt: editingTask?.completedAt,
+        subtasks: subtasks.length > 0 ? subtasks : undefined,
+        reminders: [],
+        createdAt: editingTask?.createdAt ?? new Date().toISOString(),
+      };
 
       await onSubmit(task);
       resetForm();
@@ -140,6 +174,25 @@ export default function TaskCreationSheet({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setNotes('');
+    setSubtasks([]);
+    setNewSubtask('');
+    setDateOption('none');
+    setCustomDate(undefined);
+    setHasTime(false);
+    setTime('12:00');
+    setPriority('medium');
+    reset({
+      title: '',
+      notes: '',
+      time: '12:00',
+      hasTime: false,
+      priority: 'medium' as Priority,
+    });
   };
 
   const addSubtask = () => {
@@ -193,7 +246,7 @@ export default function TaskCreationSheet({
             variant="default" 
             size="sm"
             onClick={handleSubmit(onFormSubmit)}
-            disabled={!title.trim() || isSubmitting || Object.keys(errors).length > 0}
+            disabled={!title.trim() || isSubmitting}
             className="shrink-0 relative"
             data-testid="button-save-task"
           >
@@ -227,6 +280,11 @@ export default function TaskCreationSheet({
                       message: 'Название не должно превышать 200 символов',
                     },
                   })}
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setValue('title', e.target.value);
+                  }}
                   placeholder="Название задачи"
                   className={cn(
                     "border-0 p-0 text-base focus-visible:ring-0 h-auto",
@@ -249,6 +307,11 @@ export default function TaskCreationSheet({
                       message: 'Заметка не должна превышать 1000 символов',
                     },
                   })}
+                  value={notes}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    setValue('notes', e.target.value);
+                  }}
                   placeholder="Заметка к задаче"
                   className={cn(
                     "border-0 p-0 resize-none min-h-[60px] focus-visible:ring-0",
@@ -379,6 +442,11 @@ export default function TaskCreationSheet({
                         {...register('time', {
                           required: hasTime ? 'Укажите время' : false,
                         })}
+                        value={time}
+                        onChange={(e) => {
+                          setTime(e.target.value);
+                          setValue('time', e.target.value);
+                        }}
                         className={cn("w-24 h-8", errors.time && "border-destructive")}
                       />
                       <Button

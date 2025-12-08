@@ -27,10 +27,18 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    // Исключаем /api из статических файлов
+    index: false,
+  }));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // НО исключаем /api пути - они должны обрабатываться API роутами
+  app.use("*", (req, res, next) => {
+    // Если это API путь, не обрабатываем его как статику
+    if (req.originalUrl.startsWith("/api")) {
+      return next();
+    }
     res.sendFile(path.resolve(distPath!, "index.html"));
   });
 }

@@ -2,13 +2,15 @@
 import { Request } from "express";
 
 // Базовый URL API Bot.e-replika.ru
-// Правильный URL: https://bot.e-replika.ru/api
-const BOT_REPLIKA_API_BASE = process.env.BOT_REPLIKA_API_URL || "https://bot.e-replika.ru";
-// Если указан с /docs, убираем /docs и добавляем /api
-let apiUrl = BOT_REPLIKA_API_BASE.replace(/\/docs\/?$/, '');
-if (!apiUrl.includes("/api") && !apiUrl.endsWith("/api")) {
-  apiUrl = `${apiUrl}/api`;
+// Все запросы должны идти через Bot.e-replika.ru/docs
+const BOT_REPLIKA_API_BASE = process.env.BOT_REPLIKA_API_URL || "https://bot.e-replika.ru/docs";
+// Если указан без /docs, добавляем /docs
+let apiUrl = BOT_REPLIKA_API_BASE;
+if (!apiUrl.includes("/docs")) {
+  apiUrl = apiUrl.replace(/\/$/, '') + "/docs";
 }
+// Если указан с /api, заменяем на /docs
+apiUrl = apiUrl.replace(/\/api\/?$/, '/docs');
 const BOT_REPLIKA_API_URL = apiUrl;
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";
 
@@ -35,7 +37,11 @@ export async function botReplikaRequest<T = unknown>(
   } = options;
 
   // Убираем начальный слэш если есть
-  const apiPath = path.startsWith("/") ? path : `/${path}`;
+  let apiPath = path.startsWith("/") ? path : `/${path}`;
+  // Если путь начинается с /api, заменяем на пустую строку или оставляем как есть для /docs
+  if (apiPath.startsWith("/api/")) {
+    apiPath = apiPath.replace("/api", "");
+  }
   const url = `${BOT_REPLIKA_API_URL}${apiPath}`;
 
   const headers: HeadersInit = {

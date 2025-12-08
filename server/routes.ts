@@ -1,5 +1,5 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Express, Request, Response } from "express";
+import type { Server } from "http";
 import authRoutes from "./routes/auth";
 import habitsRoutes from "./routes/habits";
 import tasksRoutes from "./routes/tasks";
@@ -24,6 +24,38 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // API root endpoints (both /api and /api/)
+  const apiInfoHandler = (_req: Request, res: Response) => {
+    res.json({ 
+      message: "SmartTasbihGoals API",
+      version: "1.0.0",
+      endpoints: [
+        "/api/bootstrap",
+        "/api/auth",
+        "/api/habits",
+        "/api/tasks",
+        "/api/goals",
+        "/api/sessions",
+        "/api/dhikr",
+        "/api/stats",
+        "/api/ai",
+        "/api/telegram",
+        "/api/qaza",
+        "/api/badges",
+        "/api/category-streaks",
+        "/api/users",
+        "/api/notifications",
+        "/api/notification-settings",
+        "/api/groups",
+        "/api/v1/reports",
+        "/api/v1/learn"
+      ]
+    });
+  };
+  
+  app.get("/api", apiInfoHandler);
+  app.get("/api/", apiInfoHandler);
+  
   // API routes
   app.use("/api/bootstrap", bootstrapRoutes);
   app.use("/api/auth", authRoutes);

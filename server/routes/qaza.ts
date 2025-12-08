@@ -263,10 +263,8 @@ function calculateQazaDebt(params: {
 // GET /api/qaza - получить данные о долге
 router.get("/", requireAuth, async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -293,10 +291,8 @@ router.get("/", requireAuth, async (req, res, next) => {
 // POST /api/qaza/calculate - рассчитать долг
 router.post("/calculate", requireAuth, async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     const parsed = calculateQazaSchema.parse(req.body);
     

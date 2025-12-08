@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { Settings2, Target, ChevronRight, History, Play, Volume2 } from 'lucide-react';
 import type { DhikrItem, PrayerSegment, TranscriptionType, Goal } from '@/lib/types';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { 
   useGoals, 
   useStats, 
@@ -50,6 +50,7 @@ interface RecentAction {
 
 export default function TasbihPage() {
   const { toast } = useToast();
+  const [location] = useLocation();
   const { data: goals = [] } = useGoals();
   const { data: qazaDebt } = useQazaDebt();
   const { data: stats } = useStats();
@@ -65,6 +66,17 @@ export default function TasbihPage() {
   const { data: unfinishedSessions = [] } = useUnfinishedSessions();
   const checkBadgesMutation = useCheckBadges();
   const { data: categoryStreaks = [] } = useCategoryStreaks();
+  
+  // Обработка query параметров из URL
+  const urlParams = useMemo(() => {
+    if (typeof window === 'undefined') return {};
+    const searchParams = new URLSearchParams(window.location.search);
+    return {
+      category: searchParams.get('category'),
+      goalId: searchParams.get('goalId'),
+      sessionId: searchParams.get('sessionId'),
+    };
+  }, [location]);
   
   // Загружаем каталог азкаров с API
   const { data: azkarCatalogFromAPI } = useDhikrCatalogByCategory('azkar');
@@ -121,6 +133,43 @@ export default function TasbihPage() {
   // Состояние для автоматической последовательности зикров после намаза
   const [isPrayerSequenceMode, setIsPrayerSequenceMode] = useState(false);
   const [sequenceStage, setSequenceStage] = useState(0); // 0=Субханаллах, 1=Альхамдулиллах, 2=Аллаху акбар
+
+  // Обработка query параметров из URL для автоматического выбора категории/цели
+  useEffect(() => {
+    // Обработка category и goalId
+    if (urlParams.category) {
+      // Найти зикр из указанной категории
+      const categoryItems = getDhikrItemsByCategory(urlParams.category as any);
+      if (categoryItems && categoryItems.length > 0) {
+        // Если есть goalId, попробуем найти конкретный элемент
+        let itemToSelect = categoryItems[0];
+        if (urlParams.goalId) {
+          const goal = goals.find((g: any) => g.id === urlParams.goalId);
+          if (goal && goal.itemId) {
+            const foundItem = categoryItems.find((item) => item.id === goal.itemId);
+            if (foundItem) {
+              itemToSelect = foundItem;
+            }
+          }
+        }
+        setSelectedItem(itemToSelect);
+        // Очистить query параметры после обработки
+        window.history.replaceState({}, '', '/');
+      }
+    }
+    
+    // Обработка sessionId для продолжения сессии
+    if (urlParams.sessionId) {
+      const session = unfinishedSessions.find((s: any) => s.id === urlParams.sessionId);
+      if (session) {
+        // Восстановить состояние сессии
+        currentSessionIdRef.current = session.id;
+        // Можно также восстановить счетчик и другие параметры из сессии
+        // Очистить query параметры после обработки
+        window.history.replaceState({}, '', '/');
+      }
+    }
+  }, [urlParams.category, urlParams.goalId, urlParams.sessionId, goals, unfinishedSessions]);
 
   // Фильтруем цели - показываем только связанные с салаватами/азкарами, чтобы не делать страницу длинной
   const activeGoals = goals.filter((g: any) => 

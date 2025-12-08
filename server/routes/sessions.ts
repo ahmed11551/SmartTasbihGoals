@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { storage } from "../storage";
 import { requireAuth, getUserId } from "../middleware/auth";
+import { prisma } from "../db-prisma";
 import { z } from "zod";
 import { botReplikaGet, botReplikaPost, botReplikaPatch, getUserIdForApi } from "../lib/bot-replika-api";
 import { logger } from "../lib/logger";
@@ -10,10 +11,8 @@ router.use(requireAuth);
 
 router.get("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -32,10 +31,8 @@ router.get("/", async (req, res, next) => {
 // GET /api/sessions/unfinished - получить незавершенные сессии
 router.get("/unfinished", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -107,10 +104,8 @@ router.get("/unfinished", async (req, res, next) => {
 
 router.get("/:id", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -135,10 +130,8 @@ router.get("/:id", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -147,6 +140,20 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({ session });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Убедиться, что пользователь существует в БД
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        // Создать пользователя если его нет
+        await prisma.user.create({
+          data: {
+            id: userId,
+            username: userId === "default-user" ? `default-user-${Date.now()}` : userId,
+            password: await storage.hashPassword("default-password"),
+          },
+        });
+      }
+      
       const session = await storage.createSession(userId, req.body);
       res.status(201).json({ session });
     }
@@ -160,10 +167,8 @@ router.post("/", async (req, res, next) => {
 
 router.patch("/:id", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);

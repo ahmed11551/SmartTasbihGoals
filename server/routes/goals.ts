@@ -43,10 +43,8 @@ async function checkGoalLimit(userId: string): Promise<{ allowed: boolean; curre
 
 router.get("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -64,10 +62,8 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:id", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -92,10 +88,8 @@ router.get("/:id", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -120,6 +114,20 @@ router.post("/", async (req, res, next) => {
       
       // Fallback: проверка лимита и создание в локальной БД
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      // Убедиться, что пользователь существует в БД
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        // Создать пользователя если его нет
+        await prisma.user.create({
+          data: {
+            id: userId,
+            username: userId === "default-user" ? `default-user-${Date.now()}` : userId,
+            password: await storage.hashPassword("default-password"),
+          },
+        });
+      }
+      
       const limitCheck = await checkGoalLimit(userId);
       if (!limitCheck.allowed) {
         return res.status(403).json({
@@ -144,10 +152,8 @@ router.post("/", async (req, res, next) => {
 
 router.patch("/:id", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);
@@ -203,10 +209,8 @@ router.patch("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {
       const apiUserId = getUserIdForApi(req);

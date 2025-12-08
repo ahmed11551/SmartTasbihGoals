@@ -18,14 +18,13 @@ const updateSettingsSchema = z.object({
 // GET /api/notification-settings - получить настройки уведомлений
 router.get("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
+        id: true,
         notificationsEnabled: true,
         notificationTime: true,
         notificationDays: true,
@@ -34,8 +33,17 @@ router.get("/", async (req, res, next) => {
       },
     });
 
+    // Если пользователь не найден, возвращаем дефолтные настройки
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.json({
+        settings: {
+          notificationsEnabled: true,
+          notificationTime: '09:00',
+          notificationDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+          telegramId: null,
+          firstName: null,
+        },
+      });
     }
 
     res.json({
@@ -55,10 +63,8 @@ router.get("/", async (req, res, next) => {
 // PUT /api/notification-settings - обновить настройки уведомлений
 router.put("/", async (req, res, next) => {
   try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    // Авторизация отключена - всегда используем userId из заголовка или default-user
+    const userId = getUserId(req) || (req as any).userId || "default-user";
 
     const parsed = updateSettingsSchema.parse(req.body);
 

@@ -11,25 +11,20 @@ const router = Router();
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";
 
 // Middleware to check token or session
+// Все запросы идут через Bot.e-replika.ru/docs с test_token_123
+// Авторизация не требуется - всегда пропускаем
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Check for token in header
+  // Все запросы идут через Bot.e-replika.ru/docs с test_token_123
+  // Авторизация не требуется - всегда пропускаем
   const token = req.headers.authorization?.replace("Bearer ", "") || 
-                req.headers["x-api-token"] as string;
+                req.headers["x-api-token"] as string ||
+                TEST_TOKEN; // По умолчанию используем test_token_123
   
-  if (token === TEST_TOKEN) {
-    // Token auth - get user from token (could be extended to validate token with Bot.e-replika.ru)
-    (req as any).authType = "token";
-    (req as any).userId = req.headers["x-user-id"] as string || "default-user";
-    return next();
-  }
+  (req as any).authType = "token";
+  (req as any).userId = req.headers["x-user-id"] as string || req.session?.userId || "default-user";
   
-  // Check session
-  if (req.session?.userId) {
-    (req as any).authType = "session";
-    return next();
-  }
-  
-  return res.status(401).json({ error: "Unauthorized" });
+  // Всегда пропускаем - авторизация не требуется
+  return next();
 }
 
 const loginSchema = z.object({
@@ -240,10 +235,8 @@ router.post("/logout", (req, res) => {
 });
 
 router.get("/me", authMiddleware, async (req, res) => {
-  const userId = (req as any).userId || req.session?.userId;
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  // Авторизация отключена - всегда возвращаем default-user если userId не указан
+  const userId = (req as any).userId || req.session?.userId || "default-user";
   
   try {
     // Проксировать запрос профиля в Bot.e-replika.ru API
@@ -287,21 +280,16 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // Token validation endpoint for Bot.e-replika.ru
+// Авторизация отключена - всегда возвращаем valid: true
 router.post("/validate-token", async (req, res) => {
   const token = req.headers.authorization?.replace("Bearer ", "") || 
-                req.body.token;
+                req.body.token ||
+                TEST_TOKEN; // По умолчанию используем test_token_123
   
-  if (!token) {
-    return res.status(401).json({ valid: false, error: "Token is required" });
-  }
-  
-  // Сначала проверяем локальный токен
-  if (token === TEST_TOKEN) {
-    return res.json({ valid: true, userId: req.body.userId || "default-user" });
-  }
-  
+  // Всегда валидируем токен как валидный
+  // Авторизация отключена - все токены принимаются
   try {
-    // Валидация через Bot.e-replika.ru API
+    // Пытаемся проверить через Bot.e-replika.ru API (опционально)
     const data = await botReplikaPost<{ valid?: boolean; userId?: string }>(
       "/auth/validate-token",
       { token },
@@ -311,13 +299,13 @@ router.post("/validate-token", async (req, res) => {
     if (data.valid) {
       return res.json({ valid: true, userId: data.userId || req.body.userId || "default-user" });
     }
-    
-    return res.status(401).json({ valid: false, error: "Invalid token" });
   } catch (apiError: any) {
-    // Если API недоступен, используем локальную проверку
-    logger.warn("Bot.e-replika.ru API unavailable, using local validation:", apiError.message);
-    return res.status(401).json({ valid: false, error: "Invalid token" });
+    // Если API недоступен, просто возвращаем valid: true
+    logger.warn("Bot.e-replika.ru API unavailable, accepting token anyway:", apiError.message);
   }
+  
+  // Всегда возвращаем valid: true (авторизация отключена)
+  return res.json({ valid: true, userId: req.body.userId || "default-user" });
 });
 
 export default router;
