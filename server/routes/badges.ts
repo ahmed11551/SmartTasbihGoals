@@ -12,27 +12,27 @@ router.use(requireAuth);
 // Определения бейджей
 const BADGE_DEFINITIONS = {
   // Streaks
-  streak_7: { type: 'streak_7', title: 'Неделя подряд', description: '7 дней подряд активность', level: 'copper' as const, icon: '🔥', target: 7 },
-  streak_30: { type: 'streak_30', title: 'Месяц подряд', description: '30 дней подряд активность', level: 'silver' as const, icon: '🔥', target: 30 },
-  streak_100: { type: 'streak_100', title: 'Сотня дней', description: '100 дней подряд активность', level: 'gold' as const, icon: '🔥', target: 100 },
+  streak_7: { type: 'streak_7', title: 'Неделя подряд', description: '7 дней подряд активность', level: 'copper' as const, icon: 'flame', target: 7 },
+  streak_30: { type: 'streak_30', title: 'Месяц подряд', description: '30 дней подряд активность', level: 'silver' as const, icon: 'flame', target: 30 },
+  streak_100: { type: 'streak_100', title: 'Сотня дней', description: '100 дней подряд активность', level: 'gold' as const, icon: 'flame', target: 100 },
   
   // Goals
-  first_goal: { type: 'first_goal', title: 'Первая цель', description: 'Создал первую цель', level: 'copper' as const, icon: '🎯', target: 1 },
-  goal_master: { type: 'goal_master', title: 'Мастер целей', description: 'Выполнил 10 целей', level: 'silver' as const, icon: '🎯', target: 10 },
-  goal_champion: { type: 'goal_champion', title: 'Чемпион целей', description: 'Выполнил 50 целей', level: 'gold' as const, icon: '🎯', target: 50 },
+  first_goal: { type: 'first_goal', title: 'Первая цель', description: 'Создал первую цель', level: 'copper' as const, icon: 'target', target: 1 },
+  goal_master: { type: 'goal_master', title: 'Мастер целей', description: 'Выполнил 10 целей', level: 'silver' as const, icon: 'target', target: 10 },
+  goal_champion: { type: 'goal_champion', title: 'Чемпион целей', description: 'Выполнил 50 целей', level: 'gold' as const, icon: 'target', target: 50 },
   
   // Dhikr
-  dhikr_1000: { type: 'dhikr_1000', title: 'Тысяча зикров', description: 'Произнес 1000 зикров', level: 'copper' as const, icon: '✨', target: 1000 },
-  dhikr_10000: { type: 'dhikr_10000', title: 'Десять тысяч зикров', description: 'Произнес 10000 зикров', level: 'silver' as const, icon: '✨', target: 10000 },
-  dhikr_100000: { type: 'dhikr_100000', title: 'Сто тысяч зикров', description: 'Произнес 100000 зикров', level: 'gold' as const, icon: '✨', target: 100000 },
+  dhikr_1000: { type: 'dhikr_1000', title: 'Тысяча зикров', description: 'Произнес 1000 зикров', level: 'copper' as const, icon: 'sparkles', target: 1000 },
+  dhikr_10000: { type: 'dhikr_10000', title: 'Десять тысяч зикров', description: 'Произнес 10000 зикров', level: 'silver' as const, icon: 'sparkles', target: 10000 },
+  dhikr_100000: { type: 'dhikr_100000', title: 'Сто тысяч зикров', description: 'Произнес 100000 зикров', level: 'gold' as const, icon: 'sparkles', target: 100000 },
   
   // Prayer (Namaz/Qaza)
-  prayer_consistent: { type: 'prayer_consistent', title: 'Постоянство в молитве', description: '30 дней подряд совершал намаз', level: 'copper' as const, icon: '🕌', target: 30 },
-  qaza_completed: { type: 'qaza_completed', title: 'Восполнил долг', description: 'Восполнил все пропущенные намазы', level: 'gold' as const, icon: '🕌', target: 1 },
+  prayer_consistent: { type: 'prayer_consistent', title: 'Постоянство в молитве', description: '30 дней подряд совершал намаз', level: 'copper' as const, icon: 'building', target: 30 },
+  qaza_completed: { type: 'qaza_completed', title: 'Восполнил долг', description: 'Восполнил все пропущенные намазы', level: 'gold' as const, icon: 'building', target: 1 },
   
   // Quran
-  quran_reader: { type: 'quran_reader', title: 'Чтец Корана', description: 'Прочитал 30 джузов', level: 'copper' as const, icon: '📖', target: 30 },
-  quran_master: { type: 'quran_master', title: 'Мастер Корана', description: 'Прочитал весь Коран', level: 'gold' as const, icon: '📖', target: 114 }, // 114 сур
+  quran_reader: { type: 'quran_reader', title: 'Чтец Корана', description: 'Прочитал 30 джузов', level: 'copper' as const, icon: 'book', target: 30 },
+  quran_master: { type: 'quran_master', title: 'Мастер Корана', description: 'Прочитал весь Коран', level: 'gold' as const, icon: 'book', target: 114 }, // 114 сур
 };
 
 // Функция проверки и присвоения бейджей

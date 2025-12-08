@@ -7,6 +7,8 @@ import { RotateCcw, Undo2, RefreshCw, Volume2, VolumeX, Target, RotateCw, CheckC
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { DhikrItem } from '@/lib/types';
+import { useDeleteLastDhikrLog } from '@/hooks/use-api';
+import { useToast } from '@/hooks/use-toast';
 
 interface TasbihCounterProps {
   item?: DhikrItem;
@@ -24,6 +26,7 @@ interface TasbihCounterProps {
   transcriptionType?: 'latin' | 'cyrillic';
   linkedGoalTitle?: string;
   goalType?: 'recite' | 'learn';
+  sessionId?: string; // ID текущей сессии для отката лога
 }
 
 export default function TasbihCounter({
@@ -42,7 +45,10 @@ export default function TasbihCounter({
   transcriptionType = 'cyrillic',
   linkedGoalTitle,
   goalType = 'recite',
+  sessionId,
 }: TasbihCounterProps) {
+  const { toast } = useToast();
+  const deleteLastLogMutation = useDeleteLastDhikrLog();
   const computedRounds = initialRounds ?? Math.floor(initialCount / 100);
   const [count, setCount] = useState(initialCount);
   const [rounds, setRounds] = useState(computedRounds);
@@ -243,19 +249,46 @@ export default function TasbihCounter({
     }, 5000);
   }, [count, rounds, goalTarget, onCountChange]);
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = useCallback(async () => {
     if (!lastAction) return;
+    
+    // Локально обновляем UI сразу для быстрой реакции
     const newCount = Math.max(0, count - lastAction.delta);
     const newRounds = Math.floor(newCount / ROUND_SIZE);
     setCount(newCount);
     setRounds(newRounds);
-    onCountChange?.(newCount, -lastAction.delta, newRounds);
     setShowUndo(false);
     setLastAction(null);
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
-  }, [lastAction, count, onCountChange]);
+    
+    // Вызываем callback для обновления родительского компонента
+    onCountChange?.(newCount, -lastAction.delta, newRounds);
+    
+    // Откатываем на сервере через API
+    if (sessionId) {
+      try {
+        await deleteLastLogMutation.mutateAsync(sessionId);
+        // API успешно откатил - всё готово
+      } catch (error: any) {
+        // Если ошибка - показываем уведомление и откатываем локально обратно
+        console.error('Failed to undo on server:', error);
+        toast({
+          title: "Не удалось отменить",
+          description: error?.message || "Попробуйте ещё раз",
+          variant: "destructive",
+        });
+        // Откатываем изменения локально обратно
+        setCount(count);
+        setRounds(Math.floor(count / ROUND_SIZE));
+        onCountChange?.(count, lastAction.delta, Math.floor(count / ROUND_SIZE));
+      }
+    } else {
+      // Если sessionId нет - только локальный откат (fallback)
+      console.warn('Undo without sessionId - only local rollback');
+    }
+  }, [lastAction, count, onCountChange, sessionId, deleteLastLogMutation, toast]);
 
   const handleReset = useCallback(() => {
     setCount(0);

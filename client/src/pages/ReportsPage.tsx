@@ -45,7 +45,8 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import { prayerLabels } from '@/lib/constants';
-import { useGoals, useStats, useDailyAzkar, useBadges, useCheckBadges, useCategoryStreaks } from '@/hooks/use-api';
+import { useGoals, useStats, useDailyAzkar, useBadges, useCheckBadges, useCategoryStreaks, useActivityHeatmap } from '@/hooks/use-api';
+import ActivityHeatmap from '@/components/ActivityHeatmap';
 import { Check, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task, Subtask, Habit, WeekDay } from '@/lib/types';
@@ -103,6 +104,7 @@ export default function ReportsPage() {
   const { data: categoryStreaks = [] } = useCategoryStreaks();
   const today = new Date().toISOString().split('T')[0];
   const { data: dailyAzkarData } = useDailyAzkar(today);
+  const { data: activityHeatmapData = [] } = useActivityHeatmap({ days: 365 });
   
   const [activeTab, setActiveTab] = useState<'today' | 'achievements' | 'history'>('today');
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('week');
@@ -1207,6 +1209,14 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-3">
+            <Card className="p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Тепловая карта активности
+              </h3>
+              <ActivityHeatmap data={activityHeatmapData} period="year" />
+            </Card>
+            
             <Card className="divide-y divide-border">
               {recentActivity.map((activity, index) => (
                 <div key={index} className="flex items-center gap-3 p-3">

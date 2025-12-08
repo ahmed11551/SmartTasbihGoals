@@ -101,10 +101,16 @@ export default function TasbihPage() {
     return getDhikrItemsByCategory('azkar');
   }, [azkarCatalogFromAPI]);
 
-  // Текущая активная сессия
+  // Текущая активная сессия (state для передачи в компоненты)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const currentSessionIdRef = useRef<string | null>(null);
   const logBatchRef = useRef<Array<{ delta: number; valueAfter: number; timestamp: Date }>>([]);
   const batchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Синхронизируем ref и state
+  useEffect(() => {
+    currentSessionIdRef.current = currentSessionId;
+  }, [currentSessionId]);
 
   // Получаем зикр дня или первый доступный (используем данные с API или fallback)
   const defaultDhikr = useMemo(() => {
@@ -163,7 +169,7 @@ export default function TasbihPage() {
       const session = unfinishedSessions.find((s: any) => s.id === urlParams.sessionId);
       if (session) {
         // Восстановить состояние сессии
-        currentSessionIdRef.current = session.id;
+        setCurrentSessionId(session.id);
         // Можно также восстановить счетчик и другие параметры из сессии
         // Очистить query параметры после обработки
         window.history.replaceState({}, '', '/');
@@ -203,14 +209,14 @@ export default function TasbihPage() {
 
   // Создать сессию при первом использовании счетчика
   const ensureSession = async () => {
-    if (currentSessionIdRef.current) return currentSessionIdRef.current;
+    if (currentSessionId) return currentSessionId;
 
     try {
       const session = await createSessionMutation.mutateAsync({
         goalId: linkedGoal?.id || undefined,
         prayerSegment: selectedPrayer,
       });
-      currentSessionIdRef.current = session.id;
+      setCurrentSessionId(session.id);
       return session.id;
     } catch (error) {
       toast({
@@ -358,31 +364,31 @@ export default function TasbihPage() {
   // Завершить сессию при размонтировании
   useEffect(() => {
     return () => {
-      if (currentSessionIdRef.current) {
+      if (currentSessionId) {
         updateSessionMutation.mutate({
-          id: currentSessionIdRef.current,
+          id: currentSessionId,
           data: { endedAt: new Date().toISOString() },
         });
-        currentSessionIdRef.current = null;
+        setCurrentSessionId(null);
       }
       if (batchTimeoutRef.current) {
         clearTimeout(batchTimeoutRef.current);
       }
     };
-  }, []);
+  }, [currentSessionId]);
 
   const handlePrayerSelect = async (prayer: PrayerSegment) => {
     // Завершить текущую сессию перед сменой
-    if (currentSessionIdRef.current) {
+    if (currentSessionId) {
       try {
         await updateSessionMutation.mutateAsync({
-          id: currentSessionIdRef.current,
+          id: currentSessionId,
           data: { endedAt: new Date().toISOString() },
         });
       } catch (error) {
         // Ошибка обрабатывается через React Query
       }
-      currentSessionIdRef.current = null;
+      setCurrentSessionId(null);
     }
 
     setSelectedPrayer(prayer);
@@ -558,13 +564,13 @@ export default function TasbihPage() {
     }
 
     // Завершить сессию
-    if (currentSessionIdRef.current) {
+    if (currentSessionId) {
       try {
         await updateSessionMutation.mutateAsync({
-          id: currentSessionIdRef.current,
+          id: currentSessionId,
           data: { endedAt: new Date().toISOString() },
         });
-        currentSessionIdRef.current = null;
+        setCurrentSessionId(null);
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           // eslint-disable-next-line no-console
@@ -590,15 +596,16 @@ export default function TasbihPage() {
   const handleResumeSession = async (session: any) => {
     try {
       // Завершить текущую сессию, если есть
-      if (currentSessionIdRef.current) {
+      if (currentSessionId) {
         try {
           await updateSessionMutation.mutateAsync({
-            id: currentSessionIdRef.current,
+            id: currentSessionId,
             data: { endedAt: new Date().toISOString() },
           });
         } catch (error) {
           // Ошибка обрабатывается через React Query
         }
+        setCurrentSessionId(null);
       }
 
       // Найти dhikr item по категории и itemId
@@ -620,7 +627,7 @@ export default function TasbihPage() {
       const rounds = Math.floor(count / 100);
       setCurrentCount(count);
       setCurrentRounds(rounds);
-      currentSessionIdRef.current = session.id;
+      setCurrentSessionId(session.id);
       setCounterKey(Date.now().toString());
 
       toast({
@@ -638,16 +645,16 @@ export default function TasbihPage() {
 
   const handleDhikrSelect = async (item: DhikrItem) => {
     // Завершить текущую сессию при смене зикра
-    if (currentSessionIdRef.current && currentCount > 0) {
+    if (currentSessionId && currentCount > 0) {
       try {
         await updateSessionMutation.mutateAsync({
-          id: currentSessionIdRef.current,
+          id: currentSessionId,
           data: { endedAt: new Date().toISOString() },
         });
       } catch (error) {
         // Ошибка обрабатывается через React Query
       }
-      currentSessionIdRef.current = null;
+      setCurrentSessionId(null);
     }
 
     // Выход из режима последовательности при ручном выборе зикра
@@ -787,6 +794,7 @@ export default function TasbihPage() {
             transcriptionType={transcriptionType}
             linkedGoalTitle={linkedGoal?.title}
             goalType={linkedGoal?.goalType || 'recite'}
+            sessionId={currentSessionId || undefined}
           />
         </div>
 

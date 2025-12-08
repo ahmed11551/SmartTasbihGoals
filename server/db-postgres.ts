@@ -29,10 +29,10 @@ export const sql = postgres(process.env.DATABASE_URL || '', {
 if (process.env.CHECK_DB_CONNECTION === 'true') {
   sql`SELECT 1`
     .then(() => {
-      console.log('✅ Прямое подключение к PostgreSQL установлено');
+      console.log('Прямое подключение к PostgreSQL установлено');
     })
     .catch((error) => {
-      console.error('❌ Ошибка прямого подключения к PostgreSQL:', error.message);
+      console.error('Ошибка прямого подключения к PostgreSQL:', error.message);
       console.error('Проверьте DATABASE_URL и доступность базы данных');
     });
 }
