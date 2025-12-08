@@ -18,5 +18,14 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Fallback для отлова ошибок загрузки React на Vercel
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('useState') && e.message.includes('undefined')) {
+          console.error('[Vercel] React not loaded correctly, reloading...');
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      }, true);
+    </script>
   </body>
 </html>

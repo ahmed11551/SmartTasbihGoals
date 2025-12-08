@@ -103,11 +103,21 @@ export default defineConfig({
             // КРИТИЧНО: На Vercel React должен быть в main bundle для гарантированной загрузки
             // Не разделяем React на отдельный chunk, чтобы избежать проблем с порядком загрузки
             if (isVercel) {
-              // На Vercel React остается в main bundle (возвращаем null)
+              // На Vercel React и react-dom ОБЯЗАТЕЛЬНО в main bundle
+              // Проверяем все возможные пути к React (включая вложенные модули)
+              const isReact = id.includes('node_modules/react') || 
+                             id.includes('node_modules/react-dom') ||
+                             id.includes('node_modules/react/jsx-runtime') ||
+                             id.includes('node_modules/react/jsx-dev-runtime') ||
+                             id.includes('/react/') ||
+                             id.includes('/react-dom/');
+              
+              if (isReact) {
+                // React остается в main bundle (null = не разделять)
+                return null;
+              }
               // Все остальные node_modules в vendor chunk
-              if (id.includes('node_modules') && 
-                  !id.includes('node_modules/react') && 
-                  !id.includes('node_modules/react-dom')) {
+              if (id.includes('node_modules')) {
                 return 'vendor';
               }
               // Страницы в отдельные чанки для lazy loading
@@ -115,7 +125,7 @@ export default defineConfig({
                 const pageName = id.split('/pages/')[1]?.split('.')[0];
                 return `page-${pageName}`;
               }
-              // React остается в main bundle (null = не разделять)
+              // Остальное в main bundle
               return null;
             }
             // Для Docker - оригинальная логика
