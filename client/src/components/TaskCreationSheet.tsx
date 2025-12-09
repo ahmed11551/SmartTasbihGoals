@@ -3,6 +3,8 @@ import { useForm, Controller } from 'react-hook-form';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -227,6 +229,9 @@ export default function TaskCreationSheet({
       )}
 
       <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{editingTask ? 'Редактирование задачи' : 'Новая задача'}</SheetTitle>
+        </SheetHeader>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border gap-3">
           <Button 
             variant="ghost" 

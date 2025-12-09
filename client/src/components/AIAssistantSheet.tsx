@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -289,6 +291,9 @@ export default function AIAssistantSheet({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>{trigger}</SheetTrigger>
         <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>AI Assistant</SheetTitle>
+          </SheetHeader>
           {content}
         </SheetContent>
       </Sheet>

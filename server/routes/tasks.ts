@@ -65,8 +65,40 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({ task });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
-      const task = await storage.createTask(userId, req.body);
-      res.status(201).json({ task });
+      
+      // Убедиться, что пользователь существует в БД
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        await prisma.user.create({
+          data: {
+            id: userId,
+            username: userId === "default-user" ? `default-user-${Date.now()}` : userId,
+            password: await storage.hashPassword("default-password"),
+          },
+        });
+      }
+      
+      try {
+        const task = await storage.createTask(userId, req.body);
+        res.status(201).json({ task });
+      } catch (createError: any) {
+        logger.error("Error creating task:", createError);
+        // Улучшенная обработка ошибок Prisma
+        if (createError.code === 'P2002') {
+          return res.status(400).json({ 
+            error: "Validation error", 
+            message: "Задача с таким названием уже существует" 
+          });
+        }
+        if (createError instanceof Error && createError.message.includes('prisma')) {
+          return res.status(400).json({ 
+            error: "Validation error", 
+            message: createError.message || "Ошибка валидации данных при создании записи",
+            details: createError 
+          });
+        }
+        throw createError;
+      }
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
