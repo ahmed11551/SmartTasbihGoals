@@ -10,7 +10,7 @@ export interface ApiError extends Error {
 }
 
 export function errorHandler(
-  err: ApiError | ZodError | Prisma.PrismaClientKnownRequestError,
+  err: ApiError | ZodError | Prisma.PrismaClientKnownRequestError | Prisma.PrismaClientValidationError | Prisma.PrismaClientInitializationError,
   req: Request,
   res: Response,
   next: NextFunction
@@ -23,6 +23,16 @@ export function errorHandler(
         path: e.path.join("."),
         message: e.message,
       })),
+    });
+  }
+
+  // Prisma validation errors
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    logger.error("Prisma validation error:", err.message);
+    return res.status(400).json({
+      error: "Validation error",
+      message: "Ошибка валидации данных при создании записи",
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined,
     });
   }
 
@@ -94,6 +104,15 @@ export function errorHandler(
       return res.status(503).json({
         error: "Database connection failed",
         message: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL в настройках Vercel.",
+      });
+    }
+    
+    // Обработка ошибок OpenAI API
+    if (errorMessage.includes('403') || errorMessage.includes('country') || errorMessage.includes('region') || errorMessage.includes('territory')) {
+      logger.error("OpenAI API region error:", err);
+      return res.status(503).json({
+        error: "OpenAI API недоступен в вашем регионе",
+        message: "OpenAI API недоступен в вашем регионе. Возможно, требуется VPN или прокси.",
       });
     }
   }

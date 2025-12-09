@@ -85,7 +85,16 @@ export default function AIAssistantSheet({
         },
       }, getAuthOptions());
       
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw { json: Promise.resolve(errorData), message: errorData.message || errorData.error || `HTTP ${res.status}` };
+      }
+      
       const data = await res.json();
+      
+      if (data.error) {
+        throw { json: Promise.resolve(data), message: data.message || data.error };
+      }
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -114,10 +123,34 @@ export default function AIAssistantSheet({
         // Not JSON, just show the response
       }
     } catch (error: any) {
+      let errorContent = 'Извините, произошла ошибка.';
+      
+      // Проверяем ответ от API
+      if (error.json) {
+        try {
+          const errorData = await error.json();
+          if (errorData.message) {
+            errorContent = errorData.message;
+          } else if (errorData.error) {
+            errorContent = errorData.error === 'OpenAI API недоступен в вашем регионе' 
+              ? 'OpenAI API недоступен в вашем регионе. Возможно, требуется VPN или прокси.'
+              : errorData.error;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+      }
+      
+      if (error.message?.includes('503') || error.message?.includes('AI service is not configured')) {
+        errorContent = 'AI-помощник временно недоступен. Для активации необходим API ключ OpenAI.';
+      } else if (error.message && !errorContent.includes('OpenAI')) {
+        errorContent = `Извините, произошла ошибка: ${error.message}`;
+      }
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Извините, произошла ошибка: ${error.message || 'Не удалось обработать запрос'}`,
+        content: errorContent,
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

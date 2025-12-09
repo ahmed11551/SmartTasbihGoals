@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Проверка DATABASE_URL перед обработкой запроса
     if (!process.env.DATABASE_URL) {
-      console.error('❌ DATABASE_URL не установлен в переменных окружения Vercel!');
+      console.error('DATABASE_URL не установлен в переменных окружения Vercel!');
       return res.status(503).json({
         error: 'Database configuration missing',
         message: 'DATABASE_URL не настроен. Пожалуйста, добавьте DATABASE_URL в настройках Vercel (Settings → Environment Variables).',

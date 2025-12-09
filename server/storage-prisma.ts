@@ -122,9 +122,16 @@ export class PrismaStorage implements IStorage {
   }
 
   async createHabit(userId: string, habit: Prisma.HabitCreateInput): Promise<Habit> {
+    // Преобразовать startDate в полный DateTime если это только дата
+    const habitData: any = { ...habit };
+    if (habitData.startDate && typeof habitData.startDate === 'string' && habitData.startDate.length === 10) {
+      // Если только дата (YYYY-MM-DD), добавить время
+      habitData.startDate = new Date(habitData.startDate + 'T00:00:00.000Z');
+    }
+    
     return prisma.habit.create({
       data: {
-        ...habit,
+        ...habitData,
         user: { connect: { id: userId } },
       },
     });
@@ -239,11 +246,20 @@ export class PrismaStorage implements IStorage {
   }
 
   async createSession(userId: string, session: Prisma.SessionCreateInput): Promise<Session> {
+    // Преобразовать goalId в связь goal если он есть
+    const { goalId, ...sessionData } = session as any;
+    const createData: Prisma.SessionCreateInput = {
+      ...sessionData,
+      user: { connect: { id: userId } },
+    };
+    
+    // Если есть goalId, создать связь с goal
+    if (goalId) {
+      createData.goal = { connect: { id: goalId } };
+    }
+    
     return prisma.session.create({
-      data: {
-        ...session,
-        user: { connect: { id: userId } },
-      },
+      data: createData,
     });
   }
 
@@ -277,12 +293,45 @@ export class PrismaStorage implements IStorage {
   }
 
   async createDhikrLog(userId: string, log: Prisma.DhikrLogCreateInput): Promise<DhikrLog> {
+    // Преобразовать sessionId в связь session
+    const { sessionId, ...logData } = log as any;
+    const createData: Prisma.DhikrLogCreateInput = {
+      ...logData,
+      offlineId: (logData.offlineId as string) || randomUUID(),
+      user: { connect: { id: userId } },
+    };
+    
+    // Session обязательна в схеме Prisma, поэтому либо используем существующую, либо создаем новую
+    if (sessionId) {
+      // Проверить, существует ли session
+      const existingSession = await prisma.session.findUnique({ where: { id: sessionId } });
+      if (existingSession) {
+        createData.session = { connect: { id: sessionId } };
+      } else {
+        // Если session не существует, создать новую
+        createData.session = {
+          create: {
+            userId,
+            goalId: logData.goalId || null,
+            prayerSegment: logData.prayerSegment || 'none',
+            startedAt: new Date(),
+          },
+        };
+      }
+    } else {
+      // Если sessionId не указан, создать новую session автоматически
+      createData.session = {
+        create: {
+          userId,
+          goalId: logData.goalId || null,
+          prayerSegment: logData.prayerSegment || 'none',
+          startedAt: new Date(),
+        },
+      };
+    }
+    
     return prisma.dhikrLog.create({
-      data: {
-        ...log,
-        offlineId: (log.offlineId as string) || randomUUID(),
-        user: { connect: { id: userId } },
-      },
+      data: createData,
     });
   }
 
