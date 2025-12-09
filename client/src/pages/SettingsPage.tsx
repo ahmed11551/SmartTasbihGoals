@@ -28,14 +28,14 @@ import {
 import { cn } from '@/lib/utils';
 import ProfileSheet from '@/components/ProfileSheet';
 import NotificationSettingsSheet from '@/components/NotificationSettingsSheet';
+import { useLocalization } from '@/hooks/use-localization';
 
 export default function SettingsPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [soundEffects, setSoundEffects] = useState(false);
-  const [language, setLanguage] = useState('ru');
-  const [transcriptionType, setTranscriptionType] = useState('cyrillic');
+  const { language, transcriptionType, setLanguage, setTranscriptionType } = useLocalization();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
 

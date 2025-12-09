@@ -39,6 +39,7 @@ import { getTodayDhikrItem, getDhikrItemsByCategory, findDhikrItemById, getAllDh
 import { useDhikrCatalogByCategory } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { prayerLabels } from '@/lib/constants';
+import { useLocalization } from '@/hooks/use-localization';
 
 interface RecentAction {
   id: string;
