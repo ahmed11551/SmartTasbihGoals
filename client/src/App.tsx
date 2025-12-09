@@ -11,14 +11,15 @@ import TelegramAuth from "@/components/TelegramAuth";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { SkipToMain } from "@/components/ui/skip-to-main";
 import NotFound from "@/pages/not-found";
-// КРИТИЧНО: Импортируем useTranslation здесь, чтобы модуль был включен в main bundle
+// КРИТИЧНО: Импортируем useTranslation здесь, чтобы модуль был включен в shared chunk
+// и был доступен для lazy-loaded страниц
 import { useTranslation } from "@/lib/i18n";
 
-// Preload i18n module to ensure it's available for lazy-loaded pages
-// This forces the module to be included in the main bundle
+// Принудительно импортируем весь модуль i18n для гарантии включения в shared chunk
+import * as i18nModule from "@/lib/i18n";
 if (typeof window !== 'undefined') {
-  // Force evaluation of the module
-  useTranslation.toString();
+  // Принудительная оценка модуля для включения в bundle
+  void i18nModule;
 }
 
 // Lazy loading для страниц - уменьшает initial bundle size
