@@ -113,3 +113,10 @@ export function getTranslation(language: Language, key: string, params?: Record<
  */
 export { translations };
 export type { Language, Translations };
+
+// КРИТИЧНО: Гарантируем, что модуль экспортируется правильно
+// Это помогает Vite правильно резолвить модуль в vendor chunk
+if (typeof window !== 'undefined') {
+  // Принудительная оценка экспорта для включения в bundle
+  (window as any).__i18n_module = { useTranslation, translations };
+}
