@@ -4,6 +4,9 @@ import App from "./App";
 import "./index.css";
 import { initTelegramWebApp } from "./lib/telegram";
 import { initSentry } from "./lib/sentry";
+// КРИТИЧНО: Импортируем i18n в entry point, чтобы модуль был гарантированно включен в main bundle
+// Это предотвращает ошибки "useTranslation is not defined" при lazy loading страниц
+import "@/lib/i18n";
 
 // Инициализация Sentry (если настроен)
 if (typeof window !== 'undefined') {

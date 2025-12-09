@@ -1,4 +1,5 @@
 // Система локализации и переводов
+// КРИТИЧНО: Этот модуль должен быть включен в main bundle для работы с lazy-loaded страницами
 
 import React, { useState, useEffect } from 'react';
 import translations, { type Language, type Translations } from './translations';

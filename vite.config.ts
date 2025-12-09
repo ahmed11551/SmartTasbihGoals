@@ -68,10 +68,18 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
+      include: [
+        'react', 
+        'react-dom', 
+        'react/jsx-runtime', 
+        'react/jsx-dev-runtime',
+        '@/lib/i18n',
+        '@/hooks/use-localization'
+      ],
       esbuildOptions: {
         target: 'esnext',
       },
+      force: isVercel || isDocker, // Принудительная оптимизация для production,
       force: isVercel, // Принудительная оптимизация для Vercel
     },
     rollupOptions: {

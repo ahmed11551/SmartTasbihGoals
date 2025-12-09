@@ -11,7 +11,15 @@ import TelegramAuth from "@/components/TelegramAuth";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { SkipToMain } from "@/components/ui/skip-to-main";
 import NotFound from "@/pages/not-found";
+// КРИТИЧНО: Импортируем useTranslation здесь, чтобы модуль был включен в main bundle
 import { useTranslation } from "@/lib/i18n";
+
+// Preload i18n module to ensure it's available for lazy-loaded pages
+// This forces the module to be included in the main bundle
+if (typeof window !== 'undefined') {
+  // Force evaluation of the module
+  useTranslation.toString();
+}
 
 // Lazy loading для страниц - уменьшает initial bundle size
 const TasbihPage = lazy(() => import("@/pages/TasbihPage"));
