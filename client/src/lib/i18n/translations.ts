@@ -637,7 +637,6 @@ const translations: Record<Language, Translations> = {
       fullReset: 'Reset All',
       resetCounter: 'Reset Counter',
       goal: 'Goal',
-      rounds: 'rounds',
       leftOf: 'left of',
       counter: 'Counter',
       removeGoal: 'Remove Goal',
