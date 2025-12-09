@@ -53,8 +53,7 @@ interface RecentAction {
 
 export default function TasbihPage() {
   const { toast } = useToast();
-  // ВРЕМЕННО: Локализация отключена
-  const t = { tasbih: { selectDhikr: "Выбрать зикр", settings: "Настройки", audio: "Аудио", transcription: "Транскрипция", translation: "Перевод", transcriptionType: "Тип транскрипции", loading: "Загрузка...", errorCreatingSession: "Ошибка создания сессии", goalCompleted: "Цель выполнена", error: "Ошибка", success: "Успешно", dhikrSaved: "Зикр сохранен", sessionResumed: "Сессия возобновлена", errorResumingSession: "Ошибка возобновления сессии", noActionToUndo: "Нет действий для отмены", undo: "Отмена", reset: "Сброс", resetCounter: "Сбросить счетчик", fullReset: "Полный сброс", goal: "Цель", leftOf: "Осталось", rounds: "Раунды", goalCompletedMessage: "Цель выполнена!", autoInterval: "Авто-интервал", from1To60Sec: "от 1 до 60 сек", startAutoTap: "Начать авто-тап", stopAutoTap: "Остановить авто-тап", autoTapMessage: "Автоматический тап каждые", second: "секунда", seconds2: "секунды", seconds: "секунд", goalColon: "Цель:", repeatCount: "Повторения", learned: "Изучено!", markLearned: "Отметить изученным", repeat: "Повторить", counter: "Счетчик", transcriptionLabel: "Транскрипция", translationLabel: "Перевод", listen: "Слушать", stop: "Остановить", quickSelect: "Быстрый выбор" }, common: { loading: "Загрузка...", error: "Ошибка", success: "Успешно", search: "Поиск" }, navigation: { tasbih: "Тасбих", goals: "Цели", zikry: "Зикры", reports: "Отчеты", settings: "Настройки" }, settings: { cyrillic: "Кириллица", latin: "Латиница" } } as any;
+  const { t } = useTranslation();
   const [location] = useLocation();
   const { data: goals = [] } = useGoals();
   const { data: qazaDebt } = useQazaDebt();
