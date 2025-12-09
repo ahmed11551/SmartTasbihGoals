@@ -40,6 +40,7 @@ import { useDhikrCatalogByCategory } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { prayerLabels } from '@/lib/constants';
 import { useLocalization } from '@/hooks/use-localization';
+import { useTranslation } from '@/lib/i18n';
 
 interface RecentAction {
   id: string;
