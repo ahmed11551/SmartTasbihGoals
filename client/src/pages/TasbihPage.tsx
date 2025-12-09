@@ -222,8 +222,8 @@ export default function TasbihPage() {
       return session.id;
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось создать сессию",
+        title: t.common.error,
+        description: t.tasbih.errorCreatingSession,
         variant: "destructive",
       });
       return null;
@@ -259,7 +259,7 @@ export default function TasbihPage() {
         });
 
         toast({
-          title: "Цель достигнута!",
+          title: t.tasbih.goalCompleted,
           description: `Машааллах! Вы выучили "${linkedGoal.title}"!`,
         });
       }
@@ -315,7 +315,7 @@ export default function TasbihPage() {
 
             if (isCompleted) {
               toast({
-                title: "Цель достигнута!",
+                title: t.tasbih.goalCompleted,
                 description: `Машааллах! Цель "${linkedGoal.title}" выполнена!`,
               });
             }
@@ -582,8 +582,8 @@ export default function TasbihPage() {
     }
 
     toast({
-      title: "Отлично!",
-      description: "Зикры сохранены",
+      title: t.common.success,
+      description: t.tasbih.dhikrSaved,
     });
   };
 
@@ -633,13 +633,13 @@ export default function TasbihPage() {
       setCounterKey(Date.now().toString());
 
       toast({
-        title: "Сессия возобновлена",
+        title: t.tasbih.sessionResumed,
         description: `Продолжаем с ${count} счетом`,
       });
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось возобновить сессию",
+        title: t.common.error,
+        description: t.tasbih.errorResumingSession,
         variant: "destructive",
       });
     }
