@@ -361,6 +361,12 @@ const translations: Record<Language, Translations> = {
       copy: 'Копировать',
       share: 'Поделиться',
       bookmark: 'Добавить в закладки',
+      copied: 'Скопировано',
+      copiedForShare: 'Скопировано для отправки',
+      startTasbih: 'Начать тасбих',
+      translation: 'Перевод',
+      source: 'Источник',
+      benefit: 'Достоинство',
     },
     reports: {
       title: 'Отчёты',

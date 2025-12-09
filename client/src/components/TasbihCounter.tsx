@@ -384,7 +384,7 @@ export default function TasbihCounter({
                 isPlaying && "bg-primary/20"
               )}
               data-testid="button-play-audio"
-              aria-label={isPlaying ? "Остановить" : "Прослушать"}
+              aria-label={isPlaying ? t.tasbih.stop : t.tasbih.listen}
             >
               {isPlaying ? (
                 <VolumeX className="w-3.5 h-3.5 text-primary" />
@@ -405,7 +405,7 @@ export default function TasbihCounter({
               </p>
               
               {showTranscription && (
-                <p className="text-base text-muted-foreground italic break-words" aria-label="Транслитерация">
+                <p className="text-base text-muted-foreground italic break-words" aria-label={t.tasbih.transcriptionLabel}>
                   {transcriptionType === 'cyrillic' 
                     ? item.transcriptionCyrillic 
                     : item.transcriptionLatin}
@@ -413,7 +413,7 @@ export default function TasbihCounter({
               )}
               
               {showTranslation && item.translation && (
-                <p className="text-sm text-muted-foreground break-words" aria-label="Перевод">
+                <p className="text-sm text-muted-foreground break-words" aria-label={t.tasbih.translationLabel}>
                   {item.translation}
                 </p>
               )}
@@ -605,7 +605,7 @@ export default function TasbihCounter({
               data-testid="button-undo"
             >
               <Undo2 className="w-4 h-4" />
-              Отменить +{lastAction.delta}
+              {t.tasbih.undo} +{lastAction.delta}
             </Button>
           )}
 

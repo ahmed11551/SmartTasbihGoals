@@ -130,6 +130,7 @@ interface ZikrDetailSheetProps {
 
 function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetailSheetProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -158,7 +159,7 @@ function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetail
       }
     } else {
       await navigator.clipboard.writeText(text);
-      toast({ title: "Скопировано для отправки" });
+          toast({ title: t.zikry.copiedForShare });
     }
   };
 
