@@ -463,17 +463,17 @@ export default function ReportsPage() {
                 <Activity className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold">Общий прогресс</h3>
-                <p className="text-xs text-muted-foreground">за {
-                  analyticsPeriod === 'week' ? 'неделю' :
-                  analyticsPeriod === 'month' ? 'месяц' :
-                  analyticsPeriod === 'quarter' ? 'квартал' : 'год'
+                <h3 className="font-semibold">{t.reports.overallProgress}</h3>
+                <p className="text-xs text-muted-foreground">{t.reports.for} {
+                  analyticsPeriod === 'week' ? t.reports.week :
+                  analyticsPeriod === 'month' ? t.reports.month :
+                  analyticsPeriod === 'quarter' ? t.reports.quarter : t.reports.year
                 }</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl font-bold text-primary">{analyticsData.overallCompletionRate}%</p>
-              <p className="text-xs text-muted-foreground">выполнено</p>
+              <p className="text-xs text-muted-foreground">{t.reports.completed}</p>
             </div>
           </div>
           
@@ -500,10 +500,10 @@ export default function ReportsPage() {
               <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                 <Flame className="w-4 h-4 text-orange-500" />
               </div>
-              <span className="text-xs text-muted-foreground">Серия</span>
+              <span className="text-xs text-muted-foreground">{t.reports.streak}</span>
             </div>
             <p className="text-2xl font-bold">{analyticsData.currentStreak}</p>
-            <p className="text-xs text-muted-foreground">дней подряд</p>
+            <p className="text-xs text-muted-foreground">{t.reports.daysInRow}</p>
           </Card>
           
           <button 
@@ -523,12 +523,12 @@ export default function ReportsPage() {
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">Ожидает</span>
+                <span className="text-xs text-muted-foreground">{t.reports.pending}</span>
                 <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
               </div>
               <p className="text-2xl font-bold">{analyticsData.pendingActions}</p>
               <p className="text-xs text-muted-foreground">
-                {analyticsData.pendingActions === 0 ? 'всё выполнено' : 'действий'}
+                {analyticsData.pendingActions === 0 ? t.reports.everythingDone : t.reports.actions}
               </p>
             </Card>
           </button>
@@ -543,11 +543,11 @@ export default function ReportsPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                   <Zap className="w-4 h-4 text-emerald-500" />
                 </div>
-                <span className="text-xs text-muted-foreground">Сегодня</span>
+                <span className="text-xs text-muted-foreground">{t.reports.today}</span>
                 <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
               </div>
               <p className="text-2xl font-bold">{analyticsData.todayHabitsCompleted}/{analyticsData.todayHabitsExpected}</p>
-              <p className="text-xs text-muted-foreground">привычек</p>
+              <p className="text-xs text-muted-foreground">{t.reports.habits}</p>
             </Card>
           </button>
           
@@ -568,7 +568,7 @@ export default function ReportsPage() {
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">Пропущено</span>
+                <span className="text-xs text-muted-foreground">{t.reports.missed}</span>
                 <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
               </div>
               <div className="flex items-center gap-1">
@@ -580,7 +580,7 @@ export default function ReportsPage() {
                   <ArrowUpRight className="w-4 h-4 text-red-500" />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">за период</p>
+              <p className="text-xs text-muted-foreground">{t.reports.forPeriod}</p>
             </Card>
           </button>
         </div>
@@ -589,17 +589,17 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              <h3 className="font-medium">Динамика</h3>
+              <h3 className="font-medium">{t.reports.dynamics}</h3>
             </div>
             <Select value={analyticsPeriod} onValueChange={(v) => setAnalyticsPeriod(v as AnalyticsPeriod)}>
               <SelectTrigger className="w-28 h-8 text-xs" data-testid="select-analytics-period">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="week">Неделя</SelectItem>
-                <SelectItem value="month">Месяц</SelectItem>
-                <SelectItem value="quarter">Квартал</SelectItem>
-                <SelectItem value="year">Год</SelectItem>
+                <SelectItem value="week">{t.reports.week}</SelectItem>
+                <SelectItem value="month">{t.reports.month}</SelectItem>
+                <SelectItem value="quarter">{t.reports.quarter}</SelectItem>
+                <SelectItem value="year">{t.reports.year}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -640,8 +640,8 @@ export default function ReportsPage() {
                   }}
                   labelStyle={{ fontWeight: 500 }}
                   formatter={(value: number, name: string) => {
-                    if (name === 'rate') return [`${value}%`, 'Выполнение'];
-                    return [value, name === 'completed' ? 'Выполнено' : name === 'missed' ? 'Пропущено' : 'Ожидается'];
+                    if (name === 'rate') return [`${value}%`, t.reports.completed];
+                    return [value, name === 'completed' ? t.reports.executed : name === 'missed' ? t.reports.missed : t.reports.pending];
                   }}
                 />
                 <Bar 
@@ -676,15 +676,15 @@ export default function ReportsPage() {
           <div className="flex items-center justify-center gap-4 mt-3 text-xs flex-wrap">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-green-500" />
-              <span className="text-muted-foreground">Выполнено</span>
+              <span className="text-muted-foreground">{t.reports.executed}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-red-500" />
-              <span className="text-muted-foreground">Пропущено</span>
+              <span className="text-muted-foreground">{t.reports.missed}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-6 h-0.5 rounded-full bg-indigo-500" />
-              <span className="text-muted-foreground">% выполнения</span>
+              <span className="text-muted-foreground">{t.reports.percentCompletion}</span>
             </div>
           </div>
           
@@ -693,7 +693,7 @@ export default function ReportsPage() {
         <Card className="p-4 mb-4" data-testid="actionable-insights">
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-5 h-5 text-primary" />
-            <h3 className="font-medium">Что делать сейчас</h3>
+            <h3 className="font-medium">{t.reports.whatToDoNow}</h3>
           </div>
           
           <div className="space-y-2">
@@ -703,8 +703,8 @@ export default function ReportsPage() {
                   <Target className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Завершите сегодняшние привычки</p>
-                  <p className="text-xs text-muted-foreground">Осталось {100 - analyticsData.todayProgress}% для полного выполнения</p>
+                  <p className="text-sm font-medium">{t.reports.completeTodayHabits}</p>
+                  <p className="text-xs text-muted-foreground">{t.reports.left} {100 - analyticsData.todayProgress}% для полного выполнения</p>
                 </div>
               </div>
             )}
@@ -715,8 +715,8 @@ export default function ReportsPage() {
                   <CircleCheck className="w-4 h-4 text-green-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-green-600">Все привычки на сегодня выполнены!</p>
-                  <p className="text-xs text-muted-foreground">Отличная работа, продолжайте!</p>
+                  <p className="text-sm font-medium text-green-600">{t.reports.allHabitsDone}</p>
+                  <p className="text-xs text-muted-foreground">{t.reports.greatWork}</p>
                 </div>
               </div>
             )}
@@ -728,8 +728,8 @@ export default function ReportsPage() {
                     <AlertCircle className="w-4 h-4 text-red-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-red-600">Просроченные задачи</p>
-                    <p className="text-xs text-muted-foreground">{analyticsData.tasksOverdue} {analyticsData.tasksOverdue === 1 ? 'задача требует' : 'задач требуют'} внимания</p>
+                    <p className="text-sm font-medium text-red-600">{t.reports.overdueTasks}</p>
+                    <p className="text-xs text-muted-foreground">{analyticsData.tasksOverdue} {analyticsData.tasksOverdue === 1 ? t.reports.task : t.reports.tasksRequireAttention} внимания</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-red-500" />
                 </div>
@@ -746,8 +746,8 @@ export default function ReportsPage() {
                   <Flame className="w-4 h-4 text-yellow-500" />
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-medium text-yellow-600">Пропущенные привычки</p>
-                  <p className="text-xs text-muted-foreground">Восстановите {analyticsData.habitsMissed} {analyticsData.habitsMissed === 1 ? 'привычку' : 'привычек'}</p>
+                  <p className="text-sm font-medium text-yellow-600">{t.reports.missedHabits}</p>
+                  <p className="text-xs text-muted-foreground">{t.reports.recoverHabits} {analyticsData.habitsMissed} {analyticsData.habitsMissed === 1 ? t.reports.habit : t.reports.habits}</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-yellow-500" />
               </button>
@@ -759,8 +759,8 @@ export default function ReportsPage() {
                   <TrendingUp className="w-4 h-4 text-orange-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Серия растет!</p>
-                  <p className="text-xs text-muted-foreground">+{analyticsData.streakDelta} дней за период</p>
+                  <p className="text-sm font-medium">{t.reports.streakGrowing}</p>
+                  <p className="text-xs text-muted-foreground">+{analyticsData.streakDelta} {t.reports.daysInPeriod}</p>
                 </div>
               </div>
             )}
@@ -770,8 +770,8 @@ export default function ReportsPage() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                   <Trophy className="w-6 h-6 text-primary" />
                 </div>
-                <p className="text-sm font-medium">Все под контролем!</p>
-                <p className="text-xs text-muted-foreground mt-1">Нет задач, требующих немедленного внимания</p>
+                <p className="text-sm font-medium">{t.reports.allUnderControl}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.reports.noTasksRequiringAttention}</p>
               </div>
             )}
           </div>
@@ -782,13 +782,13 @@ export default function ReportsPage() {
             <SheetHeader className="pb-4">
               <SheetTitle className="flex items-center gap-2">
                 <XCircle className="w-5 h-5 text-red-500" />
-                Пропущенные привычки
+                {t.reports.missedHabits}
               </SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-[calc(70vh-80px)]">
               <div className="space-y-2 pr-4">
                 {analyticsData.missedItems.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Нет пропущенных привычек</p>
+                  <p className="text-center text-muted-foreground py-8">{t.reports.noMissedHabits}</p>
                 ) : (
                   analyticsData.missedItems.map((item) => (
                     <div 
@@ -821,7 +821,7 @@ export default function ReportsPage() {
                         data-testid={`button-complete-missed-${item.id}`}
                       >
                         <CircleCheck className="w-3.5 h-3.5" />
-                        <span className="text-xs">Отметить</span>
+                        <span className="text-xs">{t.reports.mark}</span>
                       </Button>
                     </div>
                   ))
@@ -836,7 +836,7 @@ export default function ReportsPage() {
             <SheetHeader className="pb-4">
               <SheetTitle className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-yellow-500" />
-                Ожидающие действия
+                {t.reports.pendingActions}
               </SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-[calc(70vh-80px)]">
@@ -845,7 +845,7 @@ export default function ReportsPage() {
                   <div>
                     <h4 className="text-sm font-medium text-red-500 mb-2 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4" />
-                      Просроченные задачи ({analyticsData.overdueTasks.length})
+                      {t.reports.overdueTasksCount} ({analyticsData.overdueTasks.length})
                     </h4>
                     <div className="space-y-2">
                       {analyticsData.overdueTasks.map((task: Task) => (
@@ -856,7 +856,7 @@ export default function ReportsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{task.title}</p>
-                              <p className="text-xs text-red-500">Срок: {new Date(task.dueDate!).toLocaleDateString('ru-RU')}</p>
+                              <p className="text-xs text-red-500">{t.reports.deadline}: {new Date(task.dueDate!).toLocaleDateString('ru-RU')}</p>
                             </div>
                             <ChevronRight className="w-4 h-4 text-red-500" />
                           </div>
@@ -870,7 +870,7 @@ export default function ReportsPage() {
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
                       <ListChecks className="w-4 h-4" />
-                      Задачи на сегодня ({analyticsData.pendingTasks.length})
+                      {t.reports.todayTasks} ({analyticsData.pendingTasks.length})
                     </h4>
                     <div className="space-y-2">
                       {analyticsData.pendingTasks.map((task: Task) => (
@@ -882,7 +882,7 @@ export default function ReportsPage() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{task.title}</p>
                               {task.dueDate && (
-                                <p className="text-xs text-muted-foreground">Срок: {new Date(task.dueDate).toLocaleDateString('ru-RU')}</p>
+                                <p className="text-xs text-muted-foreground">{t.reports.deadline}: {new Date(task.dueDate).toLocaleDateString('ru-RU')}</p>
                               )}
                             </div>
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -897,7 +897,7 @@ export default function ReportsPage() {
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
                       <Zap className="w-4 h-4" />
-                      Невыполненные привычки ({analyticsData.todayHabitsList.filter(h => !h.isCompleted).length})
+                      {t.reports.uncompletedHabits} ({analyticsData.todayHabitsList.filter(h => !h.isCompleted).length})
                     </h4>
                     <div className="space-y-2">
                       {analyticsData.todayHabitsList.filter(h => !h.isCompleted).map(({ habit }) => (
@@ -931,8 +931,8 @@ export default function ReportsPage() {
                     <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-2">
                       <CheckCircle2 className="w-6 h-6 text-green-500" />
                     </div>
-                    <p className="text-sm font-medium">Всё выполнено!</p>
-                    <p className="text-xs text-muted-foreground mt-1">Нет ожидающих действий</p>
+                    <p className="text-sm font-medium">{t.reports.everythingDone}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.reports.noTasksRequiringAttention}</p>
                   </div>
                 )}
               </div>
@@ -945,13 +945,13 @@ export default function ReportsPage() {
             <SheetHeader className="pb-4">
               <SheetTitle className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-emerald-500" />
-                Привычки на сегодня
+                {t.reports.todayHabits}
               </SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-[calc(70vh-80px)]">
               <div className="space-y-2 pr-4">
                 {analyticsData.todayHabitsList.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Нет привычек на сегодня</p>
+                  <p className="text-center text-muted-foreground py-8">{t.reports.noTodayHabits}</p>
                 ) : (
                   analyticsData.todayHabitsList.map(({ habit, isCompleted }) => (
                     <div 
@@ -977,7 +977,7 @@ export default function ReportsPage() {
                           isCompleted && "text-green-600"
                         )}>{habit.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {isCompleted ? 'Выполнено' : 'Ожидает'}
+                          {isCompleted ? t.reports.completed : t.reports.awaiting}
                         </p>
                       </div>
                       {!isCompleted && (
