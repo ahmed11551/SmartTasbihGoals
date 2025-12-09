@@ -130,6 +130,7 @@ export default function ReportsPage() {
       whatToDoNow: 'Что делать сейчас',
       completeTodayHabits: 'Выполнить сегодняшние привычки',
       left: 'Осталось',
+      missedHabits: 'Пропущенные привычки',
     },
     common: { loading: 'Загрузка...', error: 'Ошибка', success: 'Успешно' },
   } as any;
