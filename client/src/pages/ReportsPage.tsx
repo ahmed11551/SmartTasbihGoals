@@ -105,7 +105,7 @@ export default function ReportsPage() {
     reports: {},
     common: { loading: 'Загрузка...', error: 'Ошибка', success: 'Успешно' },
   } as any;
-const { habits, tasks, toggleHabitDay } = useData();
+  const { habits, tasks, toggleHabitDay } = useData();
   const { data: goals = [] } = useGoals();
   const { data: stats } = useStats();
   const { data: badges = [] } = useBadges();
