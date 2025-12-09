@@ -285,20 +285,20 @@ export default function TasbihCounter({
           onCountChange?.(count, lastAction.delta, Math.floor(count / ROUND_SIZE));
         } else {
           // Успешно откатили
-          toast({ title: "Действие отменено", description: `Откат на ${lastAction.delta} зикров.` });
+          toast({ title: t.common.success, description: `${t.tasbih.undo} ${lastAction.delta}` });
         }
       } catch (error: any) {
         // Если ошибка 404 или "No log found" - не критично
         const errorMessage = error?.message || '';
         if (errorMessage.includes('404') || errorMessage.includes('No log found') || errorMessage.includes('Нет действий')) {
           toast({ 
-            title: "Нет действий для отмены", 
-            description: "Нечего отменять" 
+            title: t.tasbih.noActionToUndo, 
+            description: t.tasbih.noActionToUndo
           });
         } else {
           toast({
-            title: "Не удалось отменить",
-            description: errorMessage || "Попробуйте ещё раз",
+            title: t.common.error,
+            description: errorMessage || t.common.error,
             variant: "destructive",
           });
         }
@@ -439,12 +439,12 @@ export default function TasbihCounter({
           <div className="text-center space-y-2">
             <div className="text-4xl font-bold text-primary">{repeatCount}</div>
             <div className="text-sm text-muted-foreground">
-              {goalTarget ? `Цель: ${goalTarget} повторов` : 'Количество повторов'}
+              {goalTarget ? `${t.tasbih.goalColon} ${goalTarget} повторов` : t.tasbih.repeatCount}
             </div>
             {isLearned && (
               <div className="flex items-center justify-center gap-2 text-green-600 text-sm font-medium">
                 <CheckCircle2 className="w-4 h-4" />
-                Выучено!
+                {t.tasbih.learned}
               </div>
             )}
           </div>
@@ -461,7 +461,7 @@ export default function TasbihCounter({
               data-testid="button-repeat"
             >
               <RotateCw className="w-5 h-5" />
-              Повторил
+              {t.tasbih.repeat}
             </Button>
 
             <Button
@@ -473,7 +473,7 @@ export default function TasbihCounter({
               data-testid="button-mark-learned"
             >
               <CheckCircle2 className="w-5 h-5" />
-              {isLearned ? 'Выучено' : 'Выучил'}
+              {isLearned ? t.tasbih.learned.replace('!', '') : t.tasbih.markLearned}
             </Button>
 
             {(repeatCount > 0 || isLearned) && (
@@ -615,13 +615,13 @@ export default function TasbihCounter({
               size="sm"
               onClick={handleReset}
               data-testid="button-reset"
-              aria-label="Сбросить счетчик"
+              aria-label={t.tasbih.resetCounter}
               role="button"
               tabIndex={0}
               className="gap-1.5 text-xs"
             >
               <RotateCcw className="w-4 h-4" />
-              Сбросить
+              {t.tasbih.reset}
             </Button>
             
             {goalTarget && (
@@ -640,13 +640,13 @@ export default function TasbihCounter({
               size="sm"
               onClick={handleFullReset}
               data-testid="button-full-reset"
-              aria-label="Сбросить всё"
+              aria-label={t.tasbih.fullReset}
               role="button"
               tabIndex={0}
               className="gap-1.5 text-xs text-muted-foreground"
             >
               <RefreshCw className="w-4 h-4" />
-              Сбросить всё
+              {t.tasbih.fullReset}
             </Button>
           </div>
 
@@ -708,7 +708,7 @@ export default function TasbihCounter({
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Включить авто-тап
+                  {t.tasbih.startAutoTap}
                 </>
               )}
             </Button>

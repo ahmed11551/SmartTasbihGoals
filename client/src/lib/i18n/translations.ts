@@ -63,6 +63,7 @@ export interface Translations {
   tasbih: {
     title: string;
     selectDhikr: string;
+    quickSelect: string;
     rounds: string;
     count: string;
     reset: string;
@@ -79,6 +80,22 @@ export interface Translations {
     errorCreatingSession: string;
     errorResumingSession: string;
     noActionToUndo: string;
+    fullReset: string;
+    resetCounter: string;
+    goal: string;
+    leftOf: string;
+    counter: string;
+    removeGoal: string;
+    goalCompletedMessage: string;
+    autoInterval: string;
+    stopAutoTap: string;
+    startAutoTap: string;
+    from1To60Sec: string;
+    goalColon: string;
+    repeatCount: string;
+    learned: string;
+    repeat: string;
+    markLearned: string;
   };
 
   // Цели
@@ -284,6 +301,22 @@ const translations: Record<Language, Translations> = {
       errorCreatingSession: 'Не удалось создать сессию',
       errorResumingSession: 'Не удалось возобновить сессию',
       noActionToUndo: 'Нет действий для отмены',
+      fullReset: 'Сбросить всё',
+      resetCounter: 'Сбросить счетчик',
+      goal: 'Цель',
+      leftOf: 'осталось из',
+      counter: 'Счетчик',
+      removeGoal: 'Убрать цель',
+      goalCompletedMessage: 'Машааллах! Цель достигнута!',
+      autoInterval: 'Задать автоинтервал (сек)',
+      stopAutoTap: 'Остановить авто-тап',
+      startAutoTap: 'Запустить авто-тап',
+      from1To60Sec: 'от 1 до 60 сек',
+      goalColon: 'Цель:',
+      repeatCount: 'Количество повторов',
+      learned: 'Выучено!',
+      repeat: 'Повторил',
+      markLearned: 'Выучил',
     },
     goals: {
       title: 'Цели',

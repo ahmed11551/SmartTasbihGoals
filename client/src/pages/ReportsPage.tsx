@@ -443,7 +443,7 @@ export default function ReportsPage() {
     <div id="main-content" tabIndex={-1} className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
         <div className="flex items-center justify-between px-4 h-14 max-w-md mx-auto">
-          <h1 className="font-display font-semibold text-lg">Отчёты</h1>
+          <h1 className="font-display font-semibold text-lg">{t.reports.title}</h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" data-testid="button-share">
               <Share2 className="w-5 h-5" />
@@ -1003,15 +1003,15 @@ export default function ReportsPage() {
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="today" className="gap-1">
               <Calendar className="w-3 h-3" />
-              Сегодня
+              {t.reports.today}
             </TabsTrigger>
             <TabsTrigger value="achievements" className="gap-1">
               <Trophy className="w-3 h-3" />
-              Достижения
+              {t.reports.achievements}
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1">
               <History className="w-3 h-3" />
-              История
+              {t.reports.history}
             </TabsTrigger>
           </TabsList>
 
@@ -1233,7 +1233,7 @@ export default function ReportsPage() {
             </Card>
             
             <Button variant="outline" className="w-full">
-              Загрузить ещё
+              {t.reports.loadMore}
             </Button>
           </TabsContent>
         </Tabs>

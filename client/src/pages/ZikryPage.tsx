@@ -326,7 +326,7 @@ export default function ZikryPage() {
             </Button>
           )}
           <h1 className="font-display font-semibold text-lg flex-1">
-            {viewState.type === 'categories' && 'Зикры'}
+            {viewState.type === 'categories' && t.zikry.title}
             {viewState.type === 'subcategories' && viewState.category.titleRu}
             {viewState.type === 'items' && viewState.subcategory.titleRu}
           </h1>
