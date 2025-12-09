@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useTranslation } from '@/lib/i18n';
 
 interface CategoryCardProps {
   category: ZikrCatalogCategory;
@@ -354,7 +355,7 @@ export default function ZikryPage() {
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Поиск..."
+                placeholder={t.common.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -380,7 +381,7 @@ export default function ZikryPage() {
               <>
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'categories' | 'favorites')}>
                   <TabsList className="w-full mb-4">
-                    <TabsTrigger value="categories" className="flex-1">Категории</TabsTrigger>
+                    <TabsTrigger value="categories" className="flex-1">{t.zikry.categories}</TabsTrigger>
                     <TabsTrigger value="favorites" className="flex-1">Любимое</TabsTrigger>
                   </TabsList>
 
@@ -479,7 +480,7 @@ export default function ZikryPage() {
             ))}
             {getItems().length === 0 && (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Зикры будут добавлены позже</p>
+                <p className="text-muted-foreground">{t.zikry.title} будут добавлены позже</p>
               </div>
             )}
           </div>

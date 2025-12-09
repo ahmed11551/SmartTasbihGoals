@@ -470,6 +470,8 @@ const translations: Record<Language, Translations> = {
       errorCreatingSession: 'Failed to create session',
       errorResumingSession: 'Failed to resume session',
       noActionToUndo: 'No action to undo',
+      fullReset: 'Reset All',
+      resetCounter: 'Reset Counter',
     },
     goals: {
       title: 'Goals',
@@ -656,6 +658,8 @@ const translations: Record<Language, Translations> = {
       errorCreatingSession: 'فشل في إنشاء الجلسة',
       errorResumingSession: 'فشل في استئناف الجلسة',
       noActionToUndo: 'لا يوجد إجراء للتراجع',
+      fullReset: 'إعادة تعيين الكل',
+      resetCounter: 'إعادة تعيين العداد',
     },
     goals: {
       title: 'الأهداف',

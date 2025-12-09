@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import type { DhikrItem } from '@/lib/types';
 import { useDeleteLastDhikrLog } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/lib/i18n';
 
 interface TasbihCounterProps {
   item?: DhikrItem;
@@ -48,6 +49,7 @@ export default function TasbihCounter({
   sessionId,
 }: TasbihCounterProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const deleteLastLogMutation = useDeleteLastDhikrLog();
   const computedRounds = initialRounds ?? Math.floor(initialCount / 100);
   const [count, setCount] = useState(initialCount);
