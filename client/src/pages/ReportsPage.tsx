@@ -471,7 +471,7 @@ export default function ReportsPage() {
       todayProgress: todayProgressPercent,
       streakDelta,
     };
-  }, [analyticsPeriod, habits, goals, tasks]);
+  }, [analyticsPeriod, habits, goals, tasks, today]);
 
   const handleShare = async () => {
     if (navigator.share) {
