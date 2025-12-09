@@ -1018,7 +1018,7 @@ export default function ReportsPage() {
           <TabsContent value="today" className="space-y-4">
             <Card className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium">Салаваты после намаза</h3>
+                <h3 className="font-medium">{t.reports.salawatAfterPrayer}</h3>
                 <span className="text-sm text-muted-foreground">
                   166 / 495
                 </span>
