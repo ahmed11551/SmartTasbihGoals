@@ -131,7 +131,6 @@ interface ZikrDetailSheetProps {
 }
 
 function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetailSheetProps) {
-  const { toast } = useToast();
   // ВРЕМЕННО: Локализация отключена
   const t = {
     zikry: {},
