@@ -7,7 +7,8 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n';
+// ВРЕМЕННО: Локализация отключена
+  // import { useTranslation } from "@/lib/i18n";
 
 export default function BottomNav() {
   const [location] = useLocation();

@@ -13,7 +13,8 @@ import { SkipToMain } from "@/components/ui/skip-to-main";
 import NotFound from "@/pages/not-found";
 // КРИТИЧНО: Импортируем useTranslation здесь, чтобы модуль был включен в shared chunk
 // и был доступен для lazy-loaded страниц
-import { useTranslation } from "@/lib/i18n";
+// ВРЕМЕННО: Локализация отключена
+  // import { useTranslation } from "@/lib/i18n";
 
 // Принудительно импортируем весь модуль i18n для гарантии включения в bundle
 import * as i18nModule from "@/lib/i18n";
