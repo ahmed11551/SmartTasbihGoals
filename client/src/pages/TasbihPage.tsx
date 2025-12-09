@@ -52,24 +52,16 @@ interface RecentAction {
 
 export default function TasbihPage() {
   const { toast } = useToast();
-  // КРИТИЧНО: Используем fallback через глобальную переменную, если модуль еще не загружен
-  let translationHook: ReturnType<typeof useTranslation>;
-  try {
-    translationHook = useTranslation();
-  } catch (error) {
-    // Fallback через глобальную переменную
+  // КРИТИЧНО: Используем глобальную переменную как приоритетный источник
+  // Это гарантирует, что модуль доступен, даже если vendor chunk еще не загружен
+  const getTranslationHook = () => {
     if (typeof window !== 'undefined' && (window as any).__i18n) {
-      translationHook = (window as any).__i18n.useTranslation();
-    } else {
-      // Заглушка на случай, если ничего не работает
-      translationHook = {
-        t: { common: { loading: 'Загрузка...' }, tasbih: {} } as any,
-        language: 'ru' as const,
-        translate: (key: string) => key,
-      };
+      return (window as any).__i18n.useTranslation();
     }
-  }
-  const { t } = translationHook;
+    // Fallback на прямой импорт
+    return useTranslation();
+  };
+  const { t } = getTranslationHook();
   const [location] = useLocation();
   const { data: goals = [] } = useGoals();
   const { data: qazaDebt } = useQazaDebt();
