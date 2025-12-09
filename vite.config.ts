@@ -63,6 +63,10 @@ export default defineConfig({
     minify: isProduction,
     cssCodeSplit: false,
     sourcemap: isVercel ? true : false, // Включаем sourcemap на Vercel для дебага
+    // КРИТИЧНО: Включаем modulePreload для гарантии правильной загрузки vendor chunk
+    modulePreload: {
+      polyfill: true,
+    },
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
