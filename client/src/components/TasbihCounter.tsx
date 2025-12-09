@@ -715,7 +715,7 @@ export default function TasbihCounter({
 
             {autoIntervalEnabled && (
               <p className="text-xs text-center text-muted-foreground">
-                Тап будет нажиматься автоматически каждые {autoIntervalSeconds} {autoIntervalSeconds === 1 ? 'секунду' : autoIntervalSeconds < 5 ? 'секунды' : 'секунд'}
+                {t.tasbih.autoTapMessage} {autoIntervalSeconds} {autoIntervalSeconds === 1 ? t.tasbih.second : autoIntervalSeconds < 5 ? t.tasbih.seconds2 : t.tasbih.seconds}
               </p>
             )}
           </Card>

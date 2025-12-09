@@ -154,7 +154,7 @@ function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetail
         if (error.name !== 'AbortError') {
           // Для других ошибок - используем fallback на clipboard
           await navigator.clipboard.writeText(text);
-          toast({ title: t.zikry.copiedForSharing });
+          toast({ title: t.zikry.copiedForShare });
         }
       }
     } else {

@@ -1045,11 +1045,11 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <h3 className="font-medium flex items-center gap-2">
                   <ListChecks className="w-4 h-4" />
-                  Задачи на сегодня
+                  {t.reports.tasksToday}
                 </h3>
                 <Link href="/goals">
                   <Button variant="ghost" size="sm" className="gap-1 text-xs" data-testid="link-all-tasks">
-                    Все
+                    {t.reports.all}
                     <ChevronRight className="w-3 h-3" />
                   </Button>
                 </Link>
@@ -1063,7 +1063,7 @@ export default function ReportsPage() {
                 if (todayTasks.length === 0) {
                   return (
                     <p className="text-sm text-muted-foreground text-center py-2">
-                      Нет задач на сегодня
+                      {t.reports.noTasksToday}
                     </p>
                   );
                 }
@@ -1071,7 +1071,7 @@ export default function ReportsPage() {
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Выполнено</span>
+                      <span className="text-muted-foreground">{t.reports.completed}</span>
                       <span>{completedCount} / {todayTasks.length}</span>
                     </div>
                     <Progress value={(completedCount / todayTasks.length) * 100} className="h-2" />
@@ -1101,7 +1101,7 @@ export default function ReportsPage() {
                               </span>
                               {hasSubtasks && (
                                 <span className="text-xs text-muted-foreground">
-                                  {completedSubtasks}/{subtasks.length} подзадач
+                                  {completedSubtasks}/{subtasks.length} {t.reports.subtasks}
                                 </span>
                               )}
                             </div>
@@ -1116,10 +1116,10 @@ export default function ReportsPage() {
 
             <Card className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium">Активные цели</h3>
+                <h3 className="font-medium">{t.reports.activeGoals}</h3>
                 <Link href="/goals">
                   <Button variant="ghost" size="sm" className="gap-1 text-xs" data-testid="link-all-goals">
-                    Все
+                    {t.reports.all}
                     <ChevronRight className="w-3 h-3" />
                   </Button>
                 </Link>
@@ -1159,7 +1159,7 @@ export default function ReportsPage() {
           <TabsContent value="achievements" className="space-y-6">
             {unlockedBadges.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-medium">Полученные бейджи</h3>
+                <h3 className="font-medium">{t.reports.receivedBadges}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {unlockedBadges.map((badge) => (
                     <BadgeCard 
@@ -1174,7 +1174,7 @@ export default function ReportsPage() {
 
             {lockedBadges.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-medium text-muted-foreground">В процессе</h3>
+                <h3 className="font-medium text-muted-foreground">{t.reports.inProgress}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {lockedBadges.map((badge) => (
                     <BadgeCard 
@@ -1189,7 +1189,7 @@ export default function ReportsPage() {
 
             {completedGoals.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-medium">Выполненные цели</h3>
+                <h3 className="font-medium">{t.reports.completedGoals}</h3>
                 {completedGoals.map((goal) => (
                   <Card key={goal.id} className="p-3">
                     <div className="flex items-center gap-3">
