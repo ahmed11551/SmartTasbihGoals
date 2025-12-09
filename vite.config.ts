@@ -101,6 +101,10 @@ export default defineConfig({
         manualChunks: (id) => {
           // Для Docker и Vercel production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
           if (isDocker || isVercel) {
+            // КРИТИЧНО: i18n модули должны быть в vendor chunk, чтобы быть доступными для всех страниц
+            if (id.includes('/lib/i18n/')) {
+              return 'vendor';
+            }
             // КРИТИЧНО: На Vercel React должен быть в main bundle для гарантированной загрузки
             // Не разделяем React на отдельный chunk, чтобы избежать проблем с порядком загрузки
             if (isVercel) {

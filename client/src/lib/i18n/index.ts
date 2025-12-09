@@ -112,3 +112,6 @@ export function getTranslation(language: Language, key: string, params?: Record<
  */
 export { translations };
 export type { Language, Translations };
+
+// Экспортируем также как default для совместимости
+export default useTranslation;
