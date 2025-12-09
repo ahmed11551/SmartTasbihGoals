@@ -4,16 +4,10 @@ import App from "./App";
 import "./index.css";
 import { initTelegramWebApp } from "./lib/telegram";
 import { initSentry } from "./lib/sentry";
-// КРИТИЧНО: Импортируем i18n в entry point, чтобы модуль был гарантированно включен в main bundle
-// Это предотвращает ошибки "useTranslation is not defined" при lazy loading страниц
-import "@/lib/i18n";
-import * as i18nModule from "@/lib/i18n";
-// Импортируем обертку для гарантии включения в bundle
-import "@/lib/i18n-hook";
-// КРИТИЧНО: Устанавливаем глобальную переменную ДО рендера App
-if (typeof window !== 'undefined') {
-  (window as any).__i18n = i18nModule;
-}
+// ВРЕМЕННО: Локализация отключена из-за проблем с chunking
+// import "@/lib/i18n";
+// import * as i18nModule from "@/lib/i18n";
+// import "@/lib/i18n-hook";
 
 // Инициализация Sentry (если настроен)
 if (typeof window !== 'undefined') {

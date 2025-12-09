@@ -16,14 +16,8 @@ import NotFound from "@/pages/not-found";
 // ВРЕМЕННО: Локализация отключена
   // import { useTranslation } from "@/lib/i18n";
 
-// Принудительно импортируем весь модуль i18n для гарантии включения в bundle
-import * as i18nModule from "@/lib/i18n";
-// Принудительная оценка модуля для включения в bundle
-if (typeof window !== 'undefined') {
-  void i18nModule;
-  // Экспортируем модуль глобально для доступа из любых chunks
-  (window as any).__i18n = i18nModule;
-}
+// ВРЕМЕННО: Локализация отключена
+// import * as i18nModule from "@/lib/i18n";
 
 // КРИТИЧНО: Отключаем lazy loading для TasbihPage, чтобы избежать проблем с i18n
 // Модуль i18n должен быть доступен ДО загрузки страницы
