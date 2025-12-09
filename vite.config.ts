@@ -101,15 +101,10 @@ export default defineConfig({
         manualChunks: (id) => {
           // Для Docker и Vercel production - упрощенная конфигурация, чтобы избежать проблем с порядком загрузки
           if (isDocker || isVercel) {
-            // КРИТИЧНО: i18n модули и hooks должны быть в vendor chunk или main bundle
-            // для гарантированной доступности для всех страниц
+            // КРИТИЧНО: i18n модули и hooks должны быть в main bundle для гарантированной загрузки
+            // Это предотвращает ошибки "useTranslation is not defined" при lazy loading страниц
             if (id.includes('/lib/i18n/') || id.includes('/hooks/use-localization')) {
-              // Возвращаем null, чтобы включить в main bundle, или 'vendor' для vendor chunk
-              // Попробуем включить в main bundle для гарантии загрузки
-              if (isVercel) {
-                return null; // В main bundle на Vercel
-              }
-              return 'vendor'; // В vendor chunk на Docker
+              return null; // null = включить в main bundle (гарантированная загрузка)
             }
             // КРИТИЧНО: На Vercel React должен быть в main bundle для гарантированной загрузки
             // Не разделяем React на отдельный chunk, чтобы избежать проблем с порядком загрузки
