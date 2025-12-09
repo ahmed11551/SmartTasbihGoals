@@ -301,6 +301,8 @@ const translations: Record<Language, Translations> = {
       errorCreatingSession: 'Не удалось создать сессию',
       errorResumingSession: 'Не удалось возобновить сессию',
       noActionToUndo: 'Нет действий для отмены',
+      actionUndone: 'Действие отменено',
+      rollbackBy: 'Откат на',
       fullReset: 'Сбросить всё',
       resetCounter: 'Сбросить счетчик',
       goal: 'Цель',

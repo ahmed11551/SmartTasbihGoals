@@ -244,7 +244,7 @@ export default function ReportsPage() {
           const extraDay = i < remainder ? 1 : 0;
           const bucketSize = daysPerBucket + extraDay;
           buckets.push({
-            label: `Месяц ${i + 1}`,
+            label: `${t.reports.month} ${i + 1}`,
             startIdx: currentIdx,
             endIdx: currentIdx + bucketSize,
           });
@@ -1147,7 +1147,7 @@ export default function ReportsPage() {
                   <TrendingUp className="w-5 h-5 text-chart-2" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Рекомендация</p>
+                  <p className="text-sm font-medium">{t.reports.recommendation}</p>
                   <p className="text-xs text-muted-foreground">
                     Для достижения цели "10000 салаватов" делайте 350 салаватов в день
                   </p>
