@@ -694,14 +694,14 @@ export default function TasbihPage() {
               </SheetTrigger>
               <SheetContent side="right">
                 <SheetHeader>
-                  <SheetTitle>Настройки тасбиха</SheetTitle>
+                  <SheetTitle>{t.tasbih.settings}</SheetTitle>
                 </SheetHeader>
                 
                 <div className="space-y-6 py-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Volume2 className="w-4 h-4 text-muted-foreground" />
-                      <Label htmlFor="audio-player">Воспроизведение</Label>
+                      <Label htmlFor="audio-player">{t.tasbih.audio}</Label>
                     </div>
                     <Switch
                       id="audio-player"
@@ -711,7 +711,7 @@ export default function TasbihPage() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="transcription">Транскрипция</Label>
+                    <Label htmlFor="transcription">{t.tasbih.transcription}</Label>
                     <Switch
                       id="transcription"
                       checked={showTranscription}
@@ -720,7 +720,7 @@ export default function TasbihPage() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="translation">Перевод</Label>
+                    <Label htmlFor="translation">{t.tasbih.translation}</Label>
                     <Switch
                       id="translation"
                       checked={showTranslation}
@@ -730,21 +730,21 @@ export default function TasbihPage() {
 
                   {showTranscription && (
                     <div className="space-y-2">
-                      <Label>Тип транскрипции</Label>
+                      <Label>{t.tasbih.transcriptionType}</Label>
                       <div className="flex gap-2">
                         <Button
                           variant={transcriptionType === 'cyrillic' ? 'default' : 'secondary'}
                           size="sm"
                           onClick={() => setTranscriptionType('cyrillic' as 'cyrillic')}
                         >
-                          Кириллица
+                          {t.settings.cyrillic}
                         </Button>
                         <Button
                           variant={transcriptionType === 'latin' ? 'default' : 'secondary'}
                           size="sm"
                           onClick={() => setTranscriptionType('latin' as 'latin')}
                         >
-                          Латиница
+                          {t.settings.latin}
                         </Button>
                       </div>
                     </div>
