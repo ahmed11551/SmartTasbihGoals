@@ -1,0 +1,768 @@
+// Переводы для всех языков приложения
+
+export type Language = 'ru' | 'en' | 'ar';
+
+export interface Translations {
+  // Общие
+  common: {
+    save: string;
+    cancel: string;
+    delete: string;
+    edit: string;
+    create: string;
+    close: string;
+    back: string;
+    next: string;
+    done: string;
+    yes: string;
+    no: string;
+    search: string;
+    loading: string;
+    error: string;
+    success: string;
+  };
+
+  // Навигация
+  navigation: {
+    tasbih: string;
+    goals: string;
+    zikry: string;
+    reports: string;
+    settings: string;
+  };
+
+  // Настройки
+  settings: {
+    title: string;
+    profile: string;
+    app: string;
+    localization: string;
+    support: string;
+    language: string;
+    transcription: string;
+    darkMode: string;
+    notifications: string;
+    hapticFeedback: string;
+    soundEffects: string;
+    myProfile: string;
+    name: string;
+    timezone: string;
+    madhab: string;
+    help: string;
+    feedback: string;
+    privacy: string;
+    cyrillic: string;
+    latin: string;
+    russian: string;
+    english: string;
+    arabic: string;
+  };
+
+  // Тасбих
+  tasbih: {
+    title: string;
+    selectDhikr: string;
+    rounds: string;
+    count: string;
+    reset: string;
+    undo: string;
+    complete: string;
+    transcription: string;
+    translation: string;
+    audio: string;
+    settings: string;
+    transcriptionType: string;
+    goalCompleted: string;
+    sessionResumed: string;
+    dhikrSaved: string;
+    errorCreatingSession: string;
+    errorResumingSession: string;
+    noActionToUndo: string;
+  };
+
+  // Цели
+  goals: {
+    title: string;
+    activeGoals: string;
+    completedGoals: string;
+    createGoal: string;
+    createHabit: string;
+    editGoal: string;
+    deleteGoal: string;
+    pauseGoal: string;
+    resumeGoal: string;
+    category: string;
+    target: string;
+    progress: string;
+    deadline: string;
+    dailyPlan: string;
+    daysLeft: string;
+    goalCreated: string;
+    goalUpdated: string;
+    goalDeleted: string;
+    goalPaused: string;
+    goalResumed: string;
+    goalLimitReached: string;
+    errorCreatingGoal: string;
+    errorUpdatingGoal: string;
+    errorDeletingGoal: string;
+    confirmDeleteGoal: string;
+    confirmDeleteHabit: string;
+    confirmDeleteTask: string;
+    confirmDeleteSession: string;
+    cannotUndo: string;
+  };
+
+  // Зикры
+  zikry: {
+    title: string;
+    categories: string;
+    all: string;
+    today: string;
+    popular: string;
+    search: string;
+    startTasbih: string;
+    viewDetails: string;
+    copy: string;
+    share: string;
+    bookmark: string;
+  };
+
+  // Отчеты
+  reports: {
+    title: string;
+    stats: string;
+    streaks: string;
+    badges: string;
+    activity: string;
+  };
+
+  // Категории
+  categories: {
+    general: string;
+    surah: string;
+    ayah: string;
+    dua: string;
+    azkar: string;
+    names99: string;
+    salawat: string;
+    kalimat: string;
+  };
+
+  // Намазы
+  prayers: {
+    fajr: string;
+    dhuhr: string;
+    asr: string;
+    maghrib: string;
+    isha: string;
+    none: string;
+  };
+
+  // Привычки
+  habits: {
+    createHabit: string;
+    editHabit: string;
+    deleteHabit: string;
+    habitCreated: string;
+    habitUpdated: string;
+    habitDeleted: string;
+    errorCreatingHabit: string;
+    errorUpdatingHabit: string;
+    errorDeletingHabit: string;
+  };
+
+  // Задачи
+  tasks: {
+    createTask: string;
+    editTask: string;
+    deleteTask: string;
+    taskCreated: string;
+    taskUpdated: string;
+    taskDeleted: string;
+    errorCreatingTask: string;
+    errorUpdatingTask: string;
+    errorDeletingTask: string;
+  };
+
+  // AI помощник
+  ai: {
+    assistant: string;
+    greeting: string;
+    placeholder: string;
+    send: string;
+    listening: string;
+    notAvailable: string;
+  };
+
+  // Qaza калькулятор
+  qaza: {
+    title: string;
+    calculate: string;
+    birthDate: string;
+    gender: string;
+    male: string;
+    female: string;
+    bulughAge: string;
+    prayerStartDate: string;
+    travelDays: string;
+    haidDays: string;
+    childbirthCount: string;
+  };
+}
+
+const translations: Record<Language, Translations> = {
+  ru: {
+    common: {
+      save: 'Сохранить',
+      cancel: 'Отмена',
+      delete: 'Удалить',
+      edit: 'Редактировать',
+      create: 'Создать',
+      close: 'Закрыть',
+      back: 'Назад',
+      next: 'Далее',
+      done: 'Готово',
+      yes: 'Да',
+      no: 'Нет',
+      search: 'Поиск',
+      loading: 'Загрузка...',
+      error: 'Ошибка',
+      success: 'Успешно',
+    },
+    navigation: {
+      tasbih: 'Тасбих',
+      goals: 'Цели',
+      zikry: 'Зикры',
+      reports: 'Отчёты',
+      settings: 'Настройки',
+    },
+    settings: {
+      title: 'Настройки',
+      profile: 'Профиль',
+      app: 'Приложение',
+      localization: 'Локализация',
+      support: 'Поддержка',
+      language: 'Язык',
+      transcription: 'Транскрипция',
+      darkMode: 'Тёмная тема',
+      notifications: 'Умные уведомления',
+      hapticFeedback: 'Вибрация при тапе',
+      soundEffects: 'Звуковые эффекты',
+      myProfile: 'Мой профиль',
+      name: 'Имя',
+      timezone: 'Часовой пояс',
+      madhab: 'Мазхаб',
+      help: 'Помощь и FAQ',
+      feedback: 'Обратная связь',
+      privacy: 'Политика конфиденциальности',
+      cyrillic: 'Кириллица',
+      latin: 'Латиница',
+      russian: 'Русский',
+      english: 'English',
+      arabic: 'العربية',
+    },
+    tasbih: {
+      title: 'Тасбих',
+      selectDhikr: 'Выберите зикр...',
+      rounds: 'Кругов',
+      count: 'Счёт',
+      reset: 'Сбросить',
+      undo: 'Отменить',
+      complete: 'Завершить',
+      transcription: 'Транскрипция',
+      translation: 'Перевод',
+      audio: 'Воспроизведение',
+      settings: 'Настройки',
+      transcriptionType: 'Тип транскрипции',
+      goalCompleted: 'Цель достигнута!',
+      sessionResumed: 'Сессия возобновлена',
+      dhikrSaved: 'Зикры сохранены',
+      errorCreatingSession: 'Не удалось создать сессию',
+      errorResumingSession: 'Не удалось возобновить сессию',
+      noActionToUndo: 'Нет действий для отмены',
+    },
+    goals: {
+      title: 'Цели',
+      activeGoals: 'Активные цели',
+      completedGoals: 'Завершённые цели',
+      createGoal: 'Создать цель',
+      createHabit: 'Создать привычку',
+      editGoal: 'Редактировать цель',
+      deleteGoal: 'Удалить цель',
+      pauseGoal: 'Приостановить цель',
+      resumeGoal: 'Возобновить цель',
+      category: 'Категория',
+      target: 'Цель',
+      progress: 'Прогресс',
+      deadline: 'Дедлайн',
+      dailyPlan: 'Ежедневный план',
+      daysLeft: 'Осталось дней',
+      goalCreated: 'Цель создана',
+      goalUpdated: 'Цель обновлена',
+      goalDeleted: 'Цель удалена',
+      goalPaused: 'Цель приостановлена',
+      goalResumed: 'Цель возобновлена',
+      goalLimitReached: 'Достигнут лимит целей',
+      errorCreatingGoal: 'Не удалось сохранить цель',
+      errorUpdatingGoal: 'Не удалось обновить цель',
+      errorDeletingGoal: 'Не удалось удалить цель',
+      confirmDeleteGoal: 'Удалить цель?',
+      confirmDeleteHabit: 'Удалить привычку?',
+      confirmDeleteTask: 'Удалить задачу?',
+      confirmDeleteSession: 'Удалить незавершенную сессию?',
+      cannotUndo: 'Отмена доступна только в течение 5 секунд после действия',
+    },
+    zikry: {
+      title: 'Зикры',
+      categories: 'Категории',
+      all: 'Все',
+      today: 'Сегодня',
+      popular: 'Популярные',
+      search: 'Поиск',
+      startTasbih: 'Начать тасбих',
+      viewDetails: 'Подробнее',
+      copy: 'Копировать',
+      share: 'Поделиться',
+      bookmark: 'Добавить в закладки',
+    },
+    reports: {
+      title: 'Отчёты',
+      stats: 'Статистика',
+      streaks: 'Серии',
+      badges: 'Бейджи',
+      activity: 'Активность',
+    },
+    categories: {
+      general: 'Общее',
+      surah: 'Сура',
+      ayah: 'Аят',
+      dua: 'Дуа',
+      azkar: 'Азкары',
+      names99: '99 Имён',
+      salawat: 'Салаваты',
+      kalimat: 'Калимы',
+    },
+    prayers: {
+      fajr: 'Фаджр',
+      dhuhr: 'Зухр',
+      asr: 'Аср',
+      maghrib: 'Магриб',
+      isha: 'Иша',
+      none: 'Без привязки',
+    },
+    habits: {
+      createHabit: 'Создать привычку',
+      editHabit: 'Редактировать привычку',
+      deleteHabit: 'Удалить привычку',
+      habitCreated: 'Привычка создана',
+      habitUpdated: 'Привычка обновлена',
+      habitDeleted: 'Привычка удалена',
+      errorCreatingHabit: 'Не удалось сохранить привычку',
+      errorUpdatingHabit: 'Не удалось обновить привычку',
+      errorDeletingHabit: 'Не удалось удалить привычку',
+    },
+    tasks: {
+      createTask: 'Создать задачу',
+      editTask: 'Редактировать задачу',
+      deleteTask: 'Удалить задачу',
+      taskCreated: 'Задача создана',
+      taskUpdated: 'Задача обновлена',
+      taskDeleted: 'Задача удалена',
+      errorCreatingTask: 'Не удалось создать задачу',
+      errorUpdatingTask: 'Не удалось обновить задачу',
+      errorDeletingTask: 'Не удалось удалить задачу',
+    },
+    ai: {
+      assistant: 'AI Помощник',
+      greeting: 'Привет! Я AI-помощник. Я могу помочь вам создать задачи или привычки. Просто опишите, что вы хотите сделать!',
+      placeholder: 'Введите ваш запрос...',
+      send: 'Отправить',
+      listening: 'Слушаю...',
+      notAvailable: 'AI-помощник временно недоступен',
+    },
+    qaza: {
+      title: 'Калькулятор каза',
+      calculate: 'Рассчитать',
+      birthDate: 'Дата рождения',
+      gender: 'Пол',
+      male: 'Мужской',
+      female: 'Женский',
+      bulughAge: 'Возраст совершеннолетия',
+      prayerStartDate: 'Дата начала молитв',
+      travelDays: 'Дней в пути',
+      haidDays: 'Дней хайда в месяц',
+      childbirthCount: 'Количество родов',
+    },
+  },
+
+  en: {
+    common: {
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      edit: 'Edit',
+      create: 'Create',
+      close: 'Close',
+      back: 'Back',
+      next: 'Next',
+      done: 'Done',
+      yes: 'Yes',
+      no: 'No',
+      search: 'Search',
+      loading: 'Loading...',
+      error: 'Error',
+      success: 'Success',
+    },
+    navigation: {
+      tasbih: 'Tasbih',
+      goals: 'Goals',
+      zikry: 'Zikr',
+      reports: 'Reports',
+      settings: 'Settings',
+    },
+    settings: {
+      title: 'Settings',
+      profile: 'Profile',
+      app: 'Application',
+      localization: 'Localization',
+      support: 'Support',
+      language: 'Language',
+      transcription: 'Transcription',
+      darkMode: 'Dark Mode',
+      notifications: 'Smart Notifications',
+      hapticFeedback: 'Haptic Feedback',
+      soundEffects: 'Sound Effects',
+      myProfile: 'My Profile',
+      name: 'Name',
+      timezone: 'Timezone',
+      madhab: 'Madhab',
+      help: 'Help & FAQ',
+      feedback: 'Feedback',
+      privacy: 'Privacy Policy',
+      cyrillic: 'Cyrillic',
+      latin: 'Latin',
+      russian: 'Russian',
+      english: 'English',
+      arabic: 'Arabic',
+    },
+    tasbih: {
+      title: 'Tasbih',
+      selectDhikr: 'Select dhikr...',
+      rounds: 'Rounds',
+      count: 'Count',
+      reset: 'Reset',
+      undo: 'Undo',
+      complete: 'Complete',
+      transcription: 'Transcription',
+      translation: 'Translation',
+      audio: 'Playback',
+      settings: 'Settings',
+      transcriptionType: 'Transcription Type',
+      goalCompleted: 'Goal Completed!',
+      sessionResumed: 'Session Resumed',
+      dhikrSaved: 'Dhikr Saved',
+      errorCreatingSession: 'Failed to create session',
+      errorResumingSession: 'Failed to resume session',
+      noActionToUndo: 'No action to undo',
+    },
+    goals: {
+      title: 'Goals',
+      activeGoals: 'Active Goals',
+      completedGoals: 'Completed Goals',
+      createGoal: 'Create Goal',
+      createHabit: 'Create Habit',
+      editGoal: 'Edit Goal',
+      deleteGoal: 'Delete Goal',
+      pauseGoal: 'Pause Goal',
+      resumeGoal: 'Resume Goal',
+      category: 'Category',
+      target: 'Target',
+      progress: 'Progress',
+      deadline: 'Deadline',
+      dailyPlan: 'Daily Plan',
+      daysLeft: 'Days Left',
+      goalCreated: 'Goal Created',
+      goalUpdated: 'Goal Updated',
+      goalDeleted: 'Goal Deleted',
+      goalPaused: 'Goal Paused',
+      goalResumed: 'Goal Resumed',
+      goalLimitReached: 'Goal Limit Reached',
+      errorCreatingGoal: 'Failed to save goal',
+      errorUpdatingGoal: 'Failed to update goal',
+      errorDeletingGoal: 'Failed to delete goal',
+      confirmDeleteGoal: 'Delete goal?',
+      confirmDeleteHabit: 'Delete habit?',
+      confirmDeleteTask: 'Delete task?',
+      confirmDeleteSession: 'Delete unfinished session?',
+      cannotUndo: 'Undo is only available within 5 seconds of the action',
+    },
+    zikry: {
+      title: 'Zikr',
+      categories: 'Categories',
+      all: 'All',
+      today: 'Today',
+      popular: 'Popular',
+      search: 'Search',
+      startTasbih: 'Start Tasbih',
+      viewDetails: 'View Details',
+      copy: 'Copy',
+      share: 'Share',
+      bookmark: 'Bookmark',
+    },
+    reports: {
+      title: 'Reports',
+      stats: 'Statistics',
+      streaks: 'Streaks',
+      badges: 'Badges',
+      activity: 'Activity',
+    },
+    categories: {
+      general: 'General',
+      surah: 'Surah',
+      ayah: 'Ayah',
+      dua: 'Dua',
+      azkar: 'Azkar',
+      names99: '99 Names',
+      salawat: 'Salawat',
+      kalimat: 'Kalima',
+    },
+    prayers: {
+      fajr: 'Fajr',
+      dhuhr: 'Dhuhr',
+      asr: 'Asr',
+      maghrib: 'Maghrib',
+      isha: 'Isha',
+      none: 'Not linked',
+    },
+    habits: {
+      createHabit: 'Create Habit',
+      editHabit: 'Edit Habit',
+      deleteHabit: 'Delete Habit',
+      habitCreated: 'Habit Created',
+      habitUpdated: 'Habit Updated',
+      habitDeleted: 'Habit Deleted',
+      errorCreatingHabit: 'Failed to save habit',
+      errorUpdatingHabit: 'Failed to update habit',
+      errorDeletingHabit: 'Failed to delete habit',
+    },
+    tasks: {
+      createTask: 'Create Task',
+      editTask: 'Edit Task',
+      deleteTask: 'Delete Task',
+      taskCreated: 'Task Created',
+      taskUpdated: 'Task Updated',
+      taskDeleted: 'Task Deleted',
+      errorCreatingTask: 'Failed to create task',
+      errorUpdatingTask: 'Failed to update task',
+      errorDeletingTask: 'Failed to delete task',
+    },
+    ai: {
+      assistant: 'AI Assistant',
+      greeting: 'Hello! I am an AI assistant. I can help you create tasks or habits. Just describe what you want to do!',
+      placeholder: 'Enter your request...',
+      send: 'Send',
+      listening: 'Listening...',
+      notAvailable: 'AI assistant is temporarily unavailable',
+    },
+    qaza: {
+      title: 'Qaza Calculator',
+      calculate: 'Calculate',
+      birthDate: 'Birth Date',
+      gender: 'Gender',
+      male: 'Male',
+      female: 'Female',
+      bulughAge: 'Age of Maturity',
+      prayerStartDate: 'Prayer Start Date',
+      travelDays: 'Travel Days',
+      haidDays: 'Haid Days per Month',
+      childbirthCount: 'Number of Childbirths',
+    },
+  },
+
+  ar: {
+    common: {
+      save: 'حفظ',
+      cancel: 'إلغاء',
+      delete: 'حذف',
+      edit: 'تعديل',
+      create: 'إنشاء',
+      close: 'إغلاق',
+      back: 'رجوع',
+      next: 'التالي',
+      done: 'تم',
+      yes: 'نعم',
+      no: 'لا',
+      search: 'بحث',
+      loading: 'جاري التحميل...',
+      error: 'خطأ',
+      success: 'نجح',
+    },
+    navigation: {
+      tasbih: 'تسبيح',
+      goals: 'الأهداف',
+      zikry: 'الأذكار',
+      reports: 'التقارير',
+      settings: 'الإعدادات',
+    },
+    settings: {
+      title: 'الإعدادات',
+      profile: 'الملف الشخصي',
+      app: 'التطبيق',
+      localization: 'اللغة',
+      support: 'الدعم',
+      language: 'اللغة',
+      transcription: 'النطق',
+      darkMode: 'الوضع الداكن',
+      notifications: 'الإشعارات الذكية',
+      hapticFeedback: 'الاهتزاز',
+      soundEffects: 'التأثيرات الصوتية',
+      myProfile: 'ملفي الشخصي',
+      name: 'الاسم',
+      timezone: 'المنطقة الزمنية',
+      madhab: 'المذهب',
+      help: 'المساعدة والأسئلة الشائعة',
+      feedback: 'ملاحظات',
+      privacy: 'سياسة الخصوصية',
+      cyrillic: 'السيريلية',
+      latin: 'اللاتينية',
+      russian: 'الروسية',
+      english: 'الإنجليزية',
+      arabic: 'العربية',
+    },
+    tasbih: {
+      title: 'تسبيح',
+      selectDhikr: 'اختر ذكراً...',
+      rounds: 'جولات',
+      count: 'العدد',
+      reset: 'إعادة تعيين',
+      undo: 'تراجع',
+      complete: 'إكمال',
+      transcription: 'النطق',
+      translation: 'الترجمة',
+      audio: 'التشغيل',
+      settings: 'الإعدادات',
+      transcriptionType: 'نوع النطق',
+      goalCompleted: 'تم تحقيق الهدف!',
+      sessionResumed: 'تم استئناف الجلسة',
+      dhikrSaved: 'تم حفظ الذكر',
+      errorCreatingSession: 'فشل في إنشاء الجلسة',
+      errorResumingSession: 'فشل في استئناف الجلسة',
+      noActionToUndo: 'لا يوجد إجراء للتراجع',
+    },
+    goals: {
+      title: 'الأهداف',
+      activeGoals: 'الأهداف النشطة',
+      completedGoals: 'الأهداف المكتملة',
+      createGoal: 'إنشاء هدف',
+      createHabit: 'إنشاء عادة',
+      editGoal: 'تعديل الهدف',
+      deleteGoal: 'حذف الهدف',
+      pauseGoal: 'إيقاف الهدف مؤقتاً',
+      resumeGoal: 'استئناف الهدف',
+      category: 'الفئة',
+      target: 'الهدف',
+      progress: 'التقدم',
+      deadline: 'الموعد النهائي',
+      dailyPlan: 'الخطة اليومية',
+      daysLeft: 'الأيام المتبقية',
+      goalCreated: 'تم إنشاء الهدف',
+      goalUpdated: 'تم تحديث الهدف',
+      goalDeleted: 'تم حذف الهدف',
+      goalPaused: 'تم إيقاف الهدف مؤقتاً',
+      goalResumed: 'تم استئناف الهدف',
+      goalLimitReached: 'تم الوصول إلى حد الأهداف',
+      errorCreatingGoal: 'فشل في حفظ الهدف',
+      errorUpdatingGoal: 'فشل في تحديث الهدف',
+      errorDeletingGoal: 'فشل في حذف الهدف',
+      confirmDeleteGoal: 'حذف الهدف؟',
+      confirmDeleteHabit: 'حذف العادة؟',
+      confirmDeleteTask: 'حذف المهمة؟',
+      confirmDeleteSession: 'حذف الجلسة غير المكتملة؟',
+      cannotUndo: 'التراجع متاح فقط خلال 5 ثوان من الإجراء',
+    },
+    zikry: {
+      title: 'الأذكار',
+      categories: 'الفئات',
+      all: 'الكل',
+      today: 'اليوم',
+      popular: 'الشائع',
+      search: 'بحث',
+      startTasbih: 'بدء التسبيح',
+      viewDetails: 'عرض التفاصيل',
+      copy: 'نسخ',
+      share: 'مشاركة',
+      bookmark: 'إضافة إلى الإشارات المرجعية',
+    },
+    reports: {
+      title: 'التقارير',
+      stats: 'الإحصائيات',
+      streaks: 'السلاسل',
+      badges: 'الشارات',
+      activity: 'النشاط',
+    },
+    categories: {
+      general: 'عام',
+      surah: 'سورة',
+      ayah: 'آية',
+      dua: 'دعاء',
+      azkar: 'أذكار',
+      names99: '99 اسماً',
+      salawat: 'صلوات',
+      kalimat: 'كلمات',
+    },
+    prayers: {
+      fajr: 'الفجر',
+      dhuhr: 'الظهر',
+      asr: 'العصر',
+      maghrib: 'المغرب',
+      isha: 'العشاء',
+      none: 'غير مرتبط',
+    },
+    habits: {
+      createHabit: 'إنشاء عادة',
+      editHabit: 'تعديل العادة',
+      deleteHabit: 'حذف العادة',
+      habitCreated: 'تم إنشاء العادة',
+      habitUpdated: 'تم تحديث العادة',
+      habitDeleted: 'تم حذف العادة',
+      errorCreatingHabit: 'فشل في حفظ العادة',
+      errorUpdatingHabit: 'فشل في تحديث العادة',
+      errorDeletingHabit: 'فشل في حذف العادة',
+    },
+    tasks: {
+      createTask: 'إنشاء مهمة',
+      editTask: 'تعديل المهمة',
+      deleteTask: 'حذف المهمة',
+      taskCreated: 'تم إنشاء المهمة',
+      taskUpdated: 'تم تحديث المهمة',
+      taskDeleted: 'تم حذف المهمة',
+      errorCreatingTask: 'فشل في إنشاء المهمة',
+      errorUpdatingTask: 'فشл в обновлении задачи',
+      errorDeletingTask: 'فشل في حذف المهمة',
+    },
+    ai: {
+      assistant: 'المساعد الذكي',
+      greeting: 'مرحباً! أنا مساعد ذكي. يمكنني مساعدتك في إنشاء مهام أو عادات. ما عليك سوى وصف ما تريد القيام به!',
+      placeholder: 'أدخل طلبك...',
+      send: 'إرسال',
+      listening: 'أستمع...',
+      notAvailable: 'المساعد الذكي غير متاح مؤقتاً',
+    },
+    qaza: {
+      title: 'حاسبة القضاء',
+      calculate: 'حساب',
+      birthDate: 'تاريخ الميلاد',
+      gender: 'الجنس',
+      male: 'ذكر',
+      female: 'أنثى',
+      bulughAge: 'سن البلوغ',
+      prayerStartDate: 'تاريخ بدء الصلاة',
+      travelDays: 'أيام السفر',
+      haidDays: 'أيام الحيض شهرياً',
+      childbirthCount: 'عدد الولادات',
+    },
+  },
+};
+
+export default translations;

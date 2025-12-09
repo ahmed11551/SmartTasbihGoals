@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TranscriptionType } from '@/lib/types';
 
-type Language = 'ru' | 'en' | 'ar';
+export type Language = 'ru' | 'en' | 'ar';
 
 interface LocalizationSettings {
   language: Language;
