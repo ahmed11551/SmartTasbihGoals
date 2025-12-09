@@ -4,6 +4,7 @@ import { requireAuth, getUserId } from "../middleware/auth";
 import { z } from "zod";
 import { botReplikaGet, botReplikaPost, botReplikaPatch, botReplikaDelete, getUserIdForApi } from "../lib/bot-replika-api";
 import { logger } from "../lib/logger";
+import { prisma } from "../db-prisma";
 
 const router = Router();
 router.use(requireAuth);
