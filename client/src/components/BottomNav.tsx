@@ -11,7 +11,16 @@ import { useTranslation } from '@/lib/i18n';
 
 export default function BottomNav() {
   const [location] = useLocation();
-  const { t } = useTranslation();
+  // ВРЕМЕННО: Локализация отключена
+  const t = {
+    navigation: {
+      tasbih: 'Тасбих',
+      goals: 'Цели',
+      zikry: 'Зикры',
+      reports: 'Отчеты',
+      settings: 'Настройки',
+    },
+  } as any;
 
   const navItems = [
     { path: '/', icon: Circle, label: t.navigation.tasbih },

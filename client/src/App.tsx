@@ -35,10 +35,10 @@ const QazaCalculatorPage = lazy(() => import("@/pages/QazaCalculatorPage"));
 
 // Loading компонент
 const PageLoader = () => {
-  const { t } = useTranslation();
+  // ВРЕМЕННО: Локализация отключена
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-muted-foreground">{t.common.loading}</div>
+      <div className="text-muted-foreground">Загрузка...</div>
     </div>
   );
 };

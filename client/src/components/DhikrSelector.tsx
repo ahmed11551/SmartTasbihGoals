@@ -38,7 +38,11 @@ export default function DhikrSelector({ selectedItem, onSelect, trigger }: Dhikr
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'categories' | 'recent' | 'goals'>('categories');
   const { data: goals = [] } = useGoals();
-  const { t } = useTranslation();
+  // ВРЕМЕННО: Локализация отключена
+  const t = {
+    tasbih: { selectDhikr: 'Выбрать зикр' },
+    common: { search: 'Поиск' },
+  } as any;
 
   // Фильтрация по категории и поиску
   const filteredItems = useMemo(() => {
