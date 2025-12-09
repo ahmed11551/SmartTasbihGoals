@@ -37,9 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 import { EmptyState } from '@/components/ui/empty-state';
-// ВРЕМЕННО: Локализация отключена
-  // // ВРЕМЕННО: Локализация отключена
-  // import { useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/lib/i18n';
 
 interface CategoryCardProps {
   category: ZikrCatalogCategory;
@@ -132,11 +130,7 @@ interface ZikrDetailSheetProps {
 
 function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetailSheetProps) {
   const { toast } = useToast();
-  // ВРЕМЕННО: Локализация отключена
-  const t = {
-    zikry: {},
-    common: { loading: 'Загрузка...', error: 'Ошибка', success: 'Успешно' },
-  } as any;
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
