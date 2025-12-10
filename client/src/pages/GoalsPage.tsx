@@ -69,7 +69,7 @@ import { habitCategories } from '@/lib/habitsCatalog';
 import { goalCategoryLabels, prayerLabels } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { getIconByName } from '@/lib/iconUtils';
-import { useData } from '@/context/DataContext';
+// Удалено использование useData - теперь используем только API hooks напрямую для унификации источников данных
 import { 
   useGoals, 
   useCreateGoal, 
