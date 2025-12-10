@@ -205,8 +205,16 @@ router.post("/logs", async (req, res, next) => {
     
     const logData = req.body;
     
+    // Логируем входящий запрос для отладки
+    logger.info(`POST /api/dhikr/logs request`, { 
+      userId, 
+      body: logData,
+      headers: req.headers 
+    });
+    
     // Базовая валидация обязательных полей
     if (!logData) {
+      logger.error(`POST /api/dhikr/logs: Request body is missing`, { userId });
       return res.status(400).json({ error: "Invalid input", message: "Request body is required" });
     }
     
