@@ -223,13 +223,31 @@ router.post("/logs", async (req, res, next) => {
     const prayerSegment = logData.prayerSegment || 'none';
     const valueAfter = typeof logData.valueAfter === 'number' ? logData.valueAfter : 0;
     
-    // Валидация обязательных полей
+    // Валидация обязательных полей с более подробными сообщениями
     if (!category || typeof category !== 'string') {
-      return res.status(400).json({ error: "Invalid input", message: "category is required and must be a string" });
+      logger.error(`Invalid dhikr log request: category is missing or invalid`, { 
+        category, 
+        body: logData,
+        userId 
+      });
+      return res.status(400).json({ 
+        error: "Invalid input", 
+        message: `category is required and must be a string. Received: ${typeof category} - ${category}`,
+        received: { category, itemId, eventType, sessionId }
+      });
     }
     
     if (!eventType || typeof eventType !== 'string') {
-      return res.status(400).json({ error: "Invalid input", message: "eventType is required and must be a string" });
+      logger.error(`Invalid dhikr log request: eventType is missing or invalid`, { 
+        eventType, 
+        body: logData,
+        userId 
+      });
+      return res.status(400).json({ 
+        error: "Invalid input", 
+        message: `eventType is required and must be a string. Received: ${typeof eventType} - ${eventType}`,
+        received: { category, itemId, eventType, sessionId }
+      });
     }
     
     // Расширенное анти-чит логирование: проверка аномально высокой активности
