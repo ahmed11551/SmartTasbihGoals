@@ -35,10 +35,12 @@ services:
         condition: service_healthy
     command: >
       sh -c "
+        echo 'Ожидание готовности базы данных...' &&
+        sleep 3 &&
         echo 'Генерация Prisma клиента...' &&
         npx prisma generate &&
-        echo 'Применение миграций...' &&
-        npx prisma migrate deploy || (echo 'Попытка создания схемы через db push...' && npx prisma db push --accept-data-loss || echo 'Миграции не применены, продолжаем...') &&
+        echo 'Создание схемы базы данных (без миграций)...' &&
+        npx prisma db push --accept-data-loss --skip-generate &&
         echo 'Запуск приложения...' &&
         if [ -f dist/index.cjs ]; then
           node dist/index.cjs
