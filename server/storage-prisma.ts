@@ -314,9 +314,13 @@ export class PrismaStorage implements IStorage {
       atTs: logAny.atTs ? new Date(logAny.atTs) : new Date(),
       tz: logAny.tz || 'UTC',
       offlineId: (logAny.offlineId as string) || randomUUID(),
-      goalId: goalId, // Простое поле, не relation
       user: { connect: { id: userId } },
     };
+    
+    // Используем relation goal вместо прямого goalId
+    if (goalId) {
+      createData.goal = { connect: { id: goalId } };
+    }
     
     // Session обязательна в схеме Prisma, поэтому либо используем существующую, либо создаем новую
     if (sessionId) {
