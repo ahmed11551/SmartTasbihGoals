@@ -357,7 +357,22 @@ router.post("/logs", async (req, res, next) => {
       });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
-      log = await storage.createDhikrLog(userId, req.body);
+      try {
+        log = await storage.createDhikrLog(userId, req.body);
+      } catch (dbError: any) {
+        logger.error("Failed to create dhikr log in local DB", {
+          error: dbError.message,
+          errorCode: dbError.code,
+          errorMeta: dbError.meta,
+          requestBody: req.body,
+          userId,
+        });
+        return res.status(400).json({
+          error: "Validation error",
+          message: dbError.message || "Ошибка валидации данных при создании записи",
+          details: dbError.meta,
+        });
+      }
       
       // Автоматически обновить прогресс связанных целей (личных и групповых)
       if (shouldUpdateProgress && category) {
