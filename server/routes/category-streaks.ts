@@ -118,26 +118,21 @@ async function updateCategoryStreaks(userId: string) {
     // 2. Quran streak - на основе целей с категорией 'surah' или 'ayah' (коран)
     const goals = await storage.getGoals(userId);
     const quranGoals = goals.filter(g => g.category === 'surah' || g.category === 'ayah');
-    const quranDates: string[] = [];
+    const quranGoalIds = quranGoals.map(g => g.id);
     
-    // Получить даты активности по корану (когда была активность по целям корана)
-    for (const goal of quranGoals) {
-      // Получить логи dhikr для этой цели
-      const logs = await prisma.dhikrLog.findMany({
-        where: {
-          userId,
-          goalId: goal.id,
-        },
-      });
-      
-      const goalDates = logs.map(log => {
-        const date = new Date(log.atTs);
-        date.setHours(0, 0, 0, 0);
-        return date.toISOString().split('T')[0];
-      });
-      
-      quranDates.push(...goalDates);
-    }
+    // Оптимизация: получаем все логи для всех целей корана одним запросом
+    const quranLogs = quranGoalIds.length > 0 ? await prisma.dhikrLog.findMany({
+      where: {
+        userId,
+        goalId: { in: quranGoalIds },
+      },
+    }) : [];
+    
+    const quranDates: string[] = quranLogs.map(log => {
+      const date = new Date(log.atTs);
+      date.setHours(0, 0, 0, 0);
+      return date.toISOString().split('T')[0];
+    });
     
     const uniqueQuranDates = [...new Set(quranDates)];
     const quranStreak = await calculateCategoryStreak(userId, 'quran', uniqueQuranDates);
