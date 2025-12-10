@@ -62,6 +62,7 @@ import GoalCreationSheet from '@/components/GoalCreationSheet';
 import GoalCard from '@/components/GoalCard';
 import AIAssistantSheet from '@/components/AIAssistantSheet';
 import CalendarSheet from '@/components/CalendarSheet';
+import DailyAzkarBar from '@/components/DailyAzkarBar';
 import type { Habit, Task, Goal, WeekDay, Category } from '@/lib/types';
 import type { HabitTemplate } from '@/lib/habitsCatalog';
 import { habitCategories } from '@/lib/habitsCatalog';
@@ -85,6 +86,7 @@ import {
   useCheckBadges,
   useUnfinishedSessions,
   useUpdateSession,
+  useDailyAzkar,
 } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/lib/i18n';
@@ -539,6 +541,10 @@ export default function GoalsPage() {
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
   const checkBadgesMutation = useCheckBadges();
+  
+  // Загрузка данных ежедневных азкаров
+  const today = new Date().toISOString().split('T')[0];
+  const { data: dailyAzkarData } = useDailyAzkar(today);
   
   const { 
     habits, 
@@ -1124,21 +1130,34 @@ export default function GoalsPage() {
             <AIInsight habits={habitsList} />
 
         {/* Быстрое действие: После намаза */}
-        <Card className="p-3 bg-primary/5 border-primary/20">
-          <Link href="/">
-            <div className="flex items-center justify-between cursor-pointer hover:bg-primary/10 rounded-lg p-2 -m-2 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Moon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-sm">После намаза</h3>
-                  <p className="text-xs text-muted-foreground">Зикры и салаваты после намаза</p>
-                </div>
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Moon className="w-5 h-5 text-primary" />
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <h3 className="font-medium text-sm">После намаза</h3>
+                <p className="text-xs text-muted-foreground">Зикры и салаваты после намаза</p>
+              </div>
             </div>
-          </Link>
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="h-8">
+                Открыть
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          {dailyAzkarData && (
+            <DailyAzkarBar 
+              dailyAzkar={dailyAzkarData} 
+              targetPerPrayer={99}
+              onPrayerSelect={(prayer) => {
+                // Переход на главную страницу с выбранным намазом
+                window.location.href = `/?prayer=${prayer}`;
+              }}
+            />
+          )}
         </Card>
 
         {/* Быстрый доступ к калькулятору Каза */}
