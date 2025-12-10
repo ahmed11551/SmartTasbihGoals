@@ -1,6 +1,7 @@
 import { prisma } from "./db-prisma";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
+import { logger } from "./lib/logger";
 import type {
   User,
   Habit,
