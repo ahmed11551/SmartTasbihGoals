@@ -33,19 +33,26 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    user: "0:0"
     command: >
       sh -c "
         echo 'Ожидание готовности базы данных...' &&
         sleep 3 &&
+        echo 'Исправление прав доступа...' &&
+        rm -rf /app/node_modules/.prisma/client 2>/dev/null || true &&
+        chown -R nodejs:nodejs /app/node_modules/.prisma 2>/dev/null || true &&
+        chown -R nodejs:nodejs /app/dist 2>/dev/null || true &&
         echo 'Генерация Prisma клиента...' &&
         npx prisma generate &&
+        chown -R nodejs:nodejs /app/node_modules/.prisma 2>/dev/null || true &&
         echo 'Создание схемы базы данных (без миграций)...' &&
         npx prisma db push --accept-data-loss --skip-generate &&
+        chown -R nodejs:nodejs /app/node_modules/.prisma 2>/dev/null || true &&
         echo 'Запуск приложения...' &&
         if [ -f dist/index.cjs ]; then
-          node dist/index.cjs
+          exec node dist/index.cjs
         elif [ -f dist/server/index.cjs ]; then
-          node dist/server/index.cjs
+          exec node dist/server/index.cjs
         else
           echo 'Ошибка: точка входа не найдена' &&
           echo 'Содержимое dist/:' &&
