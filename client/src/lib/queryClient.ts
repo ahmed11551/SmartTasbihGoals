@@ -128,17 +128,33 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 30000, // 30 seconds
       retry: (failureCount, error: unknown) => {
-        const err = error as { status?: number };
-        // Don't retry on 4xx errors (client errors)
+        const err = error as { status?: number; isNetworkError?: boolean; isTimeoutError?: boolean };
+        
+        // Не повторять для ошибок клиента (4xx)
         if (err?.status && err.status >= 400 && err.status < 500) {
+          // Исключение: повторяем для 408 (Timeout) и 429 (Too Many Requests)
+          if (err.status === 408 || err.status === 429) {
+            return failureCount < 2; // До 2 попыток
+          }
           return false;
         }
-        // Don't retry on 503 (Service Unavailable - БД недоступна)
+        
+        // Не повторять для 503 (Service Unavailable - БД недоступна)
         if (err?.status === 503) {
           return false;
         }
-        // Retry up to 2 times for network errors
+        
+        // Для сетевых ошибок и таймаутов - повторяем до 2 раз
+        if (err?.isNetworkError || err?.isTimeoutError) {
+          return failureCount < 2;
+        }
+        
+        // Для остальных ошибок (5xx) - повторяем до 2 раз
         return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => {
+        // Экспоненциальная задержка: 1s, 2s
+        return Math.min(1000 * Math.pow(2, attemptIndex), 2000);
       },
       onError: (error: unknown) => {
         // Ошибки обрабатываются через React Query UI компоненты

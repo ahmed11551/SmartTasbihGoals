@@ -540,9 +540,10 @@ router.post("/daily-azkar", async (req, res, next) => {
           body: req.body,
           userId 
         });
+        const userMessage = formatZodError(error);
         return res.status(400).json({ 
           error: "Validation error", 
-          message: "Неверные данные запроса",
+          message: userMessage,
           details: error.errors.map(e => ({
             path: e.path.join('.'),
             message: e.message,
@@ -757,9 +758,10 @@ router.post("/favorites", async (req, res, next) => {
       body = addFavoriteSchema.parse(req.body);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        const userMessage = formatZodError(error);
         return res.status(400).json({ 
           error: "Validation error", 
-          message: "Неверные данные запроса",
+          message: userMessage,
           details: error.errors.map(e => ({
             path: e.path.join('.'),
             message: e.message,
