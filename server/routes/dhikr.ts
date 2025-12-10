@@ -646,6 +646,7 @@ router.delete("/logs/last", async (req, res, next) => {
 // GET /api/dhikr/favorites - получить избранные зикры пользователя
 router.get("/favorites", async (req, res, next) => {
   try {
+    logger.info("GET /api/dhikr/favorites called");
     const userId = getUserId(req) || (req as any).userId || "default-user";
     
     try {

@@ -63,7 +63,9 @@ export async function registerRoutes(
   app.use("/api/tasks", tasksRoutes);
   app.use("/api/goals", goalsRoutes);
   app.use("/api/sessions", sessionsRoutes);
+  console.log("[ROUTES] Registering /api/dhikr routes...");
   app.use("/api/dhikr", dhikrRoutes);
+  console.log("[ROUTES] /api/dhikr routes registered");
   app.use("/api/stats", statsRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/telegram", telegramRoutes);

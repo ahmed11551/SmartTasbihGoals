@@ -19,6 +19,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - ./server:/app/server:ro
+      - ./prisma:/app/prisma:ro
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://smarttasbih:smarttasbih_password@postgres:5432/smarttasbih_db
@@ -49,14 +52,23 @@ services:
         npx prisma db push --accept-data-loss --skip-generate &&
         chown -R nodejs:nodejs /app/node_modules/.prisma 2>/dev/null || true &&
         echo 'Запуск приложения...' &&
-        if [ -f dist/index.cjs ]; then
+        cd /app &&
+        echo 'Проверка файлов...' &&
+        ls -la server/index.ts 2>&1 | head -1 &&
+        ls -la dist/index.cjs 2>&1 | head -1 &&
+        if [ -f server/index.ts ]; then
+          echo '✅ server/index.ts найден - запуск через tsx...' &&
+          [ -f dist/index.cjs ] && (mv dist/index.cjs dist/index.cjs.backup && echo 'Перемещен dist/index.cjs') || echo 'dist/index.cjs не найден' &&
+          NODE_ENV=production PORT=5001 exec npx tsx server/index.ts
+        elif [ -f dist/index.cjs ]; then
+          echo '⚠️  server/index.ts не найден - запуск из dist/index.cjs...' &&
           exec node dist/index.cjs
         elif [ -f dist/server/index.cjs ]; then
+          echo '⚠️  Запуск из dist/server/index.cjs...' &&
           exec node dist/server/index.cjs
         else
-          echo 'Ошибка: точка входа не найдена' &&
-          echo 'Содержимое dist/:' &&
-          ls -la dist/ 2>/dev/null || echo 'Папка dist не существует' &&
+          echo '❌ Ошибка: точка входа не найдена' &&
+          ls -la dist/ server/ 2>&1 | head -10 &&
           exit 1
         fi
       "
