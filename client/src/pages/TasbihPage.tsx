@@ -40,6 +40,7 @@ import { useDhikrCatalogByCategory } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { prayerLabels } from '@/lib/constants';
 import { useLocalization } from '@/hooks/use-localization';
+import { useQueryClient } from '@tanstack/react-query';
 // ВРЕМЕННО: Локализация отключена из-за проблем с chunking
 // TODO: Восстановить после исправления проблемы с загрузкой модулей
 
@@ -53,6 +54,7 @@ interface RecentAction {
 
 export default function TasbihPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   // ВРЕМЕННО: Локализация отключена
   const t = { tasbih: { selectDhikr: "Выбрать зикр", settings: "Настройки", audio: "Аудио", transcription: "Транскрипция", translation: "Перевод", transcriptionType: "Тип транскрипции", loading: "Загрузка...", errorCreatingSession: "Ошибка создания сессии", goalCompleted: "Цель выполнена", error: "Ошибка", success: "Успешно", dhikrSaved: "Зикр сохранен", sessionResumed: "Сессия возобновлена", errorResumingSession: "Ошибка возобновления сессии", noActionToUndo: "Нет действий для отмены", undo: "Отмена", reset: "Сброс", resetCounter: "Сбросить счетчик", fullReset: "Полный сброс", goal: "Цель", leftOf: "Осталось", rounds: "Раунды", goalCompletedMessage: "Цель выполнена!", autoInterval: "Авто-интервал", from1To60Sec: "от 1 до 60 сек", startAutoTap: "Начать авто-тап", stopAutoTap: "Остановить авто-тап", autoTapMessage: "Автоматический тап каждые", second: "секунда", seconds2: "секунды", seconds: "секунд", goalColon: "Цель:", repeatCount: "Повторения", learned: "Изучено!", markLearned: "Отметить изученным", repeat: "Повторить", counter: "Счетчик", transcriptionLabel: "Транскрипция", translationLabel: "Перевод", listen: "Слушать", stop: "Остановить", quickSelect: "Быстрый выбор" }, common: { loading: "Загрузка...", error: "Ошибка", success: "Успешно", search: "Поиск" }, navigation: { tasbih: "Тасбих", goals: "Цели", zikry: "Зикры", reports: "Отчеты", settings: "Настройки" }, settings: { cyrillic: "Кириллица", latin: "Латиница" } } as any;
   const [location] = useLocation();
@@ -327,12 +329,20 @@ export default function TasbihPage() {
 
         // Обновить ежедневные азкары
         if (selectedPrayer !== 'none') {
-          const prayerKey = selectedPrayer as keyof typeof dailyAzkar;
-          const currentPrayerCount = (dailyAzkar[prayerKey] as number || 0) + lastLog.delta;
+          // Получаем актуальные данные из кэша, а не из локальной переменной
+          const queryClient = (await import('@tanstack/react-query')).useQueryClient();
+          const currentDailyAzkarData = queryClient.getQueryData(['daily-azkar', today]) as typeof dailyAzkar | undefined;
+          const currentAzkar = currentDailyAzkarData || dailyAzkar;
+          
+          const prayerKey = selectedPrayer as keyof typeof currentAzkar;
+          const currentPrayerCount = ((currentAzkar[prayerKey] as number) || 0) + lastLog.delta;
           const newDailyAzkar = {
-            ...dailyAzkar,
+            ...currentAzkar,
+            userId: currentAzkar.userId || '',
+            dateLocal: today,
             [prayerKey]: currentPrayerCount,
-            total: (dailyAzkar.total || 0) + lastLog.delta,
+            total: ((currentAzkar.total as number) || 0) + lastLog.delta,
+            isComplete: currentPrayerCount >= 99 && ((currentAzkar.total as number) || 0) + lastLog.delta >= 495,
           };
 
           await upsertDailyAzkarMutation.mutateAsync({
