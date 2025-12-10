@@ -218,6 +218,21 @@ export const dhikrApi = {
     }
     return res.json();
   },
+  
+  getFavorites: async () => {
+    const res = await apiRequest("GET", "/api/dhikr/favorites", undefined, getAuthOptions());
+    return res.json();
+  },
+  
+  addFavorite: async (category: string, itemId: string) => {
+    const res = await apiRequest("POST", "/api/dhikr/favorites", { category, itemId }, getAuthOptions());
+    return res.json();
+  },
+  
+  removeFavorite: async (category: string, itemId: string) => {
+    const res = await apiRequest("DELETE", `/api/dhikr/favorites?category=${category}&itemId=${itemId}`, undefined, getAuthOptions());
+    return res.json();
+  },
 };
 
 // Reports API

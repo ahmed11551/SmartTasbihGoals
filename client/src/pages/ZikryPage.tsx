@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { TextWithTooltip } from '@/components/ui/text-with-tooltip';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useFavorites, useToggleFavorite } from '@/hooks/use-api';
 // ВРЕМЕННО: Локализация отключена
   // // ВРЕМЕННО: Локализация отключена
   // import { useTranslation } from '@/lib/i18n';
@@ -145,7 +146,19 @@ function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetail
     common: { loading: 'Загрузка...', error: 'Ошибка', success: 'Успешно' },
   } as any;
   const [copied, setCopied] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { data: favorites = [] } = useFavorites();
+  const toggleFavoriteMutation = useToggleFavorite();
+  
+  // Определяем, является ли текущий зикр избранным
+  const isFavorite = item ? favorites.some((f: any) => f.category === item.category && f.itemId === item.id) : false;
+  
+  // Обновляем избранное при изменении item или favorites
+  useEffect(() => {
+    if (item && favorites) {
+      const favorite = favorites.some((f: any) => f.category === item.category && f.itemId === item.id);
+      // Состояние будет обновлено автоматически через isFavorite
+    }
+  }, [item, favorites]);
 
   const handleCopy = async () => {
     if (!item) return;
@@ -232,7 +245,33 @@ function ZikrDetailSheet({ item, open, onOpenChange, onStartTasbih }: ZikrDetail
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={async () => {
+              if (!item) return;
+              // Определяем категорию по subcategoryId
+              let category: ZikrCategory | null = null;
+              for (const cat of zikryCatalog) {
+                if (cat.subcategories.some(sub => sub.id === item.subcategoryId)) {
+                  category = cat.id;
+                  break;
+                }
+              }
+              if (!category) return;
+              
+              try {
+                await toggleFavoriteMutation.mutateAsync({
+                  category,
+                  itemId: item.id,
+                  isFavorite,
+                });
+              } catch (error) {
+                toast({
+                  title: t.common.error,
+                  description: 'Не удалось обновить избранное',
+                  variant: "destructive",
+                });
+              }
+            }}
+            disabled={toggleFavoriteMutation.isPending}
             data-testid="button-favorite"
           >
             <Heart className={cn("w-5 h-5", isFavorite && "fill-red-500 text-red-500")} />
@@ -271,6 +310,7 @@ type ViewState =
   | { type: 'items'; category: ZikrCatalogCategory; subcategory: ZikrSubcategory };
 
 export default function ZikryPage() {
+  const { toast } = useToast();
   // ВРЕМЕННО: Локализация отключена
   const t = {
     zikry: { 
@@ -292,6 +332,24 @@ export default function ZikryPage() {
     common: { loading: 'Загрузка...', error: 'Ошибка', success: 'Успешно', search: 'Поиск' },
   } as any;
   const [viewState, setViewState] = useState<ViewState>({ type: 'categories' });
+  const { data: favorites = [] } = useFavorites();
+  const toggleFavoriteMutation = useToggleFavorite();
+  
+  // Получаем все избранные зикры
+  const favoriteItems = (() => {
+    if (!favorites || favorites.length === 0) return [];
+    // Собираем все зикры из всех категорий
+    const allItems: Array<ZikrItem & { category: ZikrCategory }> = [];
+    zikryCatalog.forEach(category => {
+      const items = getAllZikrItems(category.id);
+      items.forEach(item => {
+        allItems.push({ ...item, category: category.id });
+      });
+    });
+    return allItems.filter(item => 
+      favorites.some((f: any) => f.category === item.category && f.itemId === item.id)
+    );
+  })();
   const [activeTab, setActiveTab] = useState<'categories' | 'favorites'>('categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<ZikrItem | null>(null);
@@ -474,11 +532,59 @@ export default function ZikryPage() {
                   </TabsContent>
 
                   <TabsContent value="favorites">
-                    <EmptyState
-                      icon={Heart}
-                      title={t.zikry.noFavorites}
-                      description={t.zikry.noFavoritesDescription}
-                    />
+                    {favoriteItems.length === 0 ? (
+                      <EmptyState
+                        icon={Heart}
+                        title={t.zikry.noFavorites}
+                        description={t.zikry.noFavoritesDescription}
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {t.zikry.found} {favoriteItems.length}
+                        </p>
+                        {favoriteItems.map(item => (
+                          <Card
+                            key={`${item.category}-${item.id}`}
+                            className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => setSelectedItem(item)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-medium mb-1">{item.titleRu}</h3>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {item.transcriptionCyrillic}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="ml-2"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    await toggleFavoriteMutation.mutateAsync({
+                                      category: item.category,
+                                      itemId: item.id,
+                                      isFavorite: true,
+                                    });
+                                  } catch (error) {
+                                    toast({
+                                      title: t.common.error,
+                                      description: 'Не удалось удалить из избранного',
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                                disabled={toggleFavoriteMutation.isPending}
+                              >
+                                <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                              </Button>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </TabsContent>
                 </Tabs>
               </>

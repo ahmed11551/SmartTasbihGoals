@@ -112,6 +112,7 @@ model User {
   notificationsEnabled Boolean          @default(true)
   notificationTime    String?          @default("09:00")
   notificationDays    String[]         @default(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
+  favorites           Json?            @default("[]") // Массив избранных зикров: [{category: string, itemId: string}]
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 

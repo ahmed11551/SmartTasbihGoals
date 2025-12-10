@@ -4,11 +4,15 @@ import { Request } from "express";
 // Базовый URL API Bot.e-replika.ru
 // Правильный URL: https://bot.e-replika.ru/api
 const BOT_REPLIKA_API_BASE = process.env.BOT_REPLIKA_API_URL || "https://bot.e-replika.ru";
-// Нормализуем URL: убираем trailing slash и добавляем /api если его нет
+// Нормализуем URL: убираем trailing slash
 let apiUrl = BOT_REPLIKA_API_BASE.replace(/\/$/, '');
-// Если в URL нет /api, добавляем его (но не добавляем если есть /docs)
+// Если в URL нет /api и нет /docs, добавляем /api
 if (!apiUrl.includes("/api") && !apiUrl.includes("/docs")) {
   apiUrl = apiUrl + "/api";
+}
+// Если URL содержит /docs, заменяем на /api
+if (apiUrl.includes("/docs")) {
+  apiUrl = apiUrl.replace("/docs", "/api");
 }
 const BOT_REPLIKA_API_URL = apiUrl;
 const TEST_TOKEN = process.env.TEST_TOKEN || "test_token_123";

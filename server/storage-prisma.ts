@@ -355,10 +355,20 @@ export class PrismaStorage implements IStorage {
       // Логировать детали ошибки для отладки
       logger.error('Error creating dhikr log', {
         error: error.message,
+        errorCode: error.code,
+        errorMeta: error.meta,
         createData: {
-          ...createData,
+          category: createData.category,
+          itemId: createData.itemId,
+          eventType: createData.eventType,
+          delta: createData.delta,
+          valueAfter: createData.valueAfter,
+          prayerSegment: createData.prayerSegment,
+          goalId: createData.goalId,
           session: typeof createData.session === 'object' ? '[relation]' : createData.session,
+          user: typeof createData.user === 'object' ? '[relation]' : createData.user,
         },
+        originalLog: logAny,
         userId,
       });
       throw error;

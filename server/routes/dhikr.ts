@@ -628,5 +628,97 @@ router.delete("/logs/last", async (req, res, next) => {
   }
 });
 
+// GET /api/dhikr/favorites - получить избранные зикры пользователя
+router.get("/favorites", async (req, res, next) => {
+  try {
+    const userId = getUserId(req) || (req as any).userId || "default-user";
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaGet<{ favorites?: unknown[] }>("/api/dhikr/favorites", apiUserId);
+      res.json({ favorites: data.favorites || data || [] });
+    } catch (apiError: any) {
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const favorites = (user?.favorites as any) || [];
+      res.json({ favorites });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/dhikr/favorites - добавить зикр в избранное
+router.post("/favorites", async (req, res, next) => {
+  try {
+    const userId = getUserId(req) || (req as any).userId || "default-user";
+    const { category, itemId } = req.body;
+    
+    if (!category || !itemId) {
+      return res.status(400).json({ error: "Invalid input", message: "category and itemId are required" });
+    }
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaPost<{ favorites?: unknown[] }>("/api/dhikr/favorites", req.body, apiUserId);
+      res.json({ favorites: data.favorites || data || [] });
+    } catch (apiError: any) {
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const favorites: Array<{ category: string; itemId: string }> = (user?.favorites as any) || [];
+      
+      // Проверяем, нет ли уже этого зикра в избранном
+      const exists = favorites.some(f => f.category === category && f.itemId === itemId);
+      if (!exists) {
+        favorites.push({ category, itemId });
+        await prisma.user.update({
+          where: { id: userId },
+          data: { favorites: favorites as any },
+        });
+      }
+      
+      res.json({ favorites });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/dhikr/favorites - удалить зикр из избранного
+router.delete("/favorites", async (req, res, next) => {
+  try {
+    const userId = getUserId(req) || (req as any).userId || "default-user";
+    const { category, itemId } = req.query;
+    
+    if (!category || !itemId) {
+      return res.status(400).json({ error: "Invalid input", message: "category and itemId query params are required" });
+    }
+    
+    try {
+      const apiUserId = getUserIdForApi(req);
+      const data = await botReplikaDelete<{ favorites?: unknown[] }>(`/api/dhikr/favorites?category=${category}&itemId=${itemId}`, apiUserId);
+      res.json({ favorites: data.favorites || data || [] });
+    } catch (apiError: any) {
+      logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
+      
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const favorites: Array<{ category: string; itemId: string }> = (user?.favorites as any) || [];
+      
+      // Удаляем зикр из избранного
+      const filtered = favorites.filter(f => !(f.category === category && f.itemId === itemId));
+      await prisma.user.update({
+        where: { id: userId },
+        data: { favorites: filtered as any },
+      });
+      
+      res.json({ favorites: filtered });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
 

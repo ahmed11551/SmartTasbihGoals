@@ -429,6 +429,34 @@ export function useCreateDhikrLog() {
   });
 }
 
+// Favorites
+export function useFavorites() {
+  return useQuery({
+    queryKey: ["dhikr-favorites"],
+    queryFn: async () => {
+      const res = await dhikrApi.getFavorites();
+      return res.favorites || [];
+    },
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ category, itemId, isFavorite }: { category: string; itemId: string; isFavorite: boolean }) => {
+      if (isFavorite) {
+        await dhikrApi.removeFavorite(category, itemId);
+      } else {
+        await dhikrApi.addFavorite(category, itemId);
+      }
+      return { category, itemId, isFavorite: !isFavorite };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dhikr-favorites"] });
+    },
+  });
+}
+
 export function useDhikrCatalog() {
   return useQuery({
     queryKey: ["dhikr-catalog"],
