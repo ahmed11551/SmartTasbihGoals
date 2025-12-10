@@ -329,16 +329,28 @@ export class PrismaStorage implements IStorage {
         create: {
           userId,
           goalId: goalId, // Используем обработанный goalId
-          goalId: logData.goalId || null,
           prayerSegment: logData.prayerSegment || 'none',
           startedAt: new Date(),
         },
       };
     }
     
-    return prisma.dhikrLog.create({
-      data: createData,
-    });
+    try {
+      return await prisma.dhikrLog.create({
+        data: createData,
+      });
+    } catch (error: any) {
+      // Логировать детали ошибки для отладки
+      logger.error('Error creating dhikr log', {
+        error: error.message,
+        createData: {
+          ...createData,
+          session: typeof createData.session === 'object' ? '[relation]' : createData.session,
+        },
+        userId,
+      });
+      throw error;
+    }
   }
 
   // Daily Azkar
