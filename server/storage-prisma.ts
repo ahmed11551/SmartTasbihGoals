@@ -295,16 +295,26 @@ export class PrismaStorage implements IStorage {
 
   async createDhikrLog(userId: string, log: Prisma.DhikrLogCreateInput): Promise<DhikrLog> {
     // Преобразовать sessionId в связь session и goalId в простое поле
-    const { sessionId, goalId: rawGoalId, goal, ...logData } = log as any;
+    const logAny = log as any;
+    const sessionId = logAny.sessionId;
+    const rawGoalId = logAny.goalId;
+    const prayerSegment = logAny.prayerSegment || 'none';
     
     // Обработать goalId - это простое поле String?, а не relation
-    // Если передан объект goal (relation), игнорируем его
-    const goalId = rawGoalId || null;
+    const goalId = (typeof rawGoalId === 'string' ? rawGoalId : null) || null;
     
+    // Явно извлекаем только нужные поля из схемы Prisma, чтобы избежать конфликтов
     const createData: Prisma.DhikrLogCreateInput = {
-      ...logData,
-      goalId: goalId, // Простое поле, не relation (убеждаемся что goal удален выше)
-      offlineId: (logData.offlineId as string) || randomUUID(),
+      category: logAny.category,
+      itemId: logAny.itemId || null,
+      eventType: logAny.eventType,
+      delta: logAny.delta,
+      valueAfter: logAny.valueAfter,
+      prayerSegment: prayerSegment,
+      atTs: logAny.atTs ? new Date(logAny.atTs) : new Date(),
+      tz: logAny.tz || 'UTC',
+      offlineId: (logAny.offlineId as string) || randomUUID(),
+      goalId: goalId, // Простое поле, не relation
       user: { connect: { id: userId } },
     };
     
@@ -320,7 +330,7 @@ export class PrismaStorage implements IStorage {
           create: {
             userId,
             goalId: goalId, // Используем обработанный goalId
-            prayerSegment: logData.prayerSegment || 'none',
+            prayerSegment: prayerSegment,
             startedAt: new Date(),
           },
         };
@@ -331,7 +341,7 @@ export class PrismaStorage implements IStorage {
         create: {
           userId,
           goalId: goalId, // Используем обработанный goalId
-          prayerSegment: logData.prayerSegment || 'none',
+          prayerSegment: prayerSegment,
           startedAt: new Date(),
         },
       };
