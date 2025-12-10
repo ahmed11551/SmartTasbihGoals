@@ -10,6 +10,70 @@ import { updateGroupGoalsProgress } from "../lib/group-goal-sync";
 const router = Router();
 router.use(requireAuth);
 
+// Zod схемы для валидации
+const createDhikrLogSchema = z.object({
+  sessionId: z.string().uuid().optional(),
+  goalId: z.string().uuid().optional().nullable(),
+  category: z.enum(['general', 'surah', 'ayah', 'dua', 'azkar', 'names99', 'salawat', 'kalimat']),
+  itemId: z.string().optional().nullable(),
+  eventType: z.enum(['tap', 'bulk', 'repeat', 'learn_mark', 'goal_completed', 'auto_reset']),
+  delta: z.number().int().min(0),
+  valueAfter: z.number().int().min(0),
+  prayerSegment: z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'none']).default('none'),
+  offlineId: z.string().uuid().optional(),
+  atTs: z.string().datetime().or(z.date()).optional(),
+  tz: z.string().default('UTC'),
+});
+
+const addFavoriteSchema = z.object({
+  category: z.enum(['general', 'surah', 'ayah', 'dua', 'azkar', 'names99', 'salawat', 'kalimat']),
+  itemId: z.string().min(1),
+});
+
+const upsertDailyAzkarSchema = z.object({
+  dateLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  userId: z.string().optional(),
+  fajr: z.number().int().min(0).default(0),
+  dhuhr: z.number().int().min(0).default(0),
+  asr: z.number().int().min(0).default(0),
+  maghrib: z.number().int().min(0).default(0),
+  isha: z.number().int().min(0).default(0),
+  total: z.number().int().min(0).default(0),
+  isComplete: z.boolean().default(false),
+});
+
+// Zod схемы для валидации
+const createDhikrLogSchema = z.object({
+  sessionId: z.string().uuid().optional(),
+  goalId: z.string().uuid().optional().nullable(),
+  category: z.enum(['general', 'surah', 'ayah', 'dua', 'azkar', 'names99', 'salawat', 'kalimat']),
+  itemId: z.string().optional().nullable(),
+  eventType: z.enum(['tap', 'bulk', 'repeat', 'learn_mark', 'goal_completed', 'auto_reset']),
+  delta: z.number().int().min(0),
+  valueAfter: z.number().int().min(0),
+  prayerSegment: z.enum(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'none']).default('none'),
+  offlineId: z.string().uuid().optional(),
+  atTs: z.string().datetime().or(z.date()).optional(),
+  tz: z.string().default('UTC'),
+});
+
+const addFavoriteSchema = z.object({
+  category: z.enum(['general', 'surah', 'ayah', 'dua', 'azkar', 'names99', 'salawat', 'kalimat']),
+  itemId: z.string().min(1),
+});
+
+const upsertDailyAzkarSchema = z.object({
+  dateLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  userId: z.string().optional(),
+  fajr: z.number().int().min(0).default(0),
+  dhuhr: z.number().int().min(0).default(0),
+  asr: z.number().int().min(0).default(0),
+  maghrib: z.number().int().min(0).default(0),
+  isha: z.number().int().min(0).default(0),
+  total: z.number().int().min(0).default(0),
+  isComplete: z.boolean().default(false),
+});
+
 /**
  * Автоматически обновляет прогресс всех активных целей, связанных с использованием тасбиха
  * @param userId - ID пользователя
@@ -203,7 +267,28 @@ router.post("/logs", async (req, res, next) => {
       });
     }
     
-    const logData = req.body;
+    // Валидация через Zod схему
+    let logData;
+    try {
+      logData = createDhikrLogSchema.parse(req.body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        logger.error(`POST /api/dhikr/logs: Validation error`, { 
+          errors: error.errors,
+          body: req.body,
+          userId 
+        });
+        return res.status(400).json({ 
+          error: "Validation error", 
+          message: "Неверные данные запроса",
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message,
+          }))
+        });
+      }
+      throw error;
+    }
     
     // Логируем входящий запрос для отладки
     logger.info(`POST /api/dhikr/logs request`, { 
@@ -212,51 +297,13 @@ router.post("/logs", async (req, res, next) => {
       headers: req.headers 
     });
     
-    // Базовая валидация обязательных полей
-    if (!logData) {
-      logger.error(`POST /api/dhikr/logs: Request body is missing`, { userId });
-      return res.status(400).json({ error: "Invalid input", message: "Request body is required" });
-    }
-    
-    // Проверяем, что delta - это число (или 0)
-    if (logData.delta !== undefined && typeof logData.delta !== 'number') {
-      return res.status(400).json({ error: "Invalid input", message: "delta must be a number" });
-    }
-    
     const category = logData.category;
     const itemId = logData.itemId;
-    const delta = typeof logData.delta === 'number' ? logData.delta : 0;
-    const eventType = logData.eventType || 'tap'; // Значение по умолчанию
+    const delta = logData.delta;
+    const eventType = logData.eventType;
     const sessionId = logData.sessionId;
-    const prayerSegment = logData.prayerSegment || 'none';
-    const valueAfter = typeof logData.valueAfter === 'number' ? logData.valueAfter : 0;
-    
-    // Валидация обязательных полей с более подробными сообщениями
-    if (!category || typeof category !== 'string') {
-      logger.error(`Invalid dhikr log request: category is missing or invalid`, { 
-        category, 
-        body: logData,
-        userId 
-      });
-      return res.status(400).json({ 
-        error: "Invalid input", 
-        message: `category is required and must be a string. Received: ${typeof category} - ${category}`,
-        received: { category, itemId, eventType, sessionId }
-      });
-    }
-    
-    if (!eventType || typeof eventType !== 'string') {
-      logger.error(`Invalid dhikr log request: eventType is missing or invalid`, { 
-        eventType, 
-        body: logData,
-        userId 
-      });
-      return res.status(400).json({ 
-        error: "Invalid input", 
-        message: `eventType is required and must be a string. Received: ${typeof eventType} - ${eventType}`,
-        received: { category, itemId, eventType, sessionId }
-      });
-    }
+    const prayerSegment = logData.prayerSegment;
+    const valueAfter = logData.valueAfter;
     
     // Расширенное анти-чит логирование: проверка аномально высокой активности
     if (delta > 0 && (eventType === 'tap' || eventType === 'bulk' || eventType === 'repeat')) {
@@ -301,7 +348,7 @@ router.post("/logs", async (req, res, next) => {
     
     try {
       const apiUserId = getUserIdForApi(req);
-      const data = await botReplikaPost<{ log?: unknown }>("/api/dhikr/logs", req.body, apiUserId);
+      const data = await botReplikaPost<{ log?: unknown }>("/api/dhikr/logs", logData, apiUserId);
       log = data.log || data;
       
       // Автоматически обновить прогресс связанных целей (личных и групповых)
@@ -358,7 +405,7 @@ router.post("/logs", async (req, res, next) => {
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
       try {
-        log = await storage.createDhikrLog(userId, req.body);
+        log = await storage.createDhikrLog(userId, logData);
       } catch (dbError: any) {
         logger.error("Failed to create dhikr log in local DB", {
           error: dbError.message,
@@ -480,20 +527,52 @@ router.post("/daily-azkar", async (req, res, next) => {
     // Авторизация отключена - всегда используем userId из заголовка или default-user
     const userId = getUserId(req) || (req as any).userId || "default-user";
     
+    // Валидация через Zod схему
+    let body;
+    try {
+      body = upsertDailyAzkarSchema.parse(req.body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        logger.error(`POST /api/dhikr/daily-azkar: Validation error`, { 
+          errors: error.errors,
+          body: req.body,
+          userId 
+        });
+        return res.status(400).json({ 
+          error: "Validation error", 
+          message: "Неверные данные запроса",
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message,
+          }))
+        });
+      }
+      throw error;
+    }
+    
     try {
       const apiUserId = getUserIdForApi(req);
-      const data = await botReplikaPost<{ azkar?: unknown }>("/api/dhikr/daily-azkar", req.body, apiUserId);
+      const data = await botReplikaPost<{ azkar?: unknown }>("/api/dhikr/daily-azkar", body, apiUserId);
       const azkar = data.azkar || data;
       res.json({ azkar });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);
-      const azkar = await storage.upsertDailyAzkar(userId, req.body);
+      
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        await prisma.user.create({
+          data: {
+            id: userId,
+            username: userId === "default-user" ? `default-user-${Date.now()}` : userId,
+            password: await storage.hashPassword("default-password"),
+          },
+        });
+      }
+      
+      const azkar = await storage.upsertDailyAzkar(userId, body);
       res.json({ azkar });
     }
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid input", details: error.errors });
-    }
     next(error);
   }
 });
@@ -669,15 +748,30 @@ router.get("/favorites", async (req, res, next) => {
 router.post("/favorites", async (req, res, next) => {
   try {
     const userId = getUserId(req) || (req as any).userId || "default-user";
-    const { category, itemId } = req.body;
     
-    if (!category || !itemId) {
-      return res.status(400).json({ error: "Invalid input", message: "category and itemId are required" });
+    // Валидация через Zod схему
+    let body;
+    try {
+      body = addFavoriteSchema.parse(req.body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          message: "Неверные данные запроса",
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message,
+          }))
+        });
+      }
+      throw error;
     }
+    
+    const { category, itemId } = body;
     
     try {
       const apiUserId = getUserIdForApi(req);
-      const data = await botReplikaPost<{ favorites?: unknown[] }>("/api/dhikr/favorites", req.body, apiUserId);
+      const data = await botReplikaPost<{ favorites?: unknown[] }>("/api/dhikr/favorites", body, apiUserId);
       res.json({ favorites: data.favorites || data || [] });
     } catch (apiError: any) {
       logger.warn("Bot.e-replika.ru API unavailable, using local DB:", apiError.message);

@@ -525,12 +525,12 @@ export default function GoalsPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
   
-  // API hooks
+  // API hooks - унифицированный источник данных
   const queryClient = useQueryClient();
   // ВАЖНО: useGoals возвращает массив, поэтому data: goals (множественное число)
   const { data: goals = [], isLoading: goalsLoading } = useGoals();
-  const { data: apiHabits = [], isLoading: habitsLoading } = useHabits();
-  const { data: apiTasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: habits = [], isLoading: habitsLoading } = useHabits();
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const createGoalMutation = useCreateGoal();
   const updateGoalMutation = useUpdateGoal();
   const deleteGoalMutation = useDeleteGoal();
@@ -546,19 +546,93 @@ export default function GoalsPage() {
   const today = new Date().toISOString().split('T')[0];
   const { data: dailyAzkarData } = useDailyAzkar(today);
   
-  const { 
-    habits, 
-    tasks, 
-    addHabit, 
-    updateHabit,
-    deleteHabit, 
-    toggleHabitDay,
-    addTask,
-    updateTask,
-    deleteTask,
-    toggleTask,
-    toggleSubtask 
-  } = useData();
+  // Функции-обертки для совместимости с существующим кодом
+  const addHabit = async (habitData: Partial<Habit>) => {
+    return await createHabitMutation.mutateAsync(habitData as any);
+  };
+  
+  const updateHabit = async (id: string, updates: Partial<Habit>) => {
+    return await updateHabitMutation.mutateAsync({ id, data: updates });
+  };
+  
+  const deleteHabit = async (id: string) => {
+    await deleteHabitMutation.mutateAsync(id);
+  };
+  
+  const toggleHabitDay = async (habitId: string, dateKey: string) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const isCompleted = habit.completedDates.includes(dateKey);
+    let newCompletedDates: string[];
+    
+    if (isCompleted) {
+      newCompletedDates = habit.completedDates.filter(d => d !== dateKey);
+    } else {
+      newCompletedDates = [...habit.completedDates, dateKey].sort();
+    }
+
+    // Calculate streak
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const checkKey = checkDate.toISOString().split('T')[0];
+      
+      if (newCompletedDates.includes(checkKey)) {
+        streak++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+
+    await updateHabit(habitId, {
+      completedDates: newCompletedDates,
+      currentStreak: streak,
+      longestStreak: Math.max(habit.longestStreak, streak),
+    });
+  };
+  
+  const addTask = async (taskData: Partial<Task>) => {
+    return await createTaskMutation.mutateAsync(taskData as any);
+  };
+  
+  const updateTask = async (id: string, updates: Partial<Task>) => {
+    return await updateTaskMutation.mutateAsync({ id, data: updates });
+  };
+  
+  const deleteTask = async (id: string) => {
+    await deleteTaskMutation.mutateAsync(id);
+  };
+  
+  const toggleTask = async (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    await updateTask(id, {
+      isCompleted: !task.isCompleted,
+      completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
+    });
+  };
+  
+  const toggleSubtask = async (taskId: string, subtaskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.subtasks) return;
+
+    const subtasks = task.subtasks.map(s => 
+      s.id === subtaskId ? { ...s, isCompleted: !s.isCompleted } : s
+    );
+    const allCompleted = subtasks.every(s => s.isCompleted);
+
+    await updateTask(taskId, {
+      subtasks,
+      isCompleted: allCompleted && subtasks.length > 0 ? true : task.isCompleted,
+      completedAt: allCompleted && subtasks.length > 0 && !task.isCompleted ? new Date().toISOString() : task.completedAt,
+    });
+  };
   
   const [goalsOpen, setGoalsOpen] = useState(true);
   const [tasksOpen, setTasksOpen] = useState(true);
