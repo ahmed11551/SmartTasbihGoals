@@ -335,9 +335,9 @@ export class PrismaStorage implements IStorage {
           prayerSegment: prayerSegment,
           startedAt: new Date(),
         };
-        // Используем relation goal вместо прямого goalId
+        // В Session используем goalId напрямую, а не relation
         if (goalId) {
-          sessionCreateData.goal = { connect: { id: goalId } };
+          sessionCreateData.goalId = goalId;
         }
         createData.session = {
           create: sessionCreateData,
@@ -350,9 +350,9 @@ export class PrismaStorage implements IStorage {
         prayerSegment: prayerSegment,
         startedAt: new Date(),
       };
-      // Используем relation goal вместо прямого goalId
+      // В Session используем goalId напрямую, а не relation
       if (goalId) {
-        sessionCreateData.goal = { connect: { id: goalId } };
+        sessionCreateData.goalId = goalId;
       }
       createData.session = {
         create: sessionCreateData,
@@ -376,7 +376,7 @@ export class PrismaStorage implements IStorage {
           delta: createData.delta,
           valueAfter: createData.valueAfter,
           prayerSegment: createData.prayerSegment,
-          goalId: createData.goalId,
+          goalId: goalId,
           session: typeof createData.session === 'object' ? '[relation]' : createData.session,
           user: typeof createData.user === 'object' ? '[relation]' : createData.user,
         },
