@@ -329,20 +329,25 @@ export default function TasbihPage() {
 
         // Обновить ежедневные азкары
         if (selectedPrayer !== 'none') {
-          // Получаем актуальные данные из кэша, а не из локальной переменной
-          const queryClient = (await import('@tanstack/react-query')).useQueryClient();
-          const currentDailyAzkarData = queryClient.getQueryData(['daily-azkar', today]) as typeof dailyAzkar | undefined;
-          const currentAzkar = currentDailyAzkarData || dailyAzkar;
+          // ВАЖНО: Используем актуальные данные из React Query кэша, а не локальную переменную
+          // Это гарантирует, что при переключении между намазами используются актуальные данные
+          const cachedData = queryClient.getQueryData<typeof dailyAzkar>(['daily-azkar', today]);
+          const currentAzkar = cachedData || dailyAzkarData || dailyAzkar;
           
           const prayerKey = selectedPrayer as keyof typeof currentAzkar;
           const currentPrayerCount = ((currentAzkar[prayerKey] as number) || 0) + lastLog.delta;
+          const currentTotal = ((currentAzkar.total as number) || 0) + lastLog.delta;
           const newDailyAzkar = {
-            ...currentAzkar,
             userId: currentAzkar.userId || '',
             dateLocal: today,
+            fajr: (currentAzkar.fajr as number) || 0,
+            dhuhr: (currentAzkar.dhuhr as number) || 0,
+            asr: (currentAzkar.asr as number) || 0,
+            maghrib: (currentAzkar.maghrib as number) || 0,
+            isha: (currentAzkar.isha as number) || 0,
             [prayerKey]: currentPrayerCount,
-            total: ((currentAzkar.total as number) || 0) + lastLog.delta,
-            isComplete: currentPrayerCount >= 99 && ((currentAzkar.total as number) || 0) + lastLog.delta >= 495,
+            total: currentTotal,
+            isComplete: currentTotal >= 495,
           };
 
           await upsertDailyAzkarMutation.mutateAsync({
