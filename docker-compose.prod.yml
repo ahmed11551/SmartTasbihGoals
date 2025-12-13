@@ -1,25 +1,7 @@
-services:
-  # Локальная БД (опционально - только для разработки)
-  # Если используете внешнюю БД, закомментируйте этот сервис
-  # и укажите DATABASE_URL в переменных окружения app сервиса
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: smarttasbih
-      POSTGRES_PASSWORD: smarttasbih_password
-      POSTGRES_DB: smarttasbih_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U smarttasbih"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    profiles:
-      - local-db  # Запускается только с флагом --profile local-db
+# Docker Compose для продакшена без локальной БД
+# Использование: docker-compose -f docker-compose.prod.yml up -d
 
+services:
   app:
     build:
       context: .
@@ -29,26 +11,21 @@ services:
       - ./prisma:/app/prisma:ro
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://smarttasbih:smarttasbih_password@postgres:5432/smarttasbih_db
+      # Укажите вашу внешнюю БД здесь:
+      DATABASE_URL: ${DATABASE_URL}
       SESSION_SECRET: ${SESSION_SECRET:-dev-secret-key-change-in-production-min-32-chars-long}
       TEST_TOKEN: ${TEST_TOKEN:-test_token_123}
       BOT_REPLIKA_API_URL: ${BOT_REPLIKA_API_URL:-https://bot.e-replika.ru}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-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}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       PORT: 5001
     ports:
       - "5001:5001"
-    # Если используете внешнюю БД, раскомментируйте и укажите DATABASE_URL:
-    # DATABASE_URL: postgresql://user:password@host:port/database
-    # depends_on:
-    #   postgres:
-    #     condition: service_healthy
     user: "0:0"
     command: >
       sh -c "
         echo 'Проверка подключения к базе данных...' &&
-        # Не ждем локальную БД, если используется внешняя
-        (nc -z postgres 5432 2>/dev/null && echo 'Локальная БД доступна' || echo 'Используется внешняя БД') &&
+        echo 'Используется внешняя БД из DATABASE_URL' &&
         sleep 2 &&
         echo 'Исправление прав доступа...' &&
         rm -rf /app/node_modules/.prisma/client 2>/dev/null || true &&
@@ -82,7 +59,4 @@ services:
         fi
       "
     restart: unless-stopped
-
-volumes:
-  postgres_data:
 
