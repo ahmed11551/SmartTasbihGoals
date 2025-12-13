@@ -29,7 +29,10 @@ services:
       - ./prisma:/app/prisma:ro
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://smarttasbih:smarttasbih_password@postgres:5432/smarttasbih_db
+      # По умолчанию используется внешняя БД из DATABASE_URL
+      # Для локальной БД (с --profile local-db) используйте:
+      # DATABASE_URL: postgresql://smarttasbih:smarttasbih_password@postgres:5432/smarttasbih_db
+      DATABASE_URL: ${DATABASE_URL:-postgresql://smarttasbih:smarttasbih_password@postgres:5432/smarttasbih_db}
       SESSION_SECRET: ${SESSION_SECRET:-dev-secret-key-change-in-production-min-32-chars-long}
       TEST_TOKEN: ${TEST_TOKEN:-test_token_123}
       BOT_REPLIKA_API_URL: ${BOT_REPLIKA_API_URL:-https://bot.e-replika.ru}
