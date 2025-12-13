@@ -162,18 +162,21 @@ npx prisma migrate deploy
 ## Управление Docker
 
 ```bash
-# Запустить
-docker-compose up -d
+# Запуск с внешней БД (продакшен)
+docker-compose -f docker-compose.prod.yml up -d
+
+# Запуск с локальной БД (разработка)
+docker-compose --profile local-db up -d
 
 # Остановить
 docker-compose down
 
-# Остановить и удалить данные БД
-docker-compose down -v
+# Остановить и удалить данные локальной БД
+docker-compose --profile local-db down -v
 
 # Просмотр логов
 docker-compose logs -f app
 
 # Пересобрать после изменений
-docker-compose up -d --build
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
