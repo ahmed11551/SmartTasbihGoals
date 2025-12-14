@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import { initTelegramWebApp } from "./lib/telegram";
 import { initSentry } from "./lib/sentry";
+import "./lib/error-handler"; // Глобальная обработка ошибок расширений браузера
 // ВРЕМЕННО: Локализация отключена из-за проблем с chunking
 // import "@/lib/i18n";
 // import * as i18nModule from "@/lib/i18n";
@@ -66,13 +67,4 @@ try {
   `;
 }
 
-// Добавляем глобальный обработчик ошибок для отлова необработанных ошибок
-window.addEventListener('error', (event) => {
-  // eslint-disable-next-line no-console
-  console.error('Unhandled error:', event.error);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  // eslint-disable-next-line no-console
-  console.error('Unhandled promise rejection:', event.reason);
-});
+// Обработчики ошибок теперь в ./lib/error-handler.ts

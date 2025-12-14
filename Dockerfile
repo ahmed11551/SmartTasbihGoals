@@ -33,6 +33,10 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Генерируем Prisma Client в builder stage (нужно для сборки сервера)
+RUN for i in 1 2 3 4 5; do \
+      npx prisma generate && break || (echo "Попытка $i не удалась, ждем..." && sleep 10); \
+    done || echo "Prisma generate failed, but continuing..."
 
 # Build the application
 RUN npm run build

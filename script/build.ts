@@ -43,10 +43,26 @@ async function buildAll() {
   // Генерируем Prisma Client всегда (включая Vercel для надежности)
   console.log("generating Prisma client...");
   const { execSync } = await import("child_process");
-  try {
-    execSync("npx prisma generate", { stdio: "inherit" });
-  } catch (error) {
-    console.warn("Prisma generate failed, continuing anyway:", error);
+  
+  // Retry логика для Prisma generate (могут быть сетевые проблемы)
+  let prismaGenerated = false;
+  for (let i = 0; i < 5; i++) {
+    try {
+      execSync("npx prisma generate", { stdio: "inherit" });
+      prismaGenerated = true;
+      break;
+    } catch (error) {
+      console.warn(`Prisma generate attempt ${i + 1} failed:`, error);
+      if (i < 4) {
+        console.log(`Retrying in 5 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+  }
+  
+  if (!prismaGenerated) {
+    console.error("Prisma generate failed after all retries. Cannot continue build.");
+    process.exit(1);
   }
 
   console.log("building client...");
