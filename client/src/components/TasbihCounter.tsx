@@ -215,6 +215,12 @@ export default function TasbihCounter({
   }, [autoIntervalEnabled, autoIntervalSeconds, isGoalComplete, isLearnMode, goalTarget, onCountChange]);
 
   const handleTap = useCallback((delta: number) => {
+    // Защита от невалидных данных
+    if (!item || !item.id) {
+      console.error('handleTap: item is invalid', item);
+      return;
+    }
+
     const now = Date.now();
     // Блокировка спама: не чаще 2 раз в секунду (500мс между тапами)
     if (now - lastTapTimeRef.current < 500) return;

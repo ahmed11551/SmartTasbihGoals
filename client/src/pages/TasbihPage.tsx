@@ -190,11 +190,13 @@ export default function TasbihPage() {
     (g.category === 'salawat' || g.category === 'azkar')
   ).slice(0, 2);
   // Найти связанную цель для текущего выбранного зикра
-  const linkedGoal = goals.find((g: any) => 
-    g.linkedCounterType === selectedItem.category && 
-    g.status === 'active' &&
-    (g.itemId === selectedItem.id || !g.itemId)
-  );
+  const linkedGoal = selectedItem?.id && selectedItem?.category 
+    ? goals.find((g: any) => 
+        g.linkedCounterType === selectedItem.category && 
+        g.status === 'active' &&
+        (g.itemId === selectedItem.id || !g.itemId)
+      )
+    : undefined;
   
   // Получить streak для текущего типа активности (dhikr по умолчанию)
   const currentStreak = React.useMemo(() => {
@@ -237,6 +239,12 @@ export default function TasbihPage() {
 
   // Сохранить лог зикра (батчинг для оптимизации)
   const handleLearnAction = useCallback(async (actionType: 'repeat' | 'learn_mark', count: number) => {
+    // Защита от невалидных данных
+    if (!selectedItem?.id || !selectedItem?.category) {
+      console.error('handleLearnAction: selectedItem is invalid', selectedItem);
+      return;
+    }
+
     const sessionId = await ensureSession();
     if (!sessionId) return;
 
@@ -274,6 +282,12 @@ export default function TasbihPage() {
   }, [ensureSession, createDhikrLogMutation, linkedGoal, selectedItem, selectedPrayer, updateGoalMutation, toast]);
 
   const saveDhikrLog = async (delta: number, valueAfter: number) => {
+    // Защита от невалидных данных
+    if (!selectedItem?.id || !selectedItem?.category) {
+      console.error('saveDhikrLog: selectedItem is invalid', selectedItem);
+      return;
+    }
+
     const sessionId = await ensureSession();
     if (!sessionId) return;
 
@@ -622,14 +636,30 @@ export default function TasbihPage() {
   };
 
   const handleContinueRecent = (action: RecentAction) => {
+    // Защита от невалидных данных
+    if (!action || !action.item || !action.item.id) {
+      console.error('handleContinueRecent: action is invalid', action);
+      return;
+    }
     setSelectedItem(action.item);
-    setCurrentCount(action.count);
-    setCurrentRounds(action.rounds);
+    setCurrentCount(action.count || 0);
+    setCurrentRounds(action.rounds || 0);
     setCounterKey(Date.now().toString());
   };
 
   // Возобновить незавершенную сессию
   const handleResumeSession = async (session: any) => {
+    // Защита от невалидных данных
+    if (!session || !session.id) {
+      console.error('handleResumeSession: session is invalid', session);
+      toast({
+        title: t.common.error,
+        description: 'Не удалось возобновить сессию',
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Завершить текущую сессию, если есть
       if (currentSessionId) {
@@ -680,6 +710,12 @@ export default function TasbihPage() {
   };
 
   const handleDhikrSelect = async (item: DhikrItem) => {
+    // Защита от undefined
+    if (!item || !item.id) {
+      console.error('handleDhikrSelect: item is invalid', item);
+      return;
+    }
+
     // Завершить текущую сессию при смене зикра
     if (currentSessionId && currentCount > 0) {
       try {

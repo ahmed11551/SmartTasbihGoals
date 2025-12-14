@@ -1019,12 +1019,22 @@ export default function GoalsPage() {
   };
 
   const handleContinueSession = (session: any) => {
+    // Защита от невалидных данных
+    if (!session || !session.id) {
+      console.error('handleContinueSession: session is invalid', session);
+      return;
+    }
     // Переход на страницу тасбиха с сохранением информации о сессии
     // Страница тасбиха находится на маршруте "/"
     navigate(`/?sessionId=${session.id}`);
   };
 
   const handleDeleteSession = (sessionId: string) => {
+    // Защита от невалидных данных
+    if (!sessionId) {
+      console.error('handleDeleteSession: sessionId is invalid', sessionId);
+      return;
+    }
     setSessionToDelete(sessionId);
     setSessionDeleteDialogOpen(true);
   };
@@ -1082,6 +1092,12 @@ export default function GoalsPage() {
   };
 
   const handleToggleTaskAsync = async (taskId: string) => {
+    // Защита от невалидных данных
+    if (!taskId) {
+      console.error('handleToggleTaskAsync: taskId is invalid', taskId);
+      return;
+    }
+
     try {
       await toggleTask(taskId);
     } catch (error) {
