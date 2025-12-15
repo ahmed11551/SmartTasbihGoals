@@ -38,10 +38,8 @@ export async function botReplikaRequest<T = unknown>(
 
   // Убираем начальный слэш если есть
   let apiPath = path.startsWith("/") ? path : `/${path}`;
-  // Если путь начинается с /api, заменяем на пустую строку или оставляем как есть для /docs
-  if (apiPath.startsWith("/api/")) {
-    apiPath = apiPath.replace("/api", "");
-  }
+  // Для /docs endpoint пути должны быть полными (например, /api/stats)
+  // Не удаляем /api, а добавляем путь к базовому URL /docs
   const url = `${BOT_REPLIKA_API_URL}${apiPath}`;
   
   // Логирование для отладки
